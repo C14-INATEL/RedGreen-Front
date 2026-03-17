@@ -17,7 +17,7 @@ export const SalaCacaNiquel = () => {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="flex w-full max-w-md flex-col gap-4">
+      <div className="flex-col gap-4">
         <div className="flex justify-start">
           <Button onClick={handleVoltar}>Voltar</Button>
         </div>
