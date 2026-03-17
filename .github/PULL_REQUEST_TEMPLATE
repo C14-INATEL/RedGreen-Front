@@ -1,0 +1,71 @@
+## Por que?
+
+> Descreva o problema que está sendo abordado com este pull request
+
+## O que foi feito?
+
+> Descrever a solução, quais arquivos ou camadas foram alteradas e etc
+
+---
+
+## Como testar?
+
+> Instruções para validar as alterações
+
+---
+
+## Comentários
+
+> Adicione informações extras relevantes
+
+<!--
+- Decisões técnicas importantes
+- Limitações conhecidas
+- TODOs futuros
+- Débitos técnicos
+- Dependências externas
+-->
+
+---
+
+## Evidências
+
+> Inclua capturas de tela, links de imagens, logs ou vídeos demonstrando o funcionamento
+
+### Demonstração
+
+<!--
+- Link para vídeo/gif demonstrativo
+- Screenshots relevantes
+- Logs importantes
+- Demonstração com Swagger
+-->
+
+---
+
+## Checklist do PR
+
+> Antes de pedir review, confirme:
+
+### Documentação e Padrões:
+
+- [ ] O título do PR segue o padrão definido (ex: `feat:`, `fix:`, `docs:`)
+- [ ] A descrição explica o **porquê** e o **que** foi feito
+- [ ] A documentação foi atualizada (Se aplicável, README, docs, swagger, etc)
+
+### Testes e Qualidade:
+
+- [ ] As alterações foram testadas localmente
+- [ ] Foram adicionados/atualizados testes automatizados (se aplicável)
+- [ ] Não há código morto/comentado
+- [ ] Code review próprio foi realizado
+
+### Testes realizados:
+
+- [ ] Testes unitários/integração
+- [ ] Testes manuais
+- [ ] Validação em diferentes dispositivos/navegadores
+
+### Evidências:
+
+- [ ] Screenshots/evidências foram incluídos (quando relevante)
