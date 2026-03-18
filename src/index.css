@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.suit-pattern {
+  background-color: hsl(150 40% 12%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ctext x='10' y='25' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♠%3C/text%3E%3Ctext x='50' y='25' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♥%3C/text%3E%3Ctext x='10' y='60' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♣%3C/text%3E%3Ctext x='50' y='60' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♦%3C/text%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+}
