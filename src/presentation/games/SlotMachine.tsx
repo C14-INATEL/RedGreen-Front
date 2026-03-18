@@ -1,6 +1,6 @@
-import cacaNiquelImagem from '../../assets/CacaNiquel.png';
+import SlotMachineImage from '../../../public/CacaNiquel.png';
 
-export const CacaNiquel = () => (
+export const SlotMachine = () => (
   <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
     <header className="text-center">
       <h1 className="text-2xl font-bold text-slate-900">Caça-níquel</h1>
@@ -11,7 +11,7 @@ export const CacaNiquel = () => (
 
     <div className="mt-6 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">
       <img
-        src={cacaNiquelImagem}
+        src={SlotMachineImage}
         alt="Imagem placeholder de um caça-níquel"
         className="max-w-none w-[1200px] h-[1000px]"
       />

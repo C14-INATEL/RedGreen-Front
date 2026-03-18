@@ -10,7 +10,7 @@ export const Home = () => {
       <h1 className="text-2xl font-bold">Bem-vindo ao Cassino Web</h1>
       <Button onClick={() => alert('Hello!')}>Clique aqui</Button>
       <div className="mt-4">
-        <Button onClick={() => navigate(paths.salacacaniquel)}>
+        <Button onClick={() => navigate(paths.slotmachineroom)}>
           Abrir caça-níquel
         </Button>
       </div>

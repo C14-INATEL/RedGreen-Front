@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { paths } from '../../paths';
-import { CacaNiquel } from '../games/CacaNiquel';
+import { SlotMachine } from '../games/SlotMachine';
 import { Button } from '../ui/Button';
 
-export const SalaCacaNiquel = () => {
+export const SlotMachineRoom = () => {
   const navigate = useNavigate();
 
   const handleVoltar = () => {
@@ -21,7 +21,7 @@ export const SalaCacaNiquel = () => {
         <div className="flex justify-start">
           <Button onClick={handleVoltar}>Voltar</Button>
         </div>
-        <CacaNiquel />
+        <SlotMachine />
       </div>
     </main>
   );
