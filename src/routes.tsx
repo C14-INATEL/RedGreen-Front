@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { paths } from './paths';
-import { Home } from './presentation/pages/Home';
+import Home from './presentation/pages/Home';
 
 // Placeholder components - replace with actual pages
 const Login = () => <div>Login</div>;
