@@ -21,7 +21,7 @@ export const SlotMachinePixi = () => (
       alt="Caça-níquel de teste"
       className="block w-full select-none"
       draggable={false}
-      src="/CacaNiquel.png"
+      src="/SlotMachine/SpriteSlotMachine.png"
     />
 
     <SlotMachineReels
