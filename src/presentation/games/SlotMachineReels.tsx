@@ -221,24 +221,54 @@ export const SlotMachineReels = ({
     let observer: ResizeObserver | null = null;
     let isDisposed = false;
     let reels: ReelState[] = [];
+    let frameId: number | null = null;
+    let lastWidth = 0;
+    let lastHeight = 0;
 
     const rebuild = () => {
-      if (!root) {
-        return;
+      if (!app || !root) {
+        return false;
       }
 
       const width = host.clientWidth;
       const height = host.clientHeight;
 
       if (!width || !height) {
-        return;
+        return false;
       }
 
+      if (width === lastWidth && height === lastHeight && reels.length) {
+        return true;
+      }
+
+      lastWidth = width;
+      lastHeight = height;
+      app.renderer.resize(width, height);
       destroyChildren(root);
 
       const scene = createReels(width, height);
       root.addChild(scene.root);
       reels = scene.reels;
+
+      return true;
+    };
+
+    const ensureInitialized = () => {
+      frameId = null;
+
+      if (isDisposed || rebuild()) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(ensureInitialized);
+    };
+
+    const scheduleInitialization = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(ensureInitialized);
     };
 
     const handleTick = () => {
@@ -249,13 +279,14 @@ export const SlotMachineReels = ({
       updateReels(reels, app.ticker.deltaTime);
     };
 
-    const setup = async () => {
+    const setup = () => {
       const nextApp = new Application({
         antialias: true,
         autoDensity: true,
         backgroundAlpha: 0,
+        height: 1,
         resolution: window.devicePixelRatio || 1,
-        resizeTo: host,
+        width: 1,
       });
 
       if (isDisposed) {
@@ -279,20 +310,37 @@ export const SlotMachineReels = ({
         typeof ResizeObserver === 'undefined'
           ? null
           : new ResizeObserver(() => {
-              rebuild();
+              if (!rebuild()) {
+                scheduleInitialization();
+              }
             });
 
-      observer?.observe(host);
-      rebuild();
+      [host, host.parentElement]
+        .filter((target): target is HTMLElement => target !== null)
+        .forEach((target) => {
+          observer?.observe(target);
+        });
+
+      if (!rebuild()) {
+        scheduleInitialization();
+      }
+
       nextApp.ticker.add(handleTick);
     };
 
-    void setup();
+    setup();
 
     return () => {
       isDisposed = true;
       observer?.disconnect();
+      reels = [];
+      lastWidth = 0;
+      lastHeight = 0;
       app?.ticker.remove(handleTick);
+
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
 
       if (root) {
         destroyChildren(root);
