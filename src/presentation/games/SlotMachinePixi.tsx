@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { SlotMachineButtons } from './SlotMachineButtons';
 import { SlotMachineReels } from './SlotMachineReels';
 
 const SLOT_MACHINE_REEL_AREA = {
@@ -28,5 +29,7 @@ export const SlotMachinePixi = () => (
       className="pointer-events-none absolute"
       style={reelAreaStyle}
     />
+
+    <SlotMachineButtons />
   </div>
 );
