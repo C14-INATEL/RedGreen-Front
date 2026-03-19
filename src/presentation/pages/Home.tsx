@@ -1,5 +1,5 @@
-import Table from '@ui/Table';
-import HUD from '../ui/HUD';
+import Table from '@presentation/ui/Table';
+import HUD from '@presentation/ui/HUD';
 
 const Home = () => {
   const MockPlayerName = 'Apostador';
