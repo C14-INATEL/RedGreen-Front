@@ -1,8 +1,8 @@
+import Table from '@ui/Table';
+
 const Home = () => {
   return (
-    <div
-      className="relative w-screen h-screen overflow-hidden suit-pattern"
-    >
+    <div className="relative w-screen h-screen overflow-hidden suit-pattern">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -10,6 +10,9 @@ const Home = () => {
             'radial-gradient(ellipse at center, hsl(150 35% 16% / 0.6) 0%, transparent 70%)',
         }}
       />
+      <div className="relative flex items-center justify-center h-full px-6 md:px-16 pt-20 pb-10">
+        <Table />
+      </div>
       <div
         className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
         style={{
