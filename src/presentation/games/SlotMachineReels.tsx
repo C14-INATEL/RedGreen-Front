@@ -67,22 +67,19 @@ const updateSymbolAppearance = (
   symbol.label.text = SLOT_SYMBOLS[symbolIndex];
   symbol.label.style = new TextStyle({
     align: 'center',
-    dropShadow: {
-      alpha: 0.16,
-      blur: 8,
-      color: 0x0f172a,
-      distance: 6,
-    },
+    dropShadow: true,
+    dropShadowAlpha: 0.16,
+    dropShadowBlur: 8,
+    dropShadowColor: 0x0f172a,
+    dropShadowDistance: 6,
     fill: fillColor,
     fontFamily: 'Georgia',
     fontSize: Math.min(width, height) * 0.24,
     fontStyle: 'italic',
     fontWeight: '700',
     letterSpacing: width * 0.02,
-    stroke: {
-      color: 0x0f172a,
-      width: Math.max(2, Math.round(width * 0.018)),
-    },
+    stroke: 0x0f172a,
+    strokeThickness: Math.max(2, Math.round(width * 0.018)),
   });
   symbol.label.anchor.set(0.5);
   symbol.label.position.set(width / 2, height / 2);
@@ -240,9 +237,7 @@ export const SlotMachineReels = ({
     };
 
     const setup = async () => {
-      const nextApp = new Application();
-
-      await nextApp.init({
+      const nextApp = new Application({
         antialias: true,
         autoDensity: true,
         backgroundAlpha: 0,
@@ -257,7 +252,7 @@ export const SlotMachineReels = ({
 
       app = nextApp;
 
-      const canvas = nextApp.canvas as HTMLCanvasElement;
+      const canvas = nextApp.view as HTMLCanvasElement;
       canvas.style.display = 'block';
       canvas.style.height = '100%';
       canvas.style.width = '100%';
