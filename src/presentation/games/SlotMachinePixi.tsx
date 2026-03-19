@@ -1,22 +1,28 @@
 import type { CSSProperties } from 'react';
 import { SlotMachineReels } from './SlotMachineReels';
 
-const SLOT_MACHINE_REEL_AREA = {
-  left: 928 / 4096,
-  top: 608 / 4096,
-  width: 2200 / 4096,
-  height: 728 / 4096,
+const SLOT_MACHINE_CONFIG = {
+  frameMaxWidthPx: 960,
+  reelArea: {
+    leftRatio: 928 / 4096,
+    topRatio: 608 / 4096,
+    widthRatio: 2200 / 4096,
+    heightRatio: 728 / 4096,
+  },
 } as const;
 
 const reelAreaStyle: CSSProperties = {
-  left: `${SLOT_MACHINE_REEL_AREA.left * 100}%`,
-  top: `${SLOT_MACHINE_REEL_AREA.top * 100}%`,
-  width: `${SLOT_MACHINE_REEL_AREA.width * 100}%`,
-  height: `${SLOT_MACHINE_REEL_AREA.height * 100}%`,
+  left: `${SLOT_MACHINE_CONFIG.reelArea.leftRatio * 100}%`,
+  top: `${SLOT_MACHINE_CONFIG.reelArea.topRatio * 100}%`,
+  width: `${SLOT_MACHINE_CONFIG.reelArea.widthRatio * 100}%`,
+  height: `${SLOT_MACHINE_CONFIG.reelArea.heightRatio * 100}%`,
 };
 
 export const SlotMachinePixi = () => (
-  <div className="relative w-full max-w-[960px] shrink-0">
+  <div
+    className="relative w-full shrink-0"
+    style={{ maxWidth: `${SLOT_MACHINE_CONFIG.frameMaxWidthPx}px` }}
+  >
     <img
       alt="Caça-níquel de teste"
       className="block w-full select-none"
