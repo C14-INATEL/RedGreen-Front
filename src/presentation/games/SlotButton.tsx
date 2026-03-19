@@ -1,8 +1,7 @@
 import type { CSSProperties, PointerEvent } from 'react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 const SLOT_MACHINE_TEXTURE_BASE_PATH = '/SlotMachine';
-const PRESS_FEEDBACK_DURATION_MS = 120;
 
 export type SlotButtonColor = 'blue' | 'red';
 
@@ -32,52 +31,51 @@ const SlotButtonComponent = ({
   style,
 }: SlotButtonProps) => {
   const [pressed, setPressed] = useState(false);
-  const resetTimeoutRef = useRef<number | null>(null);
   const spriteSources = getSlotButtonSpriteSources(color);
-
-  const clearResetTimeout = () => {
-    if (resetTimeoutRef.current === null) {
-      return;
-    }
-
-    window.clearTimeout(resetTimeoutRef.current);
-    resetTimeoutRef.current = null;
-  };
-
-  const startPressFeedback = () => {
-    clearResetTimeout();
-    setPressed(true);
-
-    resetTimeoutRef.current = window.setTimeout(() => {
-      setPressed(false);
-      resetTimeoutRef.current = null;
-    }, PRESS_FEEDBACK_DURATION_MS);
-  };
+  const currentSpriteSource = pressed
+    ? spriteSources.pressed
+    : spriteSources.normal;
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    startPressFeedback();
+    setPressed(true);
     onPress?.();
   };
 
-  useEffect(
-    () => () => {
-      clearResetTimeout();
-    },
-    []
-  );
+  const endPressFeedback = () => {
+    setPressed(false);
+  };
+
+  useEffect(() => {
+    [spriteSources.normal, spriteSources.pressed].forEach((source) => {
+      const image = new Image();
+      image.src = source;
+    });
+  }, [spriteSources.normal, spriteSources.pressed]);
 
   return (
     <button
       aria-label={label}
-      className="pointer-events-auto absolute block border-0 bg-transparent p-0"
+      aria-pressed={pressed}
+      className="pointer-events-auto absolute block"
+      onBlur={endPressFeedback}
+      onPointerCancel={endPressFeedback}
       onPointerDown={handlePointerDown}
+      onPointerLeave={endPressFeedback}
+      onPointerUp={endPressFeedback}
       style={{
         ...style,
+        WebkitAppearance: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        appearance: 'none',
+        background: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+        imageRendering: 'pixelated',
+        margin: 0,
+        outline: 'none',
+        padding: 0,
         touchAction: 'manipulation',
-        transform: pressed ? 'scale(0.95)' : 'scale(1)',
-        transformOrigin: 'center',
-        transition: 'transform 80ms ease-out',
       }}
       type="button"
     >
@@ -85,7 +83,10 @@ const SlotButtonComponent = ({
         alt=""
         className="block h-full w-full select-none"
         draggable={false}
-        src={pressed ? spriteSources.pressed : spriteSources.normal}
+        src={currentSpriteSource}
+        style={{
+          imageRendering: 'pixelated',
+        }}
       />
     </button>
   );

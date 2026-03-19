@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 import { SlotButton, type SlotButtonColor } from './SlotButton';
 
 const SLOT_MACHINE_SIZE = 4096;
@@ -15,17 +14,29 @@ type SlotButtonLayout = {
   top: number;
 };
 
-const toPercent = (value: number) => `${(value / SLOT_MACHINE_SIZE) * 100}%`;
+type SlotMachineButtonsProps = {
+  machineSize: {
+    height: number;
+    width: number;
+  };
+};
 
 const getSlotButtonStyle = (
   left: number,
-  top: number
-): CSSProperties => ({
-  height: toPercent(SLOT_BUTTON_SIZE),
-  left: toPercent(left),
-  top: toPercent(top),
-  width: toPercent(SLOT_BUTTON_SIZE),
-});
+  top: number,
+  machineSize: SlotMachineButtonsProps['machineSize']
+) => {
+  const xScale = machineSize.width / SLOT_MACHINE_SIZE;
+  const yScale = machineSize.height / SLOT_MACHINE_SIZE;
+  const hasMachineSize = machineSize.width > 0 && machineSize.height > 0;
+
+  return {
+    height: `${hasMachineSize ? Math.max(1, Math.round(SLOT_BUTTON_SIZE * yScale)) : 0}px`,
+    left: `${Math.round(left * xScale)}px`,
+    top: `${Math.round(top * yScale)}px`,
+    width: `${hasMachineSize ? Math.max(1, Math.round(SLOT_BUTTON_SIZE * xScale)) : 0}px`,
+  };
+};
 
 const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] = Array.from(
   { length: 4 },
@@ -38,14 +49,14 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] = Array.from(
   })
 );
 
-export const SlotMachineButtons = () => (
+export const SlotMachineButtons = ({ machineSize }: SlotMachineButtonsProps) => (
   <div className="pointer-events-none absolute inset-0">
     {SLOT_BUTTON_LAYOUTS.map(({ color, id, label, left, top }) => (
       <SlotButton
         color={color}
         key={id}
         label={label}
-        style={getSlotButtonStyle(left, top)}
+        style={getSlotButtonStyle(left, top, machineSize)}
       />
     ))}
   </div>
