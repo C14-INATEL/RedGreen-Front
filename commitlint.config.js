@@ -15,8 +15,8 @@ export default {
         'perf',
         'refactor',
         'revert',
-        'style'
-      ]
-    ]
-  }
+        'style',
+      ],
+    ],
+  },
 };

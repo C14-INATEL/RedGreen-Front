@@ -1,15 +1,11 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
-import {
-  Application,
-  Container,
-  Graphics,
-  Text,
-  TextStyle,
-} from 'pixi.js';
+import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 
 const SLOT_SYMBOLS = ['7', 'BAR', 'STAR', 'CHERRY', 'LEMON', 'BONUS'] as const;
-const SYMBOL_COLORS = [0xf43f5e, 0xf59e0b, 0x22c55e, 0x3b82f6, 0xa855f7, 0xef4444] as const;
+const SYMBOL_COLORS = [
+  0xf43f5e, 0xf59e0b, 0x22c55e, 0x3b82f6, 0xa855f7, 0xef4444,
+] as const;
 const REEL_COUNT = 4;
 const VISIBLE_ROWS = 3;
 const BUFFER_ROWS = 2;
@@ -42,7 +38,7 @@ const updateSymbolAppearance = (
   symbol: ReelSymbol,
   width: number,
   height: number,
-  seed: number,
+  seed: number
 ) => {
   const symbolIndex = getSymbolIndex(seed);
   const fillColor = SYMBOL_COLORS[symbolIndex];
@@ -50,7 +46,13 @@ const updateSymbolAppearance = (
   symbol.background.clear();
   symbol.background.beginFill(0xffffff, 0.96);
   symbol.background.lineStyle(6, fillColor, 0.85);
-  symbol.background.drawRoundedRect(0, 0, width, height, Math.min(width, height) * 0.16);
+  symbol.background.drawRoundedRect(
+    0,
+    0,
+    width,
+    height,
+    Math.min(width, height) * 0.16
+  );
   symbol.background.endFill();
 
   symbol.accent.clear();
@@ -60,35 +62,36 @@ const updateSymbolAppearance = (
     height * 0.08,
     width * 0.84,
     height * 0.2,
-    Math.min(width, height) * 0.1,
+    Math.min(width, height) * 0.1
   );
   symbol.accent.endFill();
 
   symbol.label.text = SLOT_SYMBOLS[symbolIndex];
   symbol.label.style = new TextStyle({
     align: 'center',
-    dropShadow: {
-      alpha: 0.16,
-      blur: 8,
-      color: 0x0f172a,
-      distance: 6,
-    },
+    dropShadow: true,
+    dropShadowAlpha: 0.16,
+    dropShadowBlur: 8,
+    dropShadowColor: 0x0f172a,
+    dropShadowDistance: 6,
     fill: fillColor,
     fontFamily: 'Georgia',
     fontSize: Math.min(width, height) * 0.24,
     fontStyle: 'italic',
     fontWeight: '700',
     letterSpacing: width * 0.02,
-    stroke: {
-      color: 0x0f172a,
-      width: Math.max(2, Math.round(width * 0.018)),
-    },
+    stroke: 0x0f172a,
+    strokeThickness: Math.max(2, Math.round(width * 0.018)),
   });
   symbol.label.anchor.set(0.5);
   symbol.label.position.set(width / 2, height / 2);
 };
 
-const createSymbol = (width: number, height: number, seed: number): ReelSymbol => {
+const createSymbol = (
+  width: number,
+  height: number,
+  seed: number
+): ReelSymbol => {
   const container = new Container();
   const background = new Graphics();
   const accent = new Graphics();
@@ -124,7 +127,13 @@ const createReels = (width: number, height: number) => {
 
     const mask = new Graphics();
     mask.beginFill(0xffffff);
-    mask.drawRoundedRect(0, 0, reelWidth, height, Math.min(reelWidth, height) * 0.08);
+    mask.drawRoundedRect(
+      0,
+      0,
+      reelWidth,
+      height,
+      Math.min(reelWidth, height) * 0.08
+    );
     mask.endFill();
 
     const reelContent = new Container();
@@ -137,7 +146,7 @@ const createReels = (width: number, height: number) => {
       height * 0.04,
       reelWidth * 0.84,
       height * 0.12,
-      Math.min(reelWidth, height) * 0.06,
+      Math.min(reelWidth, height) * 0.06
     );
     gloss.endFill();
 
@@ -145,7 +154,7 @@ const createReels = (width: number, height: number) => {
       const symbol = createSymbol(
         reelWidth,
         symbolHeight,
-        reelIndex * totalSymbols + symbolIndex,
+        reelIndex * totalSymbols + symbolIndex
       );
 
       symbol.container.y = (symbolIndex - BUFFER_ROWS) * symbolHeight;
@@ -178,7 +187,7 @@ const updateReels = (reels: ReelState[], deltaTime: number) => {
 
       if (symbol.container.y >= reel.viewHeight + reel.symbolHeight) {
         const highestSymbolY = Math.min(
-          ...reel.symbols.map(({ container }) => container.y),
+          ...reel.symbols.map(({ container }) => container.y)
         );
 
         symbol.container.y = highestSymbolY - reel.symbolHeight;
@@ -186,7 +195,8 @@ const updateReels = (reels: ReelState[], deltaTime: number) => {
           symbol,
           reel.reelWidth,
           reel.symbolHeight,
-          reelIndex + Math.round(Math.abs(symbol.container.y / reel.symbolHeight)),
+          reelIndex +
+            Math.round(Math.abs(symbol.container.y / reel.symbolHeight))
         );
       }
     });
@@ -240,9 +250,7 @@ export const SlotMachineReels = ({
     };
 
     const setup = async () => {
-      const nextApp = new Application();
-
-      await nextApp.init({
+      const nextApp = new Application({
         antialias: true,
         autoDensity: true,
         backgroundAlpha: 0,
@@ -257,7 +265,7 @@ export const SlotMachineReels = ({
 
       app = nextApp;
 
-      const canvas = nextApp.canvas as HTMLCanvasElement;
+      const canvas = nextApp.view as HTMLCanvasElement;
       canvas.style.display = 'block';
       canvas.style.height = '100%';
       canvas.style.width = '100%';
