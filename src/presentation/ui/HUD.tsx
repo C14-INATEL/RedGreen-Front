@@ -15,10 +15,8 @@ const HUD = ({ playerName, chips }: HUDProps) => {
       className="fixed top-0 left-0 right-0 z-50 h-20 flex items-center justify-between px-6 bg-card/80 backdrop-blur-sm pixel-border"
       style={{ boxShadow: '0 4px 0px rgba(0,0,0,0.8)' }}
     >
-      {/* Left: Profile */}
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 bg-card pixel-border-gold relative flex items-center justify-center">
-          {/* Ícone de usuário pixelado */}
           <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
             <rect
               x="5"
@@ -57,13 +55,9 @@ const HUD = ({ playerName, chips }: HUDProps) => {
           </span>
         </div>
       </div>
-
-      {/* Center: Logo */}
       <CassinoLogo />
 
-      {/* Right: Chip Counter */}
       <div className="flex items-center gap-3 bg-card/60 pixel-border-gold px-5 py-3">
-        {/* Ícone de ficha pixelado */}
         <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
           <rect
             x="4"

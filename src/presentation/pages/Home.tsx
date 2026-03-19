@@ -2,8 +2,8 @@ import Table from '@ui/Table';
 import HUD from '../ui/HUD';
 
 const Home = () => {
-  const mockPlayerName = 'Apostador';
-  const mockChips = 25000;
+  const MockPlayerName = 'Apostador';
+  const MockChips = 25000;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden suit-pattern">
@@ -15,7 +15,7 @@ const Home = () => {
         }}
       />
 
-      <HUD playerName={mockPlayerName} chips={mockChips} />
+      <HUD playerName={MockPlayerName} chips={MockChips} />
 
       <div className="relative flex items-center justify-center h-full px-6 md:px-16 pt-20 pb-10">
         <Table />
