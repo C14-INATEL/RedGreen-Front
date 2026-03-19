@@ -1,110 +1,79 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
-import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
+import {
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Texture,
+} from 'pixi.js';
 
-const SLOT_SYMBOLS = ['7', 'BAR', 'STAR', 'CHERRY', 'LEMON', 'BONUS'] as const;
-const SYMBOL_COLORS = [
-  0xf43f5e, 0xf59e0b, 0x22c55e, 0x3b82f6, 0xa855f7, 0xef4444,
+const SLOT_TEXTURE_URLS = [
+  '/SlotMachine/SpriteSlot2X.png',
+  '/SlotMachine/SpriteSlotCheese.png',
+  '/SlotMachine/SpriteSlotEgg.png',
+  '/SlotMachine/SpriteSlotOrange.png',
+  '/SlotMachine/SpriteSlotOranges.png',
+  '/SlotMachine/SpriteSlotPig.png',
+  '/SlotMachine/SpriteSlotRat.png',
+  '/SlotMachine/SpriteSlotWatermelon.png',
 ] as const;
+
 const REEL_COUNT = 4;
-const VISIBLE_ROWS = 3;
-const BUFFER_ROWS = 2;
 const REEL_WIDTH_RATIO = 376 / 2200;
 const REEL_GAP_RATIO = 232 / 2200;
+const REEL_CORNER_RATIO = 0.08;
+const REEL_PADDING_RATIO = 0.1;
+const MIN_SWITCH_DELAY_MS = 420;
+const MAX_SWITCH_DELAY_MS = 980;
 
 type SlotMachineReelsProps = Pick<
   HTMLAttributes<HTMLDivElement>,
   'className' | 'style'
 >;
 
-type ReelSymbol = {
-  container: Container;
-  label: Text;
-  background: Graphics;
-  accent: Graphics;
-};
-
 type ReelState = {
+  baseScale: number;
+  currentTextureIndex: number;
+  elapsedMs: number;
   reelWidth: number;
-  symbols: ReelSymbol[];
-  symbolHeight: number;
-  speed: number;
+  sprite: Sprite;
+  switchDelayMs: number;
   viewHeight: number;
 };
 
-const getSymbolIndex = (seed: number) => seed % SLOT_SYMBOLS.length;
+const getRandomTextureIndex = (excludeIndex?: number) => {
+  if (SLOT_TEXTURE_URLS.length <= 1) {
+    return 0;
+  }
 
-const updateSymbolAppearance = (
-  symbol: ReelSymbol,
-  width: number,
-  height: number,
-  seed: number
-) => {
-  const symbolIndex = getSymbolIndex(seed);
-  const fillColor = SYMBOL_COLORS[symbolIndex];
+  let nextIndex = Math.floor(Math.random() * SLOT_TEXTURE_URLS.length);
 
-  symbol.background.clear();
-  symbol.background.beginFill(0xffffff, 0.96);
-  symbol.background.lineStyle(6, fillColor, 0.85);
-  symbol.background.drawRoundedRect(
-    0,
-    0,
-    width,
-    height,
-    Math.min(width, height) * 0.16
-  );
-  symbol.background.endFill();
+  while (excludeIndex !== undefined && nextIndex === excludeIndex) {
+    nextIndex = Math.floor(Math.random() * SLOT_TEXTURE_URLS.length);
+  }
 
-  symbol.accent.clear();
-  symbol.accent.beginFill(fillColor, 0.14);
-  symbol.accent.drawRoundedRect(
-    width * 0.08,
-    height * 0.08,
-    width * 0.84,
-    height * 0.2,
-    Math.min(width, height) * 0.1
-  );
-  symbol.accent.endFill();
-
-  symbol.label.text = SLOT_SYMBOLS[symbolIndex];
-  symbol.label.style = new TextStyle({
-    align: 'center',
-    dropShadow: true,
-    dropShadowAlpha: 0.16,
-    dropShadowBlur: 8,
-    dropShadowColor: 0x0f172a,
-    dropShadowDistance: 6,
-    fill: fillColor,
-    fontFamily: 'Georgia',
-    fontSize: Math.min(width, height) * 0.24,
-    fontStyle: 'italic',
-    fontWeight: '700',
-    letterSpacing: width * 0.02,
-    stroke: 0x0f172a,
-    strokeThickness: Math.max(2, Math.round(width * 0.018)),
-  });
-  symbol.label.anchor.set(0.5);
-  symbol.label.position.set(width / 2, height / 2);
+  return nextIndex;
 };
 
-const createSymbol = (
-  width: number,
-  height: number,
-  seed: number
-): ReelSymbol => {
-  const container = new Container();
-  const background = new Graphics();
-  const accent = new Graphics();
-  const label = new Text('');
+const getNextSwitchDelay = (reelIndex: number) =>
+  MIN_SWITCH_DELAY_MS +
+  reelIndex * 90 +
+  Math.random() * (MAX_SWITCH_DELAY_MS - MIN_SWITCH_DELAY_MS);
 
-  container.addChild(background);
-  container.addChild(accent);
-  container.addChild(label);
+const applySpriteTexture = (reel: ReelState, texture: Texture) => {
+  reel.sprite.texture = texture;
 
-  const symbol = { accent, background, container, label };
-  updateSymbolAppearance(symbol, width, height, seed);
+  const maxWidth = reel.reelWidth * (1 - REEL_PADDING_RATIO * 2);
+  const maxHeight = reel.viewHeight * (1 - REEL_PADDING_RATIO * 2);
+  const widthScale = maxWidth / texture.width;
+  const heightScale = maxHeight / texture.height;
+  const nextScale = Math.max(Math.min(widthScale, heightScale), 0.01);
 
-  return symbol;
+  reel.baseScale = nextScale;
+  reel.sprite.scale.set(nextScale);
+  reel.sprite.position.set(reel.reelWidth / 2, reel.viewHeight / 2);
 };
 
 const destroyChildren = (container: Container) => {
@@ -113,13 +82,12 @@ const destroyChildren = (container: Container) => {
   });
 };
 
-const createReels = (width: number, height: number) => {
+const createReels = (width: number, height: number, textures: Texture[]) => {
   const root = new Container();
   const reels: ReelState[] = [];
   const reelWidth = width * REEL_WIDTH_RATIO;
   const reelGap = width * REEL_GAP_RATIO;
-  const symbolHeight = height / VISIBLE_ROWS;
-  const totalSymbols = VISIBLE_ROWS + BUFFER_ROWS * 2;
+  const cornerRadius = Math.min(reelWidth, height) * REEL_CORNER_RATIO;
 
   for (let reelIndex = 0; reelIndex < REEL_COUNT; reelIndex += 1) {
     const reelFrame = new Container();
@@ -127,79 +95,85 @@ const createReels = (width: number, height: number) => {
 
     const mask = new Graphics();
     mask.beginFill(0xffffff);
-    mask.drawRoundedRect(
-      0,
-      0,
-      reelWidth,
-      height,
-      Math.min(reelWidth, height) * 0.08
-    );
+    mask.drawRoundedRect(0, 0, reelWidth, height, cornerRadius);
     mask.endFill();
 
     const reelContent = new Container();
     reelContent.mask = mask;
 
+    const reelBackground = new Graphics();
+    reelBackground.beginFill(0x0f172a, 0.16);
+    reelBackground.drawRoundedRect(0, 0, reelWidth, height, cornerRadius);
+    reelBackground.endFill();
+
+    const reelShadow = new Graphics();
+    reelShadow.beginFill(0x020617, 0.18);
+    reelShadow.drawRoundedRect(
+      reelWidth * 0.06,
+      height * 0.06,
+      reelWidth * 0.88,
+      height * 0.88,
+      cornerRadius * 0.75
+    );
+    reelShadow.endFill();
+
     const gloss = new Graphics();
     gloss.beginFill(0xffffff, 0.08);
     gloss.drawRoundedRect(
       reelWidth * 0.08,
-      height * 0.04,
+      height * 0.05,
       reelWidth * 0.84,
-      height * 0.12,
-      Math.min(reelWidth, height) * 0.06
+      height * 0.16,
+      cornerRadius * 0.55
     );
     gloss.endFill();
 
-    const symbols = Array.from({ length: totalSymbols }, (_, symbolIndex) => {
-      const symbol = createSymbol(
-        reelWidth,
-        symbolHeight,
-        reelIndex * totalSymbols + symbolIndex
-      );
+    const currentTextureIndex = getRandomTextureIndex();
+    const sprite = new Sprite(textures[currentTextureIndex]);
+    sprite.anchor.set(0.5);
 
-      symbol.container.y = (symbolIndex - BUFFER_ROWS) * symbolHeight;
-      reelContent.addChild(symbol.container);
+    const reel: ReelState = {
+      baseScale: 1,
+      currentTextureIndex,
+      elapsedMs: reelIndex * 140,
+      reelWidth,
+      sprite,
+      switchDelayMs: getNextSwitchDelay(reelIndex),
+      viewHeight: height,
+    };
 
-      return symbol;
-    });
+    applySpriteTexture(reel, textures[currentTextureIndex]);
+
+    reelContent.addChild(reelBackground);
+    reelContent.addChild(reelShadow);
+    reelContent.addChild(sprite);
 
     reelFrame.addChild(reelContent);
     reelFrame.addChild(mask);
     reelFrame.addChild(gloss);
     root.addChild(reelFrame);
-
-    reels.push({
-      reelWidth,
-      speed: (height / 240) * (1 + reelIndex * 0.14),
-      symbolHeight,
-      symbols,
-      viewHeight: height,
-    });
+    reels.push(reel);
   }
 
   return { reels, root };
 };
 
-const updateReels = (reels: ReelState[], deltaTime: number) => {
+const updateReels = (
+  reels: ReelState[],
+  deltaMs: number,
+  textures: Texture[]
+) => {
   reels.forEach((reel, reelIndex) => {
-    reel.symbols.forEach((symbol) => {
-      symbol.container.y += reel.speed * deltaTime;
+    reel.elapsedMs += deltaMs;
 
-      if (symbol.container.y >= reel.viewHeight + reel.symbolHeight) {
-        const highestSymbolY = Math.min(
-          ...reel.symbols.map(({ container }) => container.y)
-        );
+    if (reel.elapsedMs < reel.switchDelayMs) {
+      return;
+    }
 
-        symbol.container.y = highestSymbolY - reel.symbolHeight;
-        updateSymbolAppearance(
-          symbol,
-          reel.reelWidth,
-          reel.symbolHeight,
-          reelIndex +
-            Math.round(Math.abs(symbol.container.y / reel.symbolHeight))
-        );
-      }
-    });
+    reel.elapsedMs = 0;
+    reel.switchDelayMs = getNextSwitchDelay(reelIndex);
+    reel.currentTextureIndex = getRandomTextureIndex(reel.currentTextureIndex);
+    applySpriteTexture(reel, textures[reel.currentTextureIndex]);
   });
 };
 
@@ -221,12 +195,13 @@ export const SlotMachineReels = ({
     let observer: ResizeObserver | null = null;
     let isDisposed = false;
     let reels: ReelState[] = [];
+    let textures: Texture[] = [];
     let frameId: number | null = null;
     let lastWidth = 0;
     let lastHeight = 0;
 
     const rebuild = () => {
-      if (!app || !root) {
+      if (!app || !root || !textures.length) {
         return false;
       }
 
@@ -246,7 +221,7 @@ export const SlotMachineReels = ({
       app.renderer.resize(width, height);
       destroyChildren(root);
 
-      const scene = createReels(width, height);
+      const scene = createReels(width, height, textures);
       root.addChild(scene.root);
       reels = scene.reels;
 
@@ -272,14 +247,22 @@ export const SlotMachineReels = ({
     };
 
     const handleTick = () => {
-      if (!app || !reels.length) {
+      if (!app || !reels.length || !textures.length) {
         return;
       }
 
-      updateReels(reels, app.ticker.deltaTime);
+      updateReels(reels, app.ticker.deltaMS, textures);
     };
 
-    const setup = () => {
+    const setup = async () => {
+      const loadedTextureMap = await Assets.load<Texture>([...SLOT_TEXTURE_URLS]);
+
+      if (isDisposed) {
+        return;
+      }
+
+      textures = SLOT_TEXTURE_URLS.map((url) => loadedTextureMap[url]);
+
       const nextApp = new Application({
         antialias: true,
         autoDensity: true,
@@ -328,12 +311,13 @@ export const SlotMachineReels = ({
       nextApp.ticker.add(handleTick);
     };
 
-    setup();
+    void setup();
 
     return () => {
       isDisposed = true;
       observer?.disconnect();
       reels = [];
+      textures = [];
       lastWidth = 0;
       lastHeight = 0;
       app?.ticker.remove(handleTick);
