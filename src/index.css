@@ -1,10 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: 100 15% 10%;
+  --foreground: 45 20% 90%;
+  --card: 90 12% 8%;
+  --card-foreground: 45 20% 90%;
+  --popover: 90 12% 8%;
+  --popover-foreground: 45 20% 90%;
+  --primary: 0 70% 42%;
+  --primary-foreground: 45 30% 95%;
+  --secondary: 35 50% 22%;
+  --secondary-foreground: 45 20% 90%;
+  --muted: 90 10% 16%;
+  --muted-foreground: 45 10% 50%;
+  --accent: 42 80% 50%;
+  --accent-foreground: 0 0% 5%;
+  --destructive: 0 84% 55%;
+  --destructive-foreground: 45 30% 95%;
+  --border: 42 40% 30% / 0.25;
+  --input: 42 40% 30% / 0.2;
+  --ring: 42 80% 50%;
+  --radius: 0px;
+
+  --hud-bg: 90 15% 6%;
+  --table-green: 100 30% 18%;
+  --table-green-light: 100 25% 22%;
+  --accent-green: 120 50% 35%;
+  --casino-red: 0 70% 42%;
+  --casino-red-glow: 0 70% 42% / 0.3;
+  --casino-gold: 42 80% 50%;
+  --casino-gold-glow: 42 80% 50% / 0.3;
+
+  --shadow-surface: 4px 4px 0px rgba(0, 0, 0, 0.5);
+  --shadow-active: 6px 6px 0px rgba(0, 0, 0, 0.6);
+
+  --font-display: 'Pixelify Sans', sans-serif;
+  --font-body: 'Silkscreen', cursive;
+  --font-mono: 'Press Start 2P', monospace;
+}
+
+* {
+  border-color: hsl(var(--border));
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+.font-body {
+  font-family: var(--font-body);
+}
+
+.pixel-border {
+  border: 3px solid hsl(var(--border));
+  box-shadow: var(--shadow-surface);
+}
+.pixel-border-gold {
+  border: 3px solid hsl(var(--casino-gold));
+  box-shadow: var(--shadow-surface);
+}
+.pixel-shadow {
+  box-shadow: var(--shadow-surface);
+}
+
+.bg-background {
+  background-color: hsl(var(--background));
+}
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+.bg-card {
+  background-color: hsl(var(--card));
+}
+.bg-secondary {
+  background-color: hsl(var(--secondary));
+}
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+.text-accent {
+  color: hsl(var(--accent));
+}
+.text-casino-gold {
+  color: hsl(var(--casino-gold));
+}
+.text-casino-red {
+  color: hsl(var(--casino-red));
+}
+.bg-table-green {
+  background-color: hsl(var(--table-green));
+}
+.border-border {
+  border-color: hsl(var(--border));
+}
+.bg-accent-green {
+  background-color: hsl(var(--accent-green));
+}
+
 .suit-pattern {
-  background-color: hsl(150 40% 12%);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ctext x='10' y='25' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♠%3C/text%3E%3Ctext x='50' y='25' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♥%3C/text%3E%3Ctext x='10' y='60' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♣%3C/text%3E%3Ctext x='50' y='60' font-size='16' fill='white' opacity='0.04' font-family='serif'%3E♦%3C/text%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect x='8' y='8' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='24' y='8' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='40' y='8' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='56' y='8' width='8' height='8' fill='white' opacity='0.02'/%3E%3Crect x='16' y='24' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='32' y='24' width='8' height='8' fill='white' opacity='0.02'/%3E%3Crect x='48' y='24' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='8' y='40' width='8' height='8' fill='white' opacity='0.02'/%3E%3Crect x='24' y='40' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='40' y='40' width='8' height='8' fill='white' opacity='0.02'/%3E%3Crect x='56' y='40' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='16' y='56' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='32' y='56' width='8' height='8' fill='white' opacity='0.03'/%3E%3Crect x='48' y='56' width='8' height='8' fill='white' opacity='0.02'/%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 80px 80px;
+  background-size: 64px 64px;
 }
