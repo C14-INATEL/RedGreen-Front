@@ -59,7 +59,6 @@ const getSlotButtonStyle = (
   const snappedCenterX = Math.round(centerX * xScale);
   const snappedCenterY = Math.round(centerY * yScale);
 
-  // Mirror anchor 0.5 semantics with integer math to keep the overlay pixel-perfect.
   return {
     height: `${height}px`,
     left: `${snappedCenterX - Math.floor(width / 2)}px`,

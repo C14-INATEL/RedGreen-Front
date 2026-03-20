@@ -24,7 +24,7 @@ const getMachineAreaStyle = (
   const yScale = machineSize.height / SLOT_MACHINE_SIZE;
   const hasMachineSize = machineSize.width > 0 && machineSize.height > 0;
 
-  // Snap the overlays to whole CSS pixels so the browser does not interpolate.
+
   return {
     height: `${hasMachineSize ? Math.max(1, Math.round(area.height * yScale)) : 0}px`,
     left: `${Math.round(area.left * xScale)}px`,
