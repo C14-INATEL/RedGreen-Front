@@ -188,6 +188,12 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background suit-pattern relative overflow-hidden flex items-center justify-center px-4">
+      <button
+        onClick={() => (window.location.href = '/')}
+        className="back-button"
+      >
+        ← Voltar
+      </button>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(150_40%_18%_/_0.5)_0%,_transparent_60%)] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md">
