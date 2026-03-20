@@ -23,100 +23,47 @@ const SLOT_TEXTURE_URLS = [
   '/SlotMachine/SpriteSlotWatermelon.png',
 ] as const;
 
-const SLOT_REEL_CONFIG = {
-  reelCount: 4,
-  layout: {
-    reelWidthRatio: 376 / 2200,
-    reelGapRatio: 232 / 2200,
-    windowPaddingXRatio: 0.0,
-    windowPaddingYRatio: 0.0,
-    windowOffsetXRatio: 0,
-    windowOffsetYRatio: 0,
-    windowCornerRadiusRatio: 0,
-  },
-  sprite: {
-    cropXRatio: 0.08,
-    cropYRatio: 0.07,
-    coverScale: 0.85,
-    offsetXRatio: 0,
-    offsetYRatio: 0,
-  },
-  animation: {
-    spinDurationMs: 150,
-    minPauseMs: 100,
-    maxPauseMs: 250,
-  },
-} as const;
-
-const REEL_ITEM_OFFSETS = [-1, 0, 1] as const;
+const REEL_COUNT = 4;
+const REEL_WIDTH_RATIO = 376 / 2200;
+const REEL_GAP_RATIO = 232 / 2200;
+const REEL_CORNER_RATIO = 0.08;
+const REEL_PADDING_RATIO = 0.1;
+const MIN_SWITCH_DELAY_MS = 420;
+const MAX_SWITCH_DELAY_MS = 980;
 
 type SlotMachineReelsProps = Pick<
   HTMLAttributes<HTMLDivElement>,
   'className' | 'style'
 >;
 
-type ReelViewport = {
-  centerX: number;
-  centerY: number;
-  cornerRadius: number;
-  height: number;
-  width: number;
-  x: number;
-  y: number;
-};
-
-type ReelItem = {
-  sprite: Sprite;
-  textureIndex: number;
-};
-
 type ReelState = {
+  baseScale: number;
+  currentTextureIndex: number;
   elapsedMs: number;
-  items: ReelItem[];
-  pauseMs: number;
-  rollDistancePx: number;
-  speedPxPerMs: number;
-  strip: Container;
-  viewport: ReelViewport;
+  reelWidth: number;
+  sprite: Sprite;
+  switchDelayMs: number;
+  viewHeight: number;
 };
 
-const getNextPauseMs = () =>
-  SLOT_REEL_CONFIG.animation.minPauseMs +
-  Math.random() *
-    (SLOT_REEL_CONFIG.animation.maxPauseMs -
-      SLOT_REEL_CONFIG.animation.minPauseMs);
-
-const getRandomTextureIndex = (
-  textureCount: number,
-  excludedIndices: number[] = []
-) => {
-  const availableIndices = Array.from(
-    { length: textureCount },
-    (_, index) => index
-  ).filter((index) => !excludedIndices.includes(index));
-
-  if (!availableIndices.length) {
-    return Math.floor(Math.random() * textureCount);
+const getRandomTextureIndex = (excludeIndex?: number) => {
+  if (SLOT_TEXTURE_URLS.length <= 1) {
+    return 0;
   }
 
-  return availableIndices[Math.floor(Math.random() * availableIndices.length)];
+  let nextIndex = Math.floor(Math.random() * SLOT_TEXTURE_URLS.length);
+
+  while (excludeIndex !== undefined && nextIndex === excludeIndex) {
+    nextIndex = Math.floor(Math.random() * SLOT_TEXTURE_URLS.length);
+  }
+
+  return nextIndex;
 };
 
-const createDisplayTexture = (texture: Texture) => {
-  const insetX = Math.round(
-    texture.frame.width * SLOT_REEL_CONFIG.sprite.cropXRatio
-  );
-  const insetY = Math.round(
-    texture.frame.height * SLOT_REEL_CONFIG.sprite.cropYRatio
-  );
-  const width = Math.max(1, texture.frame.width - insetX * 2);
-  const height = Math.max(1, texture.frame.height - insetY * 2);
-  const frame = new Rectangle(
-    texture.frame.x + insetX,
-    texture.frame.y + insetY,
-    width,
-    height
-  );
+const getNextSwitchDelay = (reelIndex: number) =>
+  MIN_SWITCH_DELAY_MS +
+  reelIndex * 90 +
+  Math.random() * (MAX_SWITCH_DELAY_MS - MIN_SWITCH_DELAY_MS);
 
 const configurePixelArtTexture = (texture: Texture) => {
   texture.baseTexture.mipmap = MIPMAP_MODES.OFF;
@@ -130,29 +77,11 @@ const configurePixelArtTexture = (texture: Texture) => {
 const applySpriteTexture = (reel: ReelState, texture: Texture) => {
   reel.sprite.texture = texture;
 
-const createViewport = (reelWidth: number, reelHeight: number): ReelViewport => {
-  const width =
-    reelWidth * (1 - SLOT_REEL_CONFIG.layout.windowPaddingXRatio * 2);
-  const height =
-    reelHeight * (1 - SLOT_REEL_CONFIG.layout.windowPaddingYRatio * 2);
-  const x =
-    (reelWidth - width) / 2 +
-    reelWidth * SLOT_REEL_CONFIG.layout.windowOffsetXRatio;
-  const y =
-    (reelHeight - height) / 2 +
-    reelHeight * SLOT_REEL_CONFIG.layout.windowOffsetYRatio;
-
-  return {
-    centerX: x + width / 2,
-    centerY: y + height / 2,
-    cornerRadius:
-      Math.min(width, height) * SLOT_REEL_CONFIG.layout.windowCornerRadiusRatio,
-    height,
-    width,
-    x,
-    y,
-  };
-};
+  const maxWidth = reel.reelWidth * (1 - REEL_PADDING_RATIO * 2);
+  const maxHeight = reel.viewHeight * (1 - REEL_PADDING_RATIO * 2);
+  const widthScale = maxWidth / texture.width;
+  const heightScale = maxHeight / texture.height;
+  const nextScale = Math.max(Math.min(widthScale, heightScale), 0.01);
 
   reel.baseScale = nextScale;
   reel.sprite.roundPixels = true;
@@ -169,92 +98,76 @@ const destroyChildren = (container: Container) => {
   });
 };
 
-const completeSpin = (reel: ReelState, textures: Texture[]) => {
-  reel.strip.y = 0;
-
-  const recycledItem = reel.items.pop();
-
-  if (!recycledItem) {
-    return;
-  }
-
-  reel.items.unshift(recycledItem);
-
-  assignRandomTexture(
-    recycledItem,
-    textures,
-    reel.viewport,
-    reel.items.slice(1).map((item) => item.textureIndex)
-  );
-  syncItemPositions(reel.items, reel.viewport);
-  reel.pauseMs = getNextPauseMs();
-};
-
 const createReels = (width: number, height: number, textures: Texture[]) => {
   const root = new Container();
   const reels: ReelState[] = [];
-  const reelWidth = width * SLOT_REEL_CONFIG.layout.reelWidthRatio;
-  const reelGap = width * SLOT_REEL_CONFIG.layout.reelGapRatio;
+  const reelWidth = width * REEL_WIDTH_RATIO;
+  const reelGap = width * REEL_GAP_RATIO;
+  const cornerRadius = Math.min(reelWidth, height) * REEL_CORNER_RATIO;
 
-  for (
-    let reelIndex = 0;
-    reelIndex < SLOT_REEL_CONFIG.reelCount;
-    reelIndex += 1
-  ) {
+  for (let reelIndex = 0; reelIndex < REEL_COUNT; reelIndex += 1) {
     const reelFrame = new Container();
     reelFrame.x = reelIndex * (reelWidth + reelGap);
 
-    const viewport = createViewport(reelWidth, height);
-
     const mask = new Graphics();
     mask.beginFill(0xffffff);
-    mask.drawRoundedRect(
-      viewport.x,
-      viewport.y,
-      viewport.width,
-      viewport.height,
-      viewport.cornerRadius
-    );
+    mask.drawRoundedRect(0, 0, reelWidth, height, cornerRadius);
     mask.endFill();
 
-    const strip = new Container();
-    strip.mask = mask;
+    const reelContent = new Container();
+    reelContent.mask = mask;
+
+    const reelBackground = new Graphics();
+    reelBackground.beginFill(0x0f172a, 0.16);
+    reelBackground.drawRoundedRect(0, 0, reelWidth, height, cornerRadius);
+    reelBackground.endFill();
+
+    const reelShadow = new Graphics();
+    reelShadow.beginFill(0x020617, 0.18);
+    reelShadow.drawRoundedRect(
+      reelWidth * 0.06,
+      height * 0.06,
+      reelWidth * 0.88,
+      height * 0.88,
+      cornerRadius * 0.75
+    );
+    reelShadow.endFill();
+
+    const gloss = new Graphics();
+    gloss.beginFill(0xffffff, 0.08);
+    gloss.drawRoundedRect(
+      reelWidth * 0.08,
+      height * 0.05,
+      reelWidth * 0.84,
+      height * 0.16,
+      cornerRadius * 0.55
+    );
+    gloss.endFill();
 
     const currentTextureIndex = getRandomTextureIndex();
     const sprite = new Sprite(textures[currentTextureIndex]);
     sprite.anchor.set(0.5);
     sprite.roundPixels = true;
 
-      return {
-        sprite,
-        textureIndex: -1,
-      };
-    });
-
-    items.forEach((item, index) => {
-      assignRandomTexture(
-        item,
-        textures,
-        viewport,
-        items.slice(0, index).map((existingItem) => existingItem.textureIndex)
-      );
-      strip.addChild(item.sprite);
-    });
-
-    syncItemPositions(items, viewport);
-
     const reel: ReelState = {
-      elapsedMs: 0,
-      items,
-      pauseMs: getNextPauseMs(),
-      rollDistancePx: 0,
-      speedPxPerMs: viewport.height / SLOT_REEL_CONFIG.animation.spinDurationMs,
-      strip,
-      viewport,
+      baseScale: 1,
+      currentTextureIndex,
+      elapsedMs: reelIndex * 140,
+      reelWidth,
+      sprite,
+      switchDelayMs: getNextSwitchDelay(reelIndex),
+      viewHeight: height,
     };
 
-    reelFrame.addChild(strip);
+    applySpriteTexture(reel, textures[currentTextureIndex]);
+
+    reelContent.addChild(reelBackground);
+    reelContent.addChild(reelShadow);
+    reelContent.addChild(sprite);
+
+    reelFrame.addChild(reelContent);
     reelFrame.addChild(mask);
+    reelFrame.addChild(gloss);
     root.addChild(reelFrame);
     reels.push(reel);
   }
@@ -267,28 +180,17 @@ const updateReels = (
   deltaMs: number,
   textures: Texture[]
 ) => {
-  reels.forEach((reel) => {
-    if (reel.rollDistancePx > 0) {
-      const step = Math.min(reel.rollDistancePx, reel.speedPxPerMs * deltaMs);
-
-      reel.strip.y += step;
-      reel.rollDistancePx -= step;
-
-      if (reel.rollDistancePx <= 0) {
-        completeSpin(reel, textures);
-      }
-
-      return;
-    }
-
+  reels.forEach((reel, reelIndex) => {
     reel.elapsedMs += deltaMs;
 
-    if (reel.elapsedMs < reel.pauseMs) {
+    if (reel.elapsedMs < reel.switchDelayMs) {
       return;
     }
 
     reel.elapsedMs = 0;
-    reel.rollDistancePx = reel.viewport.height;
+    reel.switchDelayMs = getNextSwitchDelay(reelIndex);
+    reel.currentTextureIndex = getRandomTextureIndex(reel.currentTextureIndex);
+    applySpriteTexture(reel, textures[reel.currentTextureIndex]);
   });
 };
 
@@ -392,9 +294,6 @@ export const SlotMachineReels = ({
       });
 
       if (isDisposed) {
-        textures.forEach((texture) => {
-          texture.destroy(false);
-        });
         nextApp.destroy(true, { children: true });
         return;
       }
@@ -440,6 +339,7 @@ export const SlotMachineReels = ({
       isDisposed = true;
       observer?.disconnect();
       reels = [];
+      textures = [];
       lastWidth = 0;
       lastHeight = 0;
       app?.ticker.remove(handleTick);
@@ -452,10 +352,6 @@ export const SlotMachineReels = ({
         destroyChildren(root);
       }
 
-      textures.forEach((texture) => {
-        texture.destroy(false);
-      });
-      textures = [];
       app?.destroy(true, { children: true });
     };
   }, []);
