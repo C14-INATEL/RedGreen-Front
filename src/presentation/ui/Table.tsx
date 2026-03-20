@@ -1,7 +1,13 @@
 import { motion } from 'framer-motion';
-import TableDecorations from '@presentation/ui/TableDecorations';
+import TableDecorations from '@ui/TableDecorations';
+import GameCard from '@ui/GameCard';
+import SlotMachineIcon from '@ui/SlotMachineIcon';
 
 const Table = () => {
+  const handleStartGame = () => {
+    console.log('Iniciando o Caça-Níquel...');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
@@ -15,10 +21,14 @@ const Table = () => {
             <div className="relative bg-table-green p-8 md:p-12">
               <TableDecorations />
 
-              <div className="relative z-10 flex items-center justify-center h-32">
-                <p className="text-muted-foreground/50 text-sm font-body">
-                  jogos
-                </p>
+              <div className="relative z-10 flex items-center justify-center min-h-[280px] py-4">
+                <GameCard
+                  title="Caça-Níquel"
+                  subtitle="Girar"
+                  icon={<SlotMachineIcon />}
+                  delay={0.1}
+                  onClick={handleStartGame}
+                />
               </div>
 
               <div className="relative z-10 mt-8 pt-4 border-t-2 border-border flex items-center justify-center">
