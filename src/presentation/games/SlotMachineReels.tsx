@@ -5,9 +5,11 @@ import {
   Assets,
   Container,
   Graphics,
-  Rectangle,
+  MIPMAP_MODES,
+  SCALE_MODES,
   Sprite,
   Texture,
+  WRAP_MODES,
 } from 'pixi.js';
 
 const SLOT_TEXTURE_URLS = [
@@ -116,8 +118,17 @@ const createDisplayTexture = (texture: Texture) => {
     height
   );
 
-  return new Texture(texture.baseTexture, frame, new Rectangle(0, 0, width, height));
+const configurePixelArtTexture = (texture: Texture) => {
+  texture.baseTexture.mipmap = MIPMAP_MODES.OFF;
+  texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
+  texture.baseTexture.wrapMode = WRAP_MODES.CLAMP;
+  texture.baseTexture.update();
+
+  return texture;
 };
+
+const applySpriteTexture = (reel: ReelState, texture: Texture) => {
+  reel.sprite.texture = texture;
 
 const createViewport = (reelWidth: number, reelHeight: number): ReelViewport => {
   const width =
@@ -143,39 +154,13 @@ const createViewport = (reelWidth: number, reelHeight: number): ReelViewport => 
   };
 };
 
-const applySpriteLayout = (
-  sprite: Sprite,
-  texture: Texture,
-  viewport: ReelViewport
-) => {
-  sprite.texture = texture;
-
-  const scale =
-    Math.max(viewport.width / texture.width, viewport.height / texture.height) *
-    SLOT_REEL_CONFIG.sprite.coverScale;
-
-  sprite.scale.set(scale);
-};
-
-const syncItemPositions = (items: ReelItem[], viewport: ReelViewport) => {
-  items.forEach((item, index) => {
-    item.sprite.position.set(
-      viewport.centerX + viewport.width * SLOT_REEL_CONFIG.sprite.offsetXRatio,
-      viewport.centerY +
-        viewport.height *
-          (REEL_ITEM_OFFSETS[index] + SLOT_REEL_CONFIG.sprite.offsetYRatio)
-    );
-  });
-};
-
-const assignRandomTexture = (
-  item: ReelItem,
-  textures: Texture[],
-  viewport: ReelViewport,
-  excludedIndices: number[] = []
-) => {
-  item.textureIndex = getRandomTextureIndex(textures.length, excludedIndices);
-  applySpriteLayout(item.sprite, textures[item.textureIndex], viewport);
+  reel.baseScale = nextScale;
+  reel.sprite.roundPixels = true;
+  reel.sprite.scale.set(nextScale);
+  reel.sprite.position.set(
+    Math.round(reel.reelWidth / 2),
+    Math.round(reel.viewHeight / 2)
+  );
 };
 
 const destroyChildren = (container: Container) => {
@@ -235,9 +220,10 @@ const createReels = (width: number, height: number, textures: Texture[]) => {
     const strip = new Container();
     strip.mask = mask;
 
-    const items = REEL_ITEM_OFFSETS.map(() => {
-      const sprite = new Sprite();
-      sprite.anchor.set(0.5);
+    const currentTextureIndex = getRandomTextureIndex();
+    const sprite = new Sprite(textures[currentTextureIndex]);
+    sprite.anchor.set(0.5);
+    sprite.roundPixels = true;
 
       return {
         sprite,
@@ -384,22 +370,24 @@ export const SlotMachineReels = ({
     };
 
     const setup = async () => {
-      const loadedTextureMap = await Assets.load<Texture>([...SLOT_TEXTURE_URLS]);
+      const loadedTextureMap = await Assets.load<Texture>([
+        ...SLOT_TEXTURE_URLS,
+      ]);
 
       if (isDisposed) {
         return;
       }
 
       textures = SLOT_TEXTURE_URLS.map((url) =>
-        createDisplayTexture(loadedTextureMap[url])
+        configurePixelArtTexture(loadedTextureMap[url])
       );
 
       const nextApp = new Application({
-        antialias: true,
+        antialias: false,
         autoDensity: true,
         backgroundAlpha: 0,
         height: 1,
-        resolution: window.devicePixelRatio || 1,
+        resolution: 1,
         width: 1,
       });
 
@@ -416,6 +404,7 @@ export const SlotMachineReels = ({
       const canvas = nextApp.view as HTMLCanvasElement;
       canvas.style.display = 'block';
       canvas.style.height = '100%';
+      canvas.style.imageRendering = 'pixelated';
       canvas.style.width = '100%';
 
       host.appendChild(canvas);
