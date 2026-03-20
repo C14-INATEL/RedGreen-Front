@@ -30,10 +30,10 @@
   --table-green: 100 30% 18%;
   --table-green-light: 100 25% 22%;
   --accent-green: 120 50% 35%;
-  --casino-red: 0 70% 42%;
-  --casino-red-glow: 0 70% 42% / 0.3;
-  --casino-gold: 42 80% 50%;
-  --casino-gold-glow: 42 80% 50% / 0.3;
+  --cassino-red: 0 70% 42%;
+  --cassino-red-glow: 0 70% 42% / 0.3;
+  --cassino-gold: 42 80% 50%;
+  --cassino-gold-glow: 42 80% 50% / 0.3;
 
   --shadow-surface: 4px 4px 0px rgba(0, 0, 0, 0.5);
   --shadow-active: 6px 6px 0px rgba(0, 0, 0, 0.6);
@@ -71,7 +71,7 @@ body {
   box-shadow: var(--shadow-surface);
 }
 .pixel-border-gold {
-  border: 3px solid hsl(var(--casino-gold));
+  border: 3px solid hsl(var(--cassino-gold));
   box-shadow: var(--shadow-surface);
 }
 .pixel-shadow {
@@ -93,14 +93,14 @@ body {
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
 }
-.text-accent {
-  color: hsl(var(--accent));
+.text-accent-green {
+  color: hsl(var(--accent-green));
 }
-.text-casino-gold {
-  color: hsl(var(--casino-gold));
+.text-cassino-gold {
+  color: hsl(var(--cassino-gold));
 }
-.text-casino-red {
-  color: hsl(var(--casino-red));
+.text-cassino-red {
+  color: hsl(var(--cassino-red));
 }
 .bg-table-green {
   background-color: hsl(var(--table-green));

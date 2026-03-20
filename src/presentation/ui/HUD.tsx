@@ -23,28 +23,28 @@ const HUD = ({ playerName, chips }: HUDProps) => {
               y="2"
               width="6"
               height="6"
-              fill="hsl(var(--casino-gold))"
+              fill="hsl(var(--cassino-gold))"
             />
             <rect
               x="4"
               y="8"
               width="8"
               height="4"
-              fill="hsl(var(--casino-gold))"
+              fill="hsl(var(--cassino-gold))"
             />
             <rect
               x="5"
               y="12"
               width="2"
               height="2"
-              fill="hsl(var(--casino-gold))"
+              fill="hsl(var(--cassino-gold))"
             />
             <rect
               x="9"
               y="12"
               width="2"
               height="2"
-              fill="hsl(var(--casino-gold))"
+              fill="hsl(var(--cassino-gold))"
             />
           </svg>
           <div className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-accent-green border-2 border-background" />
@@ -64,56 +64,56 @@ const HUD = ({ playerName, chips }: HUDProps) => {
             y="2"
             width="8"
             height="2"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="2"
             y="4"
             width="2"
             height="2"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="12"
             y="4"
             width="2"
             height="2"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="2"
             y="6"
             width="12"
             height="4"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="6"
             y="4"
             width="4"
             height="8"
-            fill="hsl(var(--casino-gold) / 0.7)"
+            fill="hsl(var(--cassino-gold) / 0.7)"
           />
           <rect
             x="2"
             y="10"
             width="2"
             height="2"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="12"
             y="10"
             width="2"
             height="2"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="4"
             y="12"
             width="8"
             height="2"
-            fill="hsl(var(--casino-gold))"
+            fill="hsl(var(--cassino-gold))"
           />
           <rect
             x="7"

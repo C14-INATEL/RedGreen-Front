@@ -14,7 +14,7 @@ const TableDecorations = () => {
             cx="20"
             cy="20"
             r="16"
-            fill="hsl(var(--casino-red))"
+            fill="hsl(var(--cassino-red))"
             stroke="hsl(0 0% 100% / 0.3)"
             strokeWidth="2"
           />
@@ -77,7 +77,7 @@ const TableDecorations = () => {
             cx="20"
             cy="20"
             r="16"
-            fill="hsl(var(--casino-red))"
+            fill="hsl(var(--cassino-red))"
             stroke="hsl(0 0% 100% / 0.3)"
             strokeWidth="2"
           />
@@ -159,7 +159,7 @@ const TableDecorations = () => {
             x="12"
             y="32"
             fontSize="14"
-            fill="hsl(var(--casino-red) / 0.25)"
+            fill="hsl(var(--cassino-red) / 0.25)"
             fontFamily="serif"
           >
             ♥
