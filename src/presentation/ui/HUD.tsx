@@ -2,11 +2,11 @@ import { motion } from 'framer-motion';
 import CassinoLogo from '@presentation/ui/CassinoLogo';
 
 interface HUDProps {
-  playerName: string;
-  chips: number;
+  PlayerName: string;
+  Chips: number;
 }
 
-const HUD = ({ playerName, chips }: HUDProps) => {
+const HUD = ({ PlayerName, Chips }: HUDProps) => {
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -51,7 +51,7 @@ const HUD = ({ playerName, chips }: HUDProps) => {
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-bold text-foreground font-display">
-            {playerName}
+            {PlayerName}
           </span>
         </div>
       </div>
@@ -128,7 +128,7 @@ const HUD = ({ playerName, chips }: HUDProps) => {
             Fichas
           </span>
           <span className="font-mono text-lg font-bold text-foreground">
-            {chips.toLocaleString('pt-BR')}
+            {Chips.toLocaleString('pt-BR')}
           </span>
         </div>
       </div>
