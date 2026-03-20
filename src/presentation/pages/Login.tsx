@@ -217,7 +217,9 @@ const Login = () => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    aria-label={
+                      showPassword ? 'Ocultar senha' : 'Mostrar senha'
+                    }
                   >
                     {showPassword ? eyeClosedIcon : eyeOpenIcon}
                   </button>
@@ -300,7 +302,9 @@ const Login = () => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    aria-label={
+                      showPassword ? 'Ocultar senha' : 'Mostrar senha'
+                    }
                   >
                     {showPassword ? eyeClosedIcon : eyeOpenIcon}
                   </button>
@@ -321,9 +325,7 @@ const Login = () => {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                     aria-label={
                       showConfirmPassword
@@ -389,7 +391,7 @@ const Login = () => {
             </button>
 
             <p
-              className="whitespace-pre-line uppercase text-[10px] leading-6 tracking-[0.18em]"
+              className="whitespace-pre-line uppercase text-[9px] leading-6 tracking-[0.18em]"
               style={{
                 fontFamily: '"Press Start 2P", "Courier New", monospace',
                 textTransform: 'uppercase',
