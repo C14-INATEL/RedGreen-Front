@@ -272,7 +272,9 @@ export const SlotMachineReels = ({
     };
 
     const setup = async () => {
-      const loadedTextureMap = await Assets.load<Texture>([...SLOT_TEXTURE_URLS]);
+      const loadedTextureMap = await Assets.load<Texture>([
+        ...SLOT_TEXTURE_URLS,
+      ]);
 
       if (isDisposed) {
         return;

@@ -1,7 +1,8 @@
 import type { CSSProperties, PointerEvent } from 'react';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 const SLOT_MACHINE_TEXTURE_BASE_PATH = '/SlotMachine';
+const PRESS_FEEDBACK_DURATION_MS = 120;
 
 export type SlotButtonColor = 'blue' | 'red';
 
@@ -31,18 +32,35 @@ const SlotButtonComponent = ({
   style,
 }: SlotButtonProps) => {
   const [pressed, setPressed] = useState(false);
+  const resetTimeoutRef = useRef<number | null>(null);
   const spriteSources = getSlotButtonSpriteSources(color);
   const currentSpriteSource = pressed
     ? spriteSources.pressed
     : spriteSources.normal;
 
+  const clearResetTimeout = () => {
+    if (resetTimeoutRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(resetTimeoutRef.current);
+    resetTimeoutRef.current = null;
+  };
+
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    clearResetTimeout();
     setPressed(true);
     onPress?.();
+
+    resetTimeoutRef.current = window.setTimeout(() => {
+      setPressed(false);
+      resetTimeoutRef.current = null;
+    }, PRESS_FEEDBACK_DURATION_MS);
   };
 
   const endPressFeedback = () => {
+    clearResetTimeout();
     setPressed(false);
   };
 
@@ -53,6 +71,13 @@ const SlotButtonComponent = ({
     });
   }, [spriteSources.normal, spriteSources.pressed]);
 
+  useEffect(
+    () => () => {
+      clearResetTimeout();
+    },
+    []
+  );
+
   return (
     <button
       aria-label={label}
@@ -61,8 +86,6 @@ const SlotButtonComponent = ({
       onBlur={endPressFeedback}
       onPointerCancel={endPressFeedback}
       onPointerDown={handlePointerDown}
-      onPointerLeave={endPressFeedback}
-      onPointerUp={endPressFeedback}
       style={{
         ...style,
         WebkitAppearance: 'none',
