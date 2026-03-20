@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 type Step = 'identify' | 'login' | 'signup';
 
-const existingEmails = ['admin@casino.com', 'player@casino.com'];
+const existingEmails = ['admin@cassino.com', 'player@cassino.com'];
 
 const eyeOpenIcon = (
   <svg
@@ -58,21 +58,49 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const closeToast = () => setToastMessage('');
 
+  const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const isValidBirthDate = (value: string) => {
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return false;
+
+    const [day, month, year] = value.split('/').map(Number);
+
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+
+    const date = new Date(year, month - 1, day);
+
+    return (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    );
+  };
+
   const handleContinue = () => {
-    if (!identifier.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL OU TELEFONE.');
+    const email = identifier.trim().toLowerCase();
+
+    if (!email) {
+      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
       return;
     }
 
-    setStep(
-      existingEmails.includes(identifier.toLowerCase()) ? 'login' : 'signup'
-    );
+    if (!isValidEmail(email)) {
+      setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+      return;
+    }
+
+    setStep(existingEmails.includes(email) ? 'login' : 'signup');
     setToastMessage('');
   };
 
@@ -91,8 +119,28 @@ const Login = () => {
       return;
     }
 
+    if (!nickname.trim()) {
+      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NICKNAME.');
+      return;
+    }
+
+    if (!birthDate.trim()) {
+      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA DATA DE NASCIMENTO.');
+      return;
+    }
+
+    if (!isValidBirthDate(birthDate)) {
+      setToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
+      return;
+    }
+
     if (!identifier.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL OU TELEFONE.');
+      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+      return;
+    }
+
+    if (!isValidEmail(identifier.trim().toLowerCase())) {
+      setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
       return;
     }
 
@@ -121,9 +169,12 @@ const Login = () => {
 
   const resetToIdentify = () => {
     setStep('identify');
+    setIdentifier('');
     setPassword('');
     setConfirmPassword('');
     setName('');
+    setNickname('');
+    setBirthDate('');
     setShowPassword(false);
     setShowConfirmPassword(false);
     setToastMessage('');
@@ -163,8 +214,8 @@ const Login = () => {
 
               <div className="space-y-2">
                 <input
-                  type="text"
-                  placeholder="Digite seu e-mail ou telefone"
+                  type="email"
+                  placeholder="Digite seu e-mail"
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value);
@@ -277,7 +328,31 @@ const Login = () => {
 
                 <input
                   type="text"
-                  placeholder="E-mail ou telefone"
+                  placeholder="Nickname"
+                  value={nickname}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    setToastMessage('');
+                  }}
+                  className="auth-input"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Data de nascimento (dd/mm/aaaa)"
+                  value={birthDate}
+                  onChange={(e) => {
+                    setBirthDate(e.target.value);
+                    setToastMessage('');
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+                  className="auth-input"
+                  maxLength={10}
+                />
+
+                <input
+                  type="email"
+                  placeholder="E-mail"
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value);
