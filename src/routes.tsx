@@ -1,9 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { paths } from './paths';
-import { Home } from './presentation/pages/Home';
+import Login from '@presentation/pages/Login';
 
-// Placeholder components - replace with actual pages
-const Login = () => <div>Login</div>;
 const Register = () => <div>Register</div>;
 const Dashboard = () => <div>Dashboard</div>;
 const SlotRoom = () => <div>Slot Room</div>;
@@ -11,7 +9,7 @@ const RouletteRoom = () => <div>Roulette Room</div>;
 
 export const AppRoutes = () => (
   <Routes>
-    <Route path={paths.home} element={<Home />} />
+    <Route path={paths.home} element={<Login />} />
     <Route path={paths.login} element={<Login />} />
     <Route path={paths.register} element={<Register />} />
     <Route path={paths.dashboard} element={<Dashboard />} />
