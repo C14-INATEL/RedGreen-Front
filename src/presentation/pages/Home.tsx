@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import Table from '@presentation/ui/Table';
-import HUD from '@presentation/ui/HUD';
-import RankingPanel from '@presentation/ui/RankingPanel';
+import Table from '@ui/Table';
+import HUD from '@ui/HUD';
+import RankingPanel from '@ui/RankingPanel';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 
