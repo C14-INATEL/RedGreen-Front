@@ -1,11 +1,7 @@
-// Tipos e entidades básicas
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-}
-
-export interface Wallet {
-  balance: number;
-  currency: string;
+export interface HUDProps {
+  IsLoggedIn: boolean;
+  PlayerName: string;
+  Chips: number;
+  OnLogin: () => void;
+  OnLogout: () => void;
 }

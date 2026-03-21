@@ -1,8 +1,116 @@
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: 100 15% 10%;
+  --foreground: 45 20% 90%;
+  --card: 90 12% 8%;
+  --card-foreground: 45 20% 90%;
+  --popover: 90 12% 8%;
+  --popover-foreground: 45 20% 90%;
+  --primary: 0 70% 42%;
+  --primary-foreground: 45 30% 95%;
+  --secondary: 35 50% 22%;
+  --secondary-foreground: 45 20% 90%;
+  --muted: 90 10% 16%;
+  --muted-foreground: 45 10% 50%;
+  --accent: 42 80% 50%;
+  --accent-foreground: 0 0% 5%;
+  --destructive: 0 84% 55%;
+  --destructive-foreground: 45 30% 95%;
+  --border: 42 40% 30% / 0.25;
+  --input: 42 40% 30% / 0.2;
+  --ring: 42 80% 50%;
+  --radius: 0px;
+
+  --hud-bg: 90 15% 6%;
+  --table-green: 100 30% 18%;
+  --table-green-light: 100 25% 22%;
+  --accent-green: 120 50% 35%;
+  --cassino-red: 0 70% 42%;
+  --cassino-red-glow: 0 70% 42% / 0.3;
+  --cassino-gold: 42 80% 50%;
+  --cassino-gold-glow: 42 80% 50% / 0.3;
+
+  --shadow-surface: 4px 4px 0px rgba(0, 0, 0, 0.5);
+  --shadow-active: 6px 6px 0px rgba(0, 0, 0, 0.6);
+
+  --font-display: 'Pixelify Sans', sans-serif;
+  --font-body: 'Silkscreen', cursive;
+  --font-mono: 'Press Start 2P', monospace;
+}
+
+* {
+  border-color: hsl(var(--border));
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+.font-body {
+  font-family: var(--font-body);
+}
+
+.pixel-border {
+  border: 3px solid hsl(var(--border));
+  box-shadow: var(--shadow-surface);
+}
+.pixel-border-gold {
+  border: 3px solid hsl(var(--cassino-gold));
+  box-shadow: var(--shadow-surface);
+}
+.pixel-shadow {
+  box-shadow: var(--shadow-surface);
+}
+
+.bg-background {
+  background-color: hsl(var(--background));
+}
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+.bg-card {
+  background-color: hsl(var(--card));
+}
+.bg-secondary {
+  background-color: hsl(var(--secondary));
+}
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+.text-accent-green {
+  color: hsl(var(--accent-green));
+}
+.text-cassino-gold {
+  color: hsl(var(--cassino-gold));
+}
+.text-cassino-red {
+  color: hsl(var(--cassino-red));
+}
+.bg-table-green {
+  background-color: hsl(var(--table-green));
+}
+.border-border {
+  border-color: hsl(var(--border));
+}
+.bg-accent-green {
+  background-color: hsl(var(--accent-green));
+}
 
 .suit-pattern {
   background-color: hsl(150 40% 12%);
