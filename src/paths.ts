@@ -4,6 +4,6 @@ export const paths = {
   login: '/login',
   register: '/register',
   dashboard: '/dashboard',
-  slotRoom: '/slot-room',
+  slotmachineroom: '/slot-machine-room',
   rouletteRoom: '/roulette-room',
 } as const;
