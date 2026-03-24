@@ -17,15 +17,15 @@ Responsável por gerenciar toda a interface do usuário, proporcionando uma expe
 
 ## Principais Tecnologias Utilizadas
 
-- **Framework Core:** React + Vite
-- **Linguagem:** TypeScript
-- **Renderização Gráfica:** PixiJS + @pixi/react
-- **Estilização:** Tailwind CSS
-- **Animações:** Framer Motion
-- **Requisições HTTP:** Axios
-- **Gerenciamento de Estado:** SWR
-- **Formulários:** React Hook Form
-- **Validação:** Zod
+* **Framework Core:** React + Vite  
+* **Linguagem:** TypeScript  
+* **Renderização Gráfica:** PixiJS + @pixi/react  
+* **Estilização:** Tailwind CSS  
+* **Animações:** Framer Motion  
+* **Requisições HTTP:** Axios  
+* **Gerenciamento de Estado:** SWR  
+* **Formulários:** React Hook Form  
+* **Validação:** Zod  
 
 ---
 
@@ -33,7 +33,7 @@ Responsável por gerenciar toda a interface do usuário, proporcionando uma expe
 
 #### 1. Pré-requisitos Certifique-se de ter instalado em sua máquina:
 
-- **Node.js**
+* **Node.js**
 
 ---
 
@@ -68,13 +68,26 @@ npm run build
 ```bash
 npm run build
 ```
-
 <br>
 
 **Inicia o ambiente de desenvolvimento.**
 
 ```bash
 npm run dev
+```
+<br>
+
+**Verifica erros de padronização com o ESLint.**
+
+```bash
+npm run lint
+```
+<br>
+
+**Roda o Prettier para formatar o código automaticamente.**
+
+```bash
+npm run format
 ```
 
 ---
