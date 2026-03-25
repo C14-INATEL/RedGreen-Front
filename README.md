@@ -1,73 +1,108 @@
-# React + TypeScript + Vite
+# Red & Green Cassino - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Responsável pela interface do usuário do cassino web, oferecendo uma experiência imersiva com jogos visuais em WebGL, autenticação segura, gerenciamento de carteira de fichas e integração fluida com o backend.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Funcionalidades
 
-## React Compiler
+- **Autenticação:** Gerenciamento de sessão de jogadores com JWT e redirecionamentos automáticos.
+- **Carteira:** Visualização e sincronização em tempo real do saldo de fichas via SWR.
+- **Jogos:** Motor de jogos WebGL com PixiJS para slots e roleta, com animações e física.
+- **UI/UX:** Interface responsiva e moderna com Tailwind CSS, animações com Framer Motion.
+- **Histórico e Rankings:** Painéis para histórico de apostas e rankings de jogadores.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Principais Tecnologias Utilizadas
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Framework Core:** React + Vite
+- **Linguagem:** TypeScript
+- **Motor de Jogos:** PixiJS + @pixi/react
+- **Animações:** Framer Motion
+- **Requisições e Cache:** Axios + SWR
+- **Estilos:** Tailwind CSS
+- **Formulários:** React Hook Form + Zod
+- **Qualidade e Padronização:** ESLint, Prettier, Husky, Commitlint e lint-staged.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Executando o Projeto
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+#### 1. Pré-requisitos
+
+Certifique-se de ter instalado em sua máquina:
+
+- **Node.js** (versão 18 ou superior)
+
+#### 2. Instale as dependências do projeto
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+#### 3. Iniciando o servidor de desenvolvimento
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+```bash
+npm run dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+#### 4. Acesse a aplicação
+
+Acesse a URL da aplicação: http://localhost:5173
+
+---
+
+## Comandos Importantes (Scripts)
+
+**Inicia o servidor de desenvolvimento com hot reload.**
+
+```bash
+npm run dev
+```
+
+**Verifica erros de padronização com o ESLint.**
+
+```bash
+npm run lint
+```
+
+**Compila o projeto para produção.**
+
+```bash
+npm run build
+```
+
+**Formata o código automaticamente com Prettier.**
+
+```bash
+npm run format
+```
+
+---
+
+## Estrutura do Projeto
+
+```text
+RedGreen-Front/
+├── public/                     # Arquivos estáticos (assets, imagens, sons)
+│   └── SlotMachine/            # Assets do caça-níquel (Exemplo)
+├── src/
+│   ├── main.tsx                # Ponto de entrada da aplicação
+│   ├── App.tsx                 # Componente raiz
+│   ├── AppProviders.tsx        # Provedores globais (React Router, etc.)
+│   ├── routes.tsx              # Definição das rotas
+│   ├── paths.ts                # Centralização dos paths das rotas
+│   ├── config.ts               # Configurações globais (limites, cache)
+│   ├── domain/                 # Contratos, tipos TypeScript, entidades e schemas Zod
+│   │   ├── types.ts
+│   │   └── schemas.ts
+│   ├── application/            # Regras de negócio via hooks customizados
+│   ├── infrastructure/         # Clientes HTTP, interceptors e funções puras
+│   └── presentation/           # Camada visual
+│       ├── ui/                 # Componentes React tradicionais (Botões, Modais)
+│       └── games/              # Componentes do motor WebGL (Stages PixiJS)
+│       └── pages/              # Telas que orquestram UI e Games
+├── index.html                  # Template HTML
+└── vite.config.ts              # Configurações do Vite
 ```
