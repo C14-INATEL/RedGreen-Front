@@ -4,10 +4,8 @@ Responsável pela interface do usuário do cassino web, oferecendo uma experiên
 
 ---
 
-
-
-
 ## Funcionalidades
+
 - **Autenticação:** Gerenciamento de sessão de jogadores com JWT e redirecionamentos automáticos.
 - **Carteira:** Visualização e sincronização em tempo real do saldo de fichas via SWR.
 - **Jogos:** Motor de jogos WebGL com PixiJS para slots e roleta, com animações e física.
@@ -18,23 +16,24 @@ Responsável pela interface do usuário do cassino web, oferecendo uma experiên
 
 ## Principais Tecnologias Utilizadas
 
-* **Framework Core:** React + Vite
-* **Linguagem:** TypeScript
-* **Motor de Jogos:** PixiJS + @pixi/react
-* **Animações:** Framer Motion
-* **Requisições e Cache:** Axios + SWR
-* **Estilos:** Tailwind CSS
-* **Formulários:** React Hook Form + Zod
-* **Qualidade e Padronização:** ESLint, Prettier, Husky, Commitlint e lint-staged.
+- **Framework Core:** React + Vite
+- **Linguagem:** TypeScript
+- **Motor de Jogos:** PixiJS + @pixi/react
+- **Animações:** Framer Motion
+- **Requisições e Cache:** Axios + SWR
+- **Estilos:** Tailwind CSS
+- **Formulários:** React Hook Form + Zod
+- **Qualidade e Padronização:** ESLint, Prettier, Husky, Commitlint e lint-staged.
 
 ---
 
 ## Executando o Projeto
 
 #### 1. Pré-requisitos
+
 Certifique-se de ter instalado em sua máquina:
 
-* **Node.js** (versão 18 ou superior)
+- **Node.js** (versão 18 ou superior)
 
 #### 2. Instale as dependências do projeto
 
