@@ -110,7 +110,13 @@ const Login = () => {
       return;
     }
 
-    alert('Login realizado com sucesso!');
+    if (password.trim().length < 8) {
+      setToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
+      return;
+    }
+
+    localStorage.setItem('authToken', 'fake-token');
+    window.location.href = '/';
   };
 
   const handleSignup = async () => {
