@@ -113,7 +113,7 @@ const Login = () => {
     alert('Login realizado com sucesso!');
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!name.trim()) {
       setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NOME.');
       return;
@@ -159,12 +159,45 @@ const Login = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 6 CARACTERES.');
+    if (password.length < 8) {
+      setToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
       return;
     }
 
-    alert('Conta criada com sucesso!');
+    try {
+      const [day, month, year] = birthDate.split('/');
+      const formattedBirthDate = `${year}-${month}-${day}`;
+
+      const response = await fetch('http://localhost:3000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Name: name,
+          BirthDate: formattedBirthDate,
+          Nickname: nickname,
+          Email: identifier.trim().toLowerCase(),
+          Password: password,
+          ChipBalance: 10000,
+          DailyLoginStreak: 0,
+          Active: true,
+          UserType: 'User',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setToastMessage(data.message || 'ERRO AO CRIAR CONTA.');
+        return;
+      }
+
+      setToastMessage('');
+      setStep('login');
+    } catch {
+      setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+    }
   };
 
   const resetToIdentify = () => {
