@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CassinoLogo from '@ui/CassinoLogo';
 
 type Step = 'identify' | 'login' | 'signup';
 
@@ -236,6 +237,9 @@ const Login = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(150_40%_18%_/_0.5)_0%,_transparent_60%)] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md">
+        <div className="flex justify-center mb-4">
+          <CassinoLogo />
+        </div>
         <AnimatePresence mode="wait">
           {step === 'identify' && (
             <motion.div
@@ -249,7 +253,7 @@ const Login = () => {
             >
               <h2 className="font-display text-lg font-semibold text-white text-center mb-1">
                 Bem-vindo ao <span className="text-[hsl(0,70%,42%)]">Red</span>
-                <span className="text-white">&</span>
+                <span className="text-cassino-gold">&</span>
                 <span className="text-[hsl(120,50%,35%)]">Green</span> Cassino
               </h2>
 
