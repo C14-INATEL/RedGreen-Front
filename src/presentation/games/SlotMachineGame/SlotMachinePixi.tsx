@@ -41,6 +41,8 @@ export const SlotMachinePixi = () => {
     height: number;
     width: number;
   }>(EMPTY_MACHINE_SIZE);
+  const [realSpinRequestId, setRealSpinRequestId] = useState(0);
+  const [isRealSpinRunning, setIsRealSpinRunning] = useState(false);
 
   useEffect(() => {
     const machine = machineRef.current;
@@ -72,6 +74,15 @@ export const SlotMachinePixi = () => {
     };
   }, []);
 
+  const handleLeverPull = () => {
+    if (isRealSpinRunning) {
+      return;
+    }
+
+    setIsRealSpinRunning(true);
+    setRealSpinRequestId((currentValue) => currentValue + 1);
+  };
+
   return (
     <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
       <img
@@ -86,6 +97,8 @@ export const SlotMachinePixi = () => {
 
       <SlotMachineReels
         className="pointer-events-none absolute"
+        onRealSpinStateChange={setIsRealSpinRunning}
+        spinRequestId={realSpinRequestId}
         style={getMachineAreaStyle(machineSize, SLOT_MACHINE_REEL_AREA)}
       />
 
@@ -96,7 +109,11 @@ export const SlotMachinePixi = () => {
         states={[false, true, true, true, true]}
       />
 
-      <SlotMachineLever machineSize={machineSize} />
+      <SlotMachineLever
+        disabled={isRealSpinRunning}
+        machineSize={machineSize}
+        onPull={handleLeverPull}
+      />
 
     </div>
   );

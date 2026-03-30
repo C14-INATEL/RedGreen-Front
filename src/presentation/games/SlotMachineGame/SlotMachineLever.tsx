@@ -15,6 +15,7 @@ const SLOT_LEVER_FRAME_COUNT = 18;
 const SLOT_LEVER_FRAME_DURATION_MS = 28;
 
 type SlotMachineLeverProps = {
+  disabled?: boolean;
   label?: string;
   machineSize: {
     height: number;
@@ -60,6 +61,7 @@ const getSlotLeverStyle = (
 };
 
 const SlotMachineLeverComponent = ({
+  disabled = false,
   label = 'Alavanca da maquina',
   machineSize,
   onPull,
@@ -105,7 +107,7 @@ const SlotMachineLeverComponent = ({
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
-    if (isAnimatingRef.current) {
+    if (disabled || isAnimatingRef.current) {
       return;
     }
 
@@ -135,9 +137,10 @@ const SlotMachineLeverComponent = ({
     <div className="pointer-events-none absolute inset-0">
       <button
         aria-busy={isAnimating}
+        aria-disabled={disabled || isAnimating}
         aria-label={label}
         className="pointer-events-auto absolute block"
-        disabled={isAnimating}
+        disabled={disabled || isAnimating}
         onPointerDown={handlePointerDown}
         style={{
           ...getSlotLeverStyle(machineSize),
@@ -147,7 +150,7 @@ const SlotMachineLeverComponent = ({
           background: 'transparent',
           border: 'none',
           boxShadow: 'none',
-          cursor: isAnimating ? 'default' : 'pointer',
+          cursor: disabled || isAnimating ? 'default' : 'pointer',
           margin: 0,
           outline: 'none',
           padding: 0,

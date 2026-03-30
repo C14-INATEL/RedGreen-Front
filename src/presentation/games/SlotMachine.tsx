@@ -1,3 +1,1 @@
-import { SlotMachinePixi } from './SlotMachinePixi';
-
-export const SlotMachine = () => <SlotMachinePixi />;
+export { SlotMachine } from './SlotMachineGame/SlotMachine';
