@@ -4,8 +4,6 @@ import CassinoLogo from '@ui/CassinoLogo';
 
 type Step = 'identify' | 'login' | 'signup';
 
-const existingEmails = ['admin@cassino.com', 'player@cassino.com'];
-
 const eyeOpenIcon = (
   <svg
     width="18"
@@ -88,22 +86,59 @@ const Login = () => {
     );
   };
 
-  const handleContinue = () => {
-    const email = identifier.trim().toLowerCase();
+  const handleContinue = async () => {
+  const email = identifier.trim().toLowerCase();
 
-    if (!email) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+  if (!email) {
+    setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+    return;
+  }
+
+  try {
+    const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(email)}`;
+    console.log('URL:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    console.log('STATUS:', response.status);
+
+    const data = await response.json();
+    console.log('DATA:', data);
+
+    if (!response.ok) {
+      setToastMessage('ERRO AO VERIFICAR E-MAIL.');
       return;
     }
 
-    if (!isValidEmail(email)) {
-      setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+    const emailTaken = data?.taken;
+
+    if (emailTaken === true) {
+      setStep('login');
+      setToastMessage('');
       return;
     }
 
-    setStep(existingEmails.includes(email) ? 'login' : 'signup');
-    setToastMessage('');
-  };
+    if (emailTaken === false) {
+      setStep('signup');
+      setToastMessage('');
+      return;
+    }
+
+  } catch (error) {
+    console.error('ERRO CHECK EMAIL:', error);
+    setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+  }
+};
 
   const handleLogin = () => {
     if (!password.trim()) {
