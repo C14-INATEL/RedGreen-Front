@@ -87,72 +87,99 @@ const Login = () => {
   };
 
   const handleContinue = async () => {
-  const email = identifier.trim().toLowerCase();
+    const email = identifier.trim().toLowerCase();
 
-  if (!email) {
-    setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
-    return;
-  }
-
-  if (!isValidEmail(email)) {
-    setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
-    return;
-  }
-
-  try {
-    const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(email)}`;
-    console.log('URL:', url);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-
-    console.log('STATUS:', response.status);
-
-    const data = await response.json();
-    console.log('DATA:', data);
-
-    if (!response.ok) {
-      setToastMessage('ERRO AO VERIFICAR E-MAIL.');
+    if (!email) {
+      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
       return;
     }
 
-    const emailTaken = data?.taken;
+    if (!isValidEmail(email)) {
+      setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+      return;
+    }
 
-    if (emailTaken === true) {
-      setStep('login');
+    try {
+      const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(email)}`;
+      console.log('URL:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      console.log('STATUS:', response.status);
+
+      const data = await response.json();
+      console.log('DATA:', data);
+
+      if (!response.ok) {
+        setToastMessage('ERRO AO VERIFICAR E-MAIL.');
+        return;
+      }
+
+      const emailTaken = data?.taken;
+
+      if (emailTaken === true) {
+        setStep('login');
+        setToastMessage('');
+        return;
+      }
+
+      if (emailTaken === false) {
+        setStep('signup');
+        setToastMessage('');
+        return;
+      }
+    } catch (error) {
+      console.error('ERRO CHECK EMAIL:', error);
+      setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      if (!identifier || !password) {
+        setToastMessage('PREENCHA E-MAIL E SENHA.');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          Email: identifier,
+          Password: password,
+        }),
+      });
+
+      const data = await response.json();
+      console.log('LOGIN DATA:', data);
+
+      if (!response.ok) {
+        setToastMessage('E-MAIL OU SENHA INVÁLIDOS.');
+        return;
+      }
+
+      const token = data?.Token;
+      const user = data?.User;
+
+
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
       setToastMessage('');
-      return;
+
+      window.location.href = '/';
+    } catch (error) {
+      console.error('ERRO LOGIN:', error);
+      setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
     }
-
-    if (emailTaken === false) {
-      setStep('signup');
-      setToastMessage('');
-      return;
-    }
-
-  } catch (error) {
-    console.error('ERRO CHECK EMAIL:', error);
-    setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
-  }
-};
-
-  const handleLogin = () => {
-    if (!password.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA SENHA.');
-      return;
-    }
-
-    if (password.trim().length < 8) {
-      setToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
-      return;
-    }
-
-    localStorage.setItem('authToken', 'fake-token');
-    window.location.href = '/';
   };
 
   const handleSignup = async () => {
