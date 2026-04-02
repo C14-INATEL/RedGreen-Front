@@ -4,7 +4,7 @@ import CassinoLogo from '@ui/CassinoLogo';
 
 type Step = 'identify' | 'login' | 'signup';
 
-const eyeOpenIcon = (
+const EyeOpenIcon = (
   <svg
     width="18"
     height="18"
@@ -24,7 +24,7 @@ const eyeOpenIcon = (
   </svg>
 );
 
-const eyeClosedIcon = (
+const EyeClosedIcon = (
   <svg
     width="18"
     height="18"
@@ -52,24 +52,24 @@ const eyeClosedIcon = (
 );
 
 const Login = () => {
-  const [step, setStep] = useState<Step>('identify');
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [toastMessage, setToastMessage] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [Step, SetStep] = useState<Step>('identify');
+  const [Identifier, SetIdentifier] = useState('');
+  const [Password, SetPassword] = useState('');
+  const [ConfirmPassword, SetConfirmPassword] = useState('');
+  const [Name, SetName] = useState('');
+  const [Nickname, SetNickname] = useState('');
+  const [BirthDate, SetBirthDate] = useState('');
+  const [ToastMessage, SetToastMessage] = useState('');
+  const [ShowPassword, SetShowPassword] = useState(false);
+  const [ShowConfirmPassword, SetShowConfirmPassword] = useState(false);
 
-  const closeToast = () => setToastMessage('');
+  const CloseToast = () => SetToastMessage('');
 
-  const isValidEmail = (value: string) => {
+  const IsValidEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const isValidBirthDate = (value: string) => {
+  const IsValidBirthDate = (value: string) => {
     if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return false;
 
     const [day, month, year] = value.split('/').map(Number);
@@ -86,21 +86,21 @@ const Login = () => {
     );
   };
 
-  const handleContinue = async () => {
-    const email = identifier.trim().toLowerCase();
+  const HandleContinue = async () => {
+    const Email = Identifier.trim().toLowerCase();
 
-    if (!email) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+    if (!Email) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
       return;
     }
 
-    if (!isValidEmail(email)) {
-      setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+    if (!IsValidEmail(Email)) {
+      SetToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
       return;
     }
 
     try {
-      const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(email)}`;
+      const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(Email)}`;
       console.log('URL:', url);
 
       const response = await fetch(url, {
@@ -112,37 +112,37 @@ const Login = () => {
 
       console.log('STATUS:', response.status);
 
-      const data = await response.json();
-      console.log('DATA:', data);
+      const Data = await response.json();
+      console.log('DATA:', Data);
 
       if (!response.ok) {
-        setToastMessage('ERRO AO VERIFICAR E-MAIL.');
+        SetToastMessage('ERRO AO VERIFICAR E-MAIL.');
         return;
       }
 
-      const emailTaken = data?.taken;
+      const EmailTaken = Data?.taken;
 
-      if (emailTaken === true) {
-        setStep('login');
-        setToastMessage('');
+      if (EmailTaken === true) {
+        SetStep('login');
+        SetToastMessage('');
         return;
       }
 
-      if (emailTaken === false) {
-        setStep('signup');
-        setToastMessage('');
+      if (EmailTaken === false) {
+        SetStep('signup');
+        SetToastMessage('');
         return;
       }
     } catch (error) {
       console.error('ERRO CHECK EMAIL:', error);
-      setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
     }
   };
 
-  const handleLogin = async () => {
+  const HandleLogin = async () => {
     try {
-      if (!identifier || !password) {
-        setToastMessage('PREENCHA E-MAIL E SENHA.');
+      if (!Identifier || !Password) {
+        SetToastMessage('PREENCHA E-MAIL E SENHA.');
         return;
       }
 
@@ -153,101 +153,100 @@ const Login = () => {
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          Email: identifier,
-          Password: password,
+          Email: Identifier,
+          Password: Password,
         }),
       });
 
-      const data = await response.json();
-      console.log('LOGIN DATA:', data);
+      const Data = await response.json();
+      console.log('LOGIN DATA:', Data);
 
       if (!response.ok) {
-        setToastMessage('E-MAIL OU SENHA INVÁLIDOS.');
+        SetToastMessage('E-MAIL OU SENHA INVÁLIDOS.');
         return;
       }
 
-      const token = data?.Token;
-      const user = data?.User;
+      const Token = Data?.Token;
+      const User = Data?.User;
 
+      localStorage.setItem('authToken', Token);
+      localStorage.setItem('user', JSON.stringify(User));
 
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      setToastMessage('');
+      SetToastMessage('');
 
       window.location.href = '/';
     } catch (error) {
       console.error('ERRO LOGIN:', error);
-      setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
     }
   };
 
   const handleSignup = async () => {
-    if (!name.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NOME.');
+    if (!Name.trim()) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NOME.');
       return;
     }
 
-    if (!nickname.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NICKNAME.');
+    if (!Nickname.trim()) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NICKNAME.');
       return;
     }
 
-    if (!birthDate.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA DATA DE NASCIMENTO.');
+    if (!BirthDate.trim()) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA DATA DE NASCIMENTO.');
       return;
     }
 
-    if (!isValidBirthDate(birthDate)) {
-      setToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
+    if (!IsValidBirthDate(BirthDate)) {
+      SetToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
       return;
     }
 
-    if (!identifier.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+    if (!Identifier.trim()) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
       return;
     }
 
-    if (!isValidEmail(identifier.trim().toLowerCase())) {
-      setToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+    if (!IsValidEmail(Identifier.trim().toLowerCase())) {
+      SetToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
       return;
     }
 
-    if (!password.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA SENHA.');
+    if (!Password.trim()) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA SENHA.');
       return;
     }
 
-    if (!confirmPassword.trim()) {
-      setToastMessage('CAMPO OBRIGATÓRIO\nCONFIRME SUA SENHA.');
+    if (!ConfirmPassword.trim()) {
+      SetToastMessage('CAMPO OBRIGATÓRIO\nCONFIRME SUA SENHA.');
       return;
     }
 
-    if (password !== confirmPassword) {
-      setToastMessage('ERRO\nAS SENHAS NÃO CONFEREM.');
+    if (Password !== ConfirmPassword) {
+      SetToastMessage('ERRO\nAS SENHAS NÃO CONFEREM.');
       return;
     }
 
-    if (password.length < 8) {
-      setToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
+    if (Password.length < 8) {
+      SetToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
       return;
     }
 
     try {
-      const [day, month, year] = birthDate.split('/');
+      const [day, month, year] = BirthDate.split('/');
       const formattedBirthDate = `${year}-${month}-${day}`;
 
-      const response = await fetch('http://localhost:3000/auth/register', {
+      const Response = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          Name: name,
+          Name: Name,
           BirthDate: formattedBirthDate,
-          Nickname: nickname,
-          Email: identifier.trim().toLowerCase(),
-          Password: password,
+          Nickname: Nickname,
+          Email: Identifier.trim().toLowerCase(),
+          Password: Password,
           ChipBalance: 10000,
           DailyLoginStreak: 0,
           Active: true,
@@ -255,31 +254,31 @@ const Login = () => {
         }),
       });
 
-      const data = await response.json();
+      const Data = await Response.json();
 
-      if (!response.ok) {
-        setToastMessage(data.message || 'ERRO AO CRIAR CONTA.');
+      if (!Response.ok) {
+        SetToastMessage(Data.message || 'ERRO AO CRIAR CONTA.');
         return;
       }
 
-      setToastMessage('');
-      setStep('login');
+      SetToastMessage('');
+      SetStep('login');
     } catch {
-      setToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
     }
   };
 
   const resetToIdentify = () => {
-    setStep('identify');
-    setIdentifier('');
-    setPassword('');
-    setConfirmPassword('');
-    setName('');
-    setNickname('');
-    setBirthDate('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setToastMessage('');
+    SetStep('identify');
+    SetIdentifier('');
+    SetPassword('');
+    SetConfirmPassword('');
+    SetName('');
+    SetNickname('');
+    SetBirthDate('');
+    SetShowPassword(false);
+    SetShowConfirmPassword(false);
+    SetToastMessage('');
   };
 
   const panelVariants = {
@@ -303,7 +302,7 @@ const Login = () => {
           <CassinoLogo />
         </div>
         <AnimatePresence mode="wait">
-          {step === 'identify' && (
+          {Step === 'identify' && (
             <motion.div
               key="identify"
               variants={panelVariants}
@@ -327,23 +326,23 @@ const Login = () => {
                 <input
                   type="email"
                   placeholder="Digite seu e-mail"
-                  value={identifier}
+                  value={Identifier}
                   onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setToastMessage('');
+                    SetIdentifier(e.target.value);
+                    SetToastMessage('');
                   }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
+                  onKeyDown={(e) => e.key === 'Enter' && HandleContinue()}
                   className="auth-input"
                 />
 
-                <button onClick={handleContinue} className="auth-button mt-4">
+                <button onClick={HandleContinue} className="auth-button mt-4">
                   Continuar
                 </button>
               </div>
             </motion.div>
           )}
 
-          {step === 'login' && (
+          {Step === 'login' && (
             <motion.div
               key="login"
               variants={panelVariants}
@@ -358,36 +357,36 @@ const Login = () => {
               </h2>
 
               <p className="text-white/80 text-xs text-center mb-6">
-                {identifier}
+                {Identifier}
               </p>
 
               <div className="space-y-2">
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={ShowPassword ? 'text' : 'password'}
                     placeholder="Senha"
-                    value={password}
+                    value={Password}
                     onChange={(e) => {
-                      setPassword(e.target.value);
-                      setToastMessage('');
+                      SetPassword(e.target.value);
+                      SetToastMessage('');
                     }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                    onKeyDown={(e) => e.key === 'Enter' && HandleLogin()}
                     className="auth-input pr-12"
                   />
 
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => SetShowPassword(!ShowPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                     aria-label={
-                      showPassword ? 'Ocultar senha' : 'Mostrar senha'
+                      ShowPassword ? 'Ocultar senha' : 'Mostrar senha'
                     }
                   >
-                    {showPassword ? eyeClosedIcon : eyeOpenIcon}
+                    {ShowPassword ? EyeClosedIcon : EyeOpenIcon}
                   </button>
                 </div>
 
-                <button onClick={handleLogin} className="auth-button mt-4">
+                <button onClick={HandleLogin} className="auth-button mt-4">
                   Entrar
                 </button>
               </div>
@@ -407,7 +406,7 @@ const Login = () => {
             </motion.div>
           )}
 
-          {step === 'signup' && (
+          {Step === 'signup' && (
             <motion.div
               key="signup"
               variants={panelVariants}
@@ -429,10 +428,10 @@ const Login = () => {
                 <input
                   type="text"
                   placeholder="Nome"
-                  value={name}
+                  value={Name}
                   onChange={(e) => {
-                    setName(e.target.value);
-                    setToastMessage('');
+                    SetName(e.target.value);
+                    SetToastMessage('');
                   }}
                   className="auth-input"
                 />
@@ -440,10 +439,10 @@ const Login = () => {
                 <input
                   type="text"
                   placeholder="Nickname"
-                  value={nickname}
+                  value={Nickname}
                   onChange={(e) => {
-                    setNickname(e.target.value);
-                    setToastMessage('');
+                    SetNickname(e.target.value);
+                    SetToastMessage('');
                   }}
                   className="auth-input"
                 />
@@ -451,10 +450,10 @@ const Login = () => {
                 <input
                   type="text"
                   placeholder="Data de nascimento (dd/mm/aaaa)"
-                  value={birthDate}
+                  value={BirthDate}
                   onChange={(e) => {
-                    setBirthDate(e.target.value);
-                    setToastMessage('');
+                    SetBirthDate(e.target.value);
+                    SetToastMessage('');
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
                   className="auth-input"
@@ -464,46 +463,46 @@ const Login = () => {
                 <input
                   type="email"
                   placeholder="E-mail"
-                  value={identifier}
+                  value={Identifier}
                   onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setToastMessage('');
+                    SetIdentifier(e.target.value);
+                    SetToastMessage('');
                   }}
                   className="auth-input"
                 />
 
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={ShowPassword ? 'text' : 'password'}
                     placeholder="Senha"
-                    value={password}
+                    value={Password}
                     onChange={(e) => {
-                      setPassword(e.target.value);
-                      setToastMessage('');
+                      SetPassword(e.target.value);
+                      SetToastMessage('');
                     }}
                     className="auth-input pr-12"
                   />
 
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => SetShowPassword(!ShowPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                     aria-label={
-                      showPassword ? 'Ocultar senha' : 'Mostrar senha'
+                      ShowPassword ? 'Ocultar senha' : 'Mostrar senha'
                     }
                   >
-                    {showPassword ? eyeClosedIcon : eyeOpenIcon}
+                    {ShowPassword ? EyeClosedIcon : EyeOpenIcon}
                   </button>
                 </div>
 
                 <div className="relative">
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={ShowConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirmar senha"
-                    value={confirmPassword}
+                    value={ConfirmPassword}
                     onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      setToastMessage('');
+                      SetConfirmPassword(e.target.value);
+                      SetToastMessage('');
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
                     className="auth-input pr-12"
@@ -511,15 +510,15 @@ const Login = () => {
 
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() => SetShowConfirmPassword(!ShowConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                     aria-label={
-                      showConfirmPassword
+                      ShowConfirmPassword
                         ? 'Ocultar confirmação de senha'
                         : 'Mostrar confirmação de senha'
                     }
                   >
-                    {showConfirmPassword ? eyeClosedIcon : eyeOpenIcon}
+                    {ShowConfirmPassword ? EyeClosedIcon : EyeOpenIcon}
                   </button>
                 </div>
 
@@ -552,7 +551,7 @@ const Login = () => {
       </div>
 
       <AnimatePresence>
-        {toastMessage && (
+        {ToastMessage && (
           <motion.div
             initial={{ opacity: 0, x: 80, y: 20 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
@@ -565,7 +564,7 @@ const Login = () => {
             }}
           >
             <button
-              onClick={closeToast}
+              onClick={CloseToast}
               className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center border-2 border-transparent text-[10px] text-white hover:border-white/40"
               style={{
                 borderRadius: 0,
@@ -584,7 +583,7 @@ const Login = () => {
                 imageRendering: 'pixelated',
               }}
             >
-              {toastMessage}
+              {ToastMessage}
             </p>
           </motion.div>
         )}
