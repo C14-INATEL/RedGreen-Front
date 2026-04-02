@@ -17,14 +17,17 @@ const SLOT_BUTTON_CENTER_OFFSET = {
 } as const;
 
 type SlotButtonLayout = {
+  action: 'reroll' | 'resetIdle';
   centerX: number;
   centerY: number;
   color: SlotButtonColor;
   id: string;
   label: string;
+  reelIndex?: number;
 };
 
 type SlotButtonLayoutConfig = {
+  action?: 'reroll' | 'resetIdle';
   centerX?: number;
   centerY?: number;
   color: SlotButtonColor;
@@ -32,14 +35,18 @@ type SlotButtonLayoutConfig = {
   label: string;
   offsetX?: number;
   offsetY?: number;
-  slotIndex?: number;
+  reelIndex?: number;
 };
 
 type SlotMachineButtonsProps = {
+  canResetToIdle?: boolean;
+  canReroll?: boolean;
   machineSize: {
     height: number;
     width: number;
   };
+  onResetToIdle?: () => void;
+  onRerollReel?: (reelIndex: number) => void;
 };
 
 const getSlotButtonStyle = (
@@ -69,12 +76,14 @@ const getSlotButtonStyle = (
 
 const SLOT_BUTTON_LAYOUT_CONFIGS: readonly SlotButtonLayoutConfig[] = [
   ...Array.from({ length: SLOT_TOP_BUTTON_COUNT }, (_, index) => ({
+    action: 'reroll' as const,
     color: 'red' as const,
     id: `slot-button-${index + 1}`,
     label: `Botao ${index + 1} da maquina`,
-    slotIndex: index,
+    reelIndex: index,
   })),
   {
+    action: 'resetIdle',
     color: 'blue',
     centerX: SLOT_BLUE_BUTTON_CENTER.x,
     centerY: SLOT_BLUE_BUTTON_CENTER.y,
@@ -93,13 +102,15 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] =
       label,
       offsetX = 0,
       offsetY = 0,
-      slotIndex,
+      action = 'reroll',
+      reelIndex,
     }) => ({
+      action,
       centerX:
         (centerX ??
           SLOT_BUTTON_PANEL_LEFT +
             SLOT_BUTTON_HALF_SIZE +
-            SLOT_BUTTON_STEP * (slotIndex ?? 0)) +
+            SLOT_BUTTON_STEP * (reelIndex ?? 0)) +
         SLOT_BUTTON_CENTER_OFFSET.x +
         offsetX,
       centerY:
@@ -109,20 +120,44 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] =
       color,
       id,
       label,
+      reelIndex,
     })
   );
 
 export const SlotMachineButtons = ({
+  canResetToIdle = false,
+  canReroll = false,
   machineSize,
+  onResetToIdle,
+  onRerollReel,
 }: SlotMachineButtonsProps) => (
   <div className="pointer-events-none absolute inset-0">
-    {SLOT_BUTTON_LAYOUTS.map(({ centerX, centerY, color, id, label }) => (
-      <SlotButton
-        color={color}
-        key={id}
-        label={label}
-        style={getSlotButtonStyle(centerX, centerY, machineSize)}
-      />
-    ))}
+    {SLOT_BUTTON_LAYOUTS.map(
+      ({ action, centerX, centerY, color, id, label, reelIndex }) => (
+        <SlotButton
+          color={color}
+          disabled={
+            action === 'resetIdle'
+              ? !canResetToIdle
+              : !canReroll || reelIndex === undefined
+          }
+          key={id}
+          label={label}
+          onPress={() => {
+            if (action === 'resetIdle') {
+              onResetToIdle?.();
+              return;
+            }
+
+            if (reelIndex === undefined) {
+              return;
+            }
+
+            onRerollReel?.(reelIndex);
+          }}
+          style={getSlotButtonStyle(centerX, centerY, machineSize)}
+        />
+      )
+    )}
   </div>
 );

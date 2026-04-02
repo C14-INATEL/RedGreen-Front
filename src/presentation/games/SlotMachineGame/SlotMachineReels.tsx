@@ -12,6 +12,7 @@ import {
   WRAP_MODES,
 } from 'pixi.js';
 import { getTestSlotMachineSpinResult } from './testSlotMachineSpinMock';
+import { getTestSlotMachineRerollResult } from './testSlotMachineRerollMock';
 import {
   getSlotMachineTextureIndexBySymbolId,
   getSlotMachineTextureUrls,
@@ -28,7 +29,6 @@ const REEL_GAP_RATIO = 232 / 2200;
 const REEL_CORNER_RATIO = 0.08;
 const REEL_PADDING_RATIO = 0.1;
 const DEFAULT_EXTRA_SPIN_STEPS = 2;
-const RESULT_TO_IDLE_DELAY_MS = 1800;
 const SLOT_MACHINE_IDLE_CONFIG = {
   baseSpeedPxPerMs: 0.42,
   randomVariancePxPerMs: 0.05,
@@ -40,7 +40,10 @@ type SlotMachineReelsProps = Pick<
   HTMLAttributes<HTMLDivElement>,
   'className' | 'style'
 > & {
+  idleRequestId?: number;
+  onMachineModeChange?: (mode: SlotMachineReelsMode) => void;
   onRealSpinStateChange?: (isRunning: boolean) => void;
+  rerollRequest?: SlotMachineReelsRerollRequest | null;
   spinRequestId?: number;
 };
 
@@ -70,11 +73,21 @@ type ReelState = {
   viewHeight: number;
 };
 
-type SlotMachineReelsMode = 'idle' | 'realSpin' | 'resultHold';
+export type SlotMachineReelsMode =
+  | 'idle'
+  | 'realSpin'
+  | 'rerollSpin'
+  | 'resultHold';
+
+export type SlotMachineReelsRerollRequest = {
+  id: number;
+  reelIndex: number;
+};
 
 type SlotMachineReelsControls = {
-  enterIdleMode: () => void;
-  startRealSpin: () => void;
+  enterIdleMode: () => boolean;
+  startRealSpin: () => boolean;
+  startReroll: (reelIndex: number) => boolean;
 };
 
 const SPIN_DIRECTION_MULTIPLIER: Record<SlotMachineSpinDirection, 1 | -1> = {
@@ -162,6 +175,22 @@ const applyCellTexture = (
     reel.viewHeight
   );
   positionCellSprite(cell, reel);
+};
+
+const restoreVisibleReelTexture = (
+  reel: ReelState,
+  textureIndex: number,
+  textures: Texture[]
+) => {
+  const visibleCell = getVisibleCell(reel);
+
+  applyCellTexture(reel, visibleCell, textureIndex, textures);
+  reel.currentTextureIndex = visibleCell.textureIndex;
+  reel.isSpinning = false;
+  reel.scrollOffset = 0;
+  reel.speedPxPerMs = 0;
+  reel.stopPlan = null;
+  syncReelStripPosition(reel);
 };
 
 const getNextRecycleTextureIndex = (
@@ -393,14 +422,23 @@ const createReels = (width: number, height: number, textures: Texture[]) => {
 
 export const SlotMachineReels = ({
   className,
+  idleRequestId = 0,
+  onMachineModeChange,
   onRealSpinStateChange,
+  rerollRequest = null,
   spinRequestId = 0,
   style,
 }: SlotMachineReelsProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<SlotMachineReelsControls | null>(null);
+  const handledIdleRequestIdRef = useRef(0);
+  const handledRerollRequestIdRef = useRef(0);
   const handledSpinRequestIdRef = useRef(0);
+  const latestIdleRequestIdRef = useRef(idleRequestId);
+  const latestRerollRequestRef =
+    useRef<SlotMachineReelsRerollRequest | null>(rerollRequest);
   const latestSpinRequestIdRef = useRef(spinRequestId);
+  const onMachineModeChangeRef = useRef(onMachineModeChange);
   const onRealSpinStateChangeRef = useRef(onRealSpinStateChange);
 
   useEffect(() => {
@@ -413,9 +451,45 @@ export const SlotMachineReels = ({
       return;
     }
 
-    handledSpinRequestIdRef.current = spinRequestId;
-    controlsRef.current.startRealSpin();
+    if (controlsRef.current.startRealSpin()) {
+      handledSpinRequestIdRef.current = spinRequestId;
+    }
   }, [spinRequestId]);
+
+  useEffect(() => {
+    latestIdleRequestIdRef.current = idleRequestId;
+
+    if (
+      !controlsRef.current ||
+      idleRequestId <= handledIdleRequestIdRef.current
+    ) {
+      return;
+    }
+
+    if (controlsRef.current.enterIdleMode()) {
+      handledIdleRequestIdRef.current = idleRequestId;
+    }
+  }, [idleRequestId]);
+
+  useEffect(() => {
+    latestRerollRequestRef.current = rerollRequest;
+
+    if (
+      !controlsRef.current ||
+      !rerollRequest ||
+      rerollRequest.id <= handledRerollRequestIdRef.current
+    ) {
+      return;
+    }
+
+    if (controlsRef.current.startReroll(rerollRequest.reelIndex)) {
+      handledRerollRequestIdRef.current = rerollRequest.id;
+    }
+  }, [rerollRequest]);
+
+  useEffect(() => {
+    onMachineModeChangeRef.current = onMachineModeChange;
+  }, [onMachineModeChange]);
 
   useEffect(() => {
     onRealSpinStateChangeRef.current = onRealSpinStateChange;
@@ -439,6 +513,7 @@ export const SlotMachineReels = ({
     let lastHeight = 0;
     let actionTimeoutIds: number[] = [];
     let currentMode: SlotMachineReelsMode = 'idle';
+    let isReady = false;
 
     const clearActionTimeouts = () => {
       actionTimeoutIds.forEach((timeoutId) => {
@@ -467,6 +542,15 @@ export const SlotMachineReels = ({
       onRealSpinStateChangeRef.current?.(isRunning);
     };
 
+    const notifyMachineModeChange = (mode: SlotMachineReelsMode) => {
+      onMachineModeChangeRef.current?.(mode);
+    };
+
+    const setCurrentMode = (mode: SlotMachineReelsMode) => {
+      currentMode = mode;
+      notifyMachineModeChange(mode);
+    };
+
     const startSpin = (
       speedPxPerMs: number,
       direction: SlotMachineSpinDirection
@@ -482,13 +566,42 @@ export const SlotMachineReels = ({
       });
     };
 
-    const enterIdleMode = () => {
-      if (!reels.length) {
+    const startReelSpin = (
+      reelIndex: number,
+      speedPxPerMs: number,
+      direction: SlotMachineSpinDirection
+    ) => {
+      const reel = reels[reelIndex];
+
+      if (!reel) {
         return;
       }
 
+      reels.forEach((currentReel, currentReelIndex) => {
+        currentReel.currentTextureIndex = getVisibleCell(currentReel).textureIndex;
+        currentReel.scrollOffset = 0;
+        currentReel.stopPlan = null;
+
+        if (currentReelIndex === reelIndex) {
+          currentReel.isSpinning = true;
+          currentReel.speedPxPerMs = speedPxPerMs;
+          currentReel.spinDirection = SPIN_DIRECTION_MULTIPLIER[direction];
+        } else {
+          currentReel.isSpinning = false;
+          currentReel.speedPxPerMs = 0;
+        }
+
+        syncReelStripPosition(currentReel);
+      });
+    };
+
+    const enterIdleMode = () => {
+      if (!isReady || !reels.length) {
+        return false;
+      }
+
       clearActionTimeouts();
-      currentMode = 'idle';
+      setCurrentMode('idle');
 
       reels.forEach((reel) => {
         reel.currentTextureIndex = getVisibleCell(reel).textureIndex;
@@ -502,6 +615,7 @@ export const SlotMachineReels = ({
       });
 
       notifyRealSpinStateChange(false);
+      return true;
     };
 
     const stopReel = (
@@ -556,12 +670,12 @@ export const SlotMachineReels = ({
     };
 
     const startRealSpin = () => {
-      if (!reels.length || currentMode !== 'idle') {
-        return;
+      if (!isReady || !reels.length || currentMode !== 'idle') {
+        return false;
       }
 
       clearActionTimeouts();
-      currentMode = 'realSpin';
+      setCurrentMode('realSpin');
       notifyRealSpinStateChange(true);
 
       const nextMockSpinResult = getTestSlotMachineSpinResult();
@@ -573,6 +687,46 @@ export const SlotMachineReels = ({
       scheduleTimeout(() => {
         applyMockResult(nextMockSpinResult);
       }, nextMockSpinResult.responseDelayMs);
+
+      return true;
+    };
+
+    const startReroll = (requestedReelIndex: number) => {
+      if (!isReady || !reels.length || currentMode !== 'resultHold') {
+        return false;
+      }
+
+      const nextMockRerollResult =
+        getTestSlotMachineRerollResult(requestedReelIndex);
+      const targetTextureIndex = getSlotMachineTextureIndexBySymbolId(
+        nextMockRerollResult.symbolId
+      );
+
+      if (
+        nextMockRerollResult.reelIndex !== requestedReelIndex ||
+        targetTextureIndex < 0
+      ) {
+        return false;
+      }
+
+      clearActionTimeouts();
+      setCurrentMode('rerollSpin');
+      notifyRealSpinStateChange(true);
+      startReelSpin(
+        requestedReelIndex,
+        nextMockRerollResult.spinSpeedPxPerMs,
+        nextMockRerollResult.spinDirection
+      );
+
+      scheduleTimeout(() => {
+        stopReel(
+          requestedReelIndex,
+          targetTextureIndex,
+          nextMockRerollResult.extraSpinSteps ?? DEFAULT_EXTRA_SPIN_STEPS
+        );
+      }, nextMockRerollResult.responseDelayMs);
+
+      return true;
     };
 
     const consumePendingSpinRequest = () => {
@@ -582,8 +736,36 @@ export const SlotMachineReels = ({
         return;
       }
 
-      handledSpinRequestIdRef.current = latestSpinRequestIdRef.current;
-      startRealSpin();
+      if (startRealSpin()) {
+        handledSpinRequestIdRef.current = latestSpinRequestIdRef.current;
+      }
+    };
+
+    const consumePendingIdleRequest = () => {
+      if (
+        latestIdleRequestIdRef.current <= handledIdleRequestIdRef.current
+      ) {
+        return;
+      }
+
+      if (enterIdleMode()) {
+        handledIdleRequestIdRef.current = latestIdleRequestIdRef.current;
+      }
+    };
+
+    const consumePendingRerollRequest = () => {
+      const latestRerollRequest = latestRerollRequestRef.current;
+
+      if (
+        !latestRerollRequest ||
+        latestRerollRequest.id <= handledRerollRequestIdRef.current
+      ) {
+        return;
+      }
+
+      if (startReroll(latestRerollRequest.reelIndex)) {
+        handledRerollRequestIdRef.current = latestRerollRequest.id;
+      }
     };
 
     const rebuild = () => {
@@ -605,13 +787,40 @@ export const SlotMachineReels = ({
       lastWidth = width;
       lastHeight = height;
       app.renderer.resize(width, height);
+      const shouldRestoreResultHold = currentMode === 'resultHold';
+      const previousResultTextureIndices = shouldRestoreResultHold
+        ? reels.map((reel) => getVisibleCell(reel).textureIndex)
+        : [];
       destroyChildren(root);
 
       const scene = createReels(width, height, textures);
       root.addChild(scene.root);
       reels = scene.reels;
+      isReady = true;
+
+      if (
+        shouldRestoreResultHold &&
+        previousResultTextureIndices.length === SLOT_MACHINE_REEL_COUNT
+      ) {
+        previousResultTextureIndices.forEach((textureIndex, reelIndex) => {
+          const reel = reels[reelIndex];
+
+          if (!reel) {
+            return;
+          }
+
+          restoreVisibleReelTexture(reel, textureIndex, textures);
+        });
+
+        setCurrentMode('resultHold');
+        notifyRealSpinStateChange(false);
+        return true;
+      }
+
       enterIdleMode();
+      consumePendingIdleRequest();
       consumePendingSpinRequest();
+      consumePendingRerollRequest();
 
       return true;
     };
@@ -642,13 +851,11 @@ export const SlotMachineReels = ({
       updateReels(reels, app.ticker.deltaMS, textures);
 
       if (
-        currentMode === 'realSpin' &&
+        (currentMode === 'realSpin' || currentMode === 'rerollSpin') &&
         reels.every((reel) => !reel.isSpinning)
       ) {
-        currentMode = 'resultHold';
-        scheduleTimeout(() => {
-          enterIdleMode();
-        }, RESULT_TO_IDLE_DELAY_MS);
+        setCurrentMode('resultHold');
+        notifyRealSpinStateChange(false);
       }
     };
 
@@ -711,12 +918,14 @@ export const SlotMachineReels = ({
       }
 
       nextApp.ticker.add(handleTick);
+      controlsRef.current = {
+        enterIdleMode,
+        startRealSpin,
+        startReroll,
+      };
+      consumePendingIdleRequest();
       consumePendingSpinRequest();
-    };
-
-    controlsRef.current = {
-      enterIdleMode,
-      startRealSpin,
+      consumePendingRerollRequest();
     };
 
     void setup();
@@ -726,6 +935,7 @@ export const SlotMachineReels = ({
       controlsRef.current = null;
       clearActionTimeouts();
       observer?.disconnect();
+      isReady = false;
       reels = [];
       textures = [];
       lastWidth = 0;

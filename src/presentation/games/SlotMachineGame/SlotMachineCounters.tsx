@@ -1,7 +1,6 @@
 import { SlotMachineCounter } from './SlotMachineCounter';
 
 const SLOT_MACHINE_SIZE = 4096;
-const SLOT_COUNTER_COUNT = 5;
 const SLOT_COUNTER_SIZE = {
   height: 224,
   width: 160,
@@ -25,18 +24,16 @@ type SlotMachineCounterLayout = {
 };
 
 const DEFAULT_COUNTER_STATES = Array.from(
-  { length: SLOT_COUNTER_COUNT },
+  { length: 5 },
   () => false
 ) as readonly boolean[];
 
-const SLOT_COUNTER_LAYOUTS: readonly SlotMachineCounterLayout[] = Array.from(
-  { length: SLOT_COUNTER_COUNT },
-  (_, index) => ({
+const getSlotCounterLayouts = (counterCount: number) =>
+  Array.from({ length: counterCount }, (_, index) => ({
     id: `slot-counter-${index + 1}`,
     left: SLOT_COUNTER_PANEL_LEFT + SLOT_COUNTER_STEP * index,
     top: SLOT_COUNTER_PANEL_TOP,
-  })
-);
+  })) as readonly SlotMachineCounterLayout[];
 
 const getSlotCounterStyle = (
   left: number,
@@ -64,14 +61,20 @@ const getSlotCounterStyle = (
 export const SlotMachineCounters = ({
   machineSize,
   states = DEFAULT_COUNTER_STATES,
-}: SlotMachineCountersProps) => (
-  <div className="pointer-events-none absolute inset-0">
-    {SLOT_COUNTER_LAYOUTS.map(({ id, left, top }, index) => (
-      <SlotMachineCounter
-        active={states[index] ?? false}
-        key={id}
-        style={getSlotCounterStyle(left, top, machineSize)}
-      />
-    ))}
-  </div>
-);
+}: SlotMachineCountersProps) => {
+  const normalizedStates =
+    states.length > 0 ? states : DEFAULT_COUNTER_STATES;
+  const counterLayouts = getSlotCounterLayouts(normalizedStates.length);
+
+  return (
+    <div className="pointer-events-none absolute inset-0">
+      {counterLayouts.map(({ id, left, top }, index) => (
+        <SlotMachineCounter
+          active={normalizedStates[index] ?? false}
+          key={id}
+          style={getSlotCounterStyle(left, top, machineSize)}
+        />
+      ))}
+    </div>
+  );
+};

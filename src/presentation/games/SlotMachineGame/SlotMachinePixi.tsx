@@ -3,9 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { SlotMachineButtons } from './SlotMachineButtons';
 import { SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
-import { SlotMachineReels } from './SlotMachineReels';
+import {
+  SlotMachineReels,
+  type SlotMachineReelsMode,
+  type SlotMachineReelsRerollRequest,
+} from './SlotMachineReels';
 
 const SLOT_MACHINE_SIZE = 4096;
+const MAX_REROLLS = 5;
 const SLOT_MACHINE_REEL_AREA = {
   height: 728,
   left: 928,
@@ -26,14 +31,20 @@ const getMachineAreaStyle = (
   const yScale = machineSize.height / SLOT_MACHINE_SIZE;
   const hasMachineSize = machineSize.width > 0 && machineSize.height > 0;
 
-
   return {
-    height: `${hasMachineSize ? Math.max(1, Math.round(area.height * yScale)) : 0}px`,
+    height: `${
+      hasMachineSize ? Math.max(1, Math.round(area.height * yScale)) : 0
+    }px`,
     left: `${Math.round(area.left * xScale)}px`,
     top: `${Math.round(area.top * yScale)}px`,
-    width: `${hasMachineSize ? Math.max(1, Math.round(area.width * xScale)) : 0}px`,
+    width: `${
+      hasMachineSize ? Math.max(1, Math.round(area.width * xScale)) : 0
+    }px`,
   };
 };
+
+const getRerollCounterStates = (rerollsRemaining: number) =>
+  Array.from({ length: MAX_REROLLS }, (_, index) => index < rerollsRemaining);
 
 export const SlotMachinePixi = () => {
   const machineRef = useRef<HTMLDivElement | null>(null);
@@ -41,8 +52,17 @@ export const SlotMachinePixi = () => {
     height: number;
     width: number;
   }>(EMPTY_MACHINE_SIZE);
+  const [idleRequestId, setIdleRequestId] = useState(0);
+  const [machineMode, setMachineMode] =
+    useState<SlotMachineReelsMode>('idle');
+  const [pendingAction, setPendingAction] = useState<
+    'idle' | 'reroll' | 'spin' | null
+  >(null);
   const [realSpinRequestId, setRealSpinRequestId] = useState(0);
-  const [isRealSpinRunning, setIsRealSpinRunning] = useState(false);
+  const [rerollRequest, setRerollRequest] =
+    useState<SlotMachineReelsRerollRequest | null>(null);
+  const [rerollsRemaining, setRerollsRemaining] = useState(MAX_REROLLS);
+  const [isMachineAnimating, setIsMachineAnimating] = useState(false);
 
   useEffect(() => {
     const machine = machineRef.current;
@@ -74,13 +94,67 @@ export const SlotMachinePixi = () => {
     };
   }, []);
 
+  const canReturnToIdle =
+    machineMode === 'resultHold' &&
+    !isMachineAnimating &&
+    pendingAction === null;
+  const canStartSpin =
+    machineMode === 'idle' && !isMachineAnimating && pendingAction === null;
+  const canUseReroll =
+    machineMode === 'resultHold' &&
+    !isMachineAnimating &&
+    pendingAction === null &&
+    rerollsRemaining > 0;
+
   const handleLeverPull = () => {
-    if (isRealSpinRunning) {
+    if (!canStartSpin) {
       return;
     }
 
-    setIsRealSpinRunning(true);
+    setPendingAction('spin');
+    setRerollsRemaining(MAX_REROLLS);
     setRealSpinRequestId((currentValue) => currentValue + 1);
+  };
+
+  const handleReturnToIdle = () => {
+    if (!canReturnToIdle) {
+      return;
+    }
+
+    setPendingAction('idle');
+    setIdleRequestId((currentValue) => currentValue + 1);
+  };
+
+  const handleRerollReel = (reelIndex: number) => {
+    if (!canUseReroll) {
+      return;
+    }
+
+    setPendingAction('reroll');
+    setRerollsRemaining((currentValue) => Math.max(0, currentValue - 1));
+    setRerollRequest((currentValue) => ({
+      id: (currentValue?.id ?? 0) + 1,
+      reelIndex,
+    }));
+  };
+
+  const handleMachineModeChange = (nextMode: SlotMachineReelsMode) => {
+    setMachineMode(nextMode);
+    setPendingAction((currentValue) => {
+      if (currentValue === 'idle' && nextMode === 'idle') {
+        return null;
+      }
+
+      if (currentValue === 'spin' && nextMode === 'realSpin') {
+        return null;
+      }
+
+      if (currentValue === 'reroll' && nextMode === 'rerollSpin') {
+        return null;
+      }
+
+      return currentValue;
+    });
   };
 
   return (
@@ -97,24 +171,38 @@ export const SlotMachinePixi = () => {
 
       <SlotMachineReels
         className="pointer-events-none absolute"
-        onRealSpinStateChange={setIsRealSpinRunning}
+        idleRequestId={idleRequestId}
+        onMachineModeChange={handleMachineModeChange}
+        onRealSpinStateChange={(isRunning) => {
+          setIsMachineAnimating(isRunning);
+
+          if (isRunning) {
+            setPendingAction(null);
+          }
+        }}
+        rerollRequest={rerollRequest}
         spinRequestId={realSpinRequestId}
         style={getMachineAreaStyle(machineSize, SLOT_MACHINE_REEL_AREA)}
       />
 
-      <SlotMachineButtons machineSize={machineSize} />
+      <SlotMachineButtons
+        canResetToIdle={canReturnToIdle}
+        canReroll={canUseReroll}
+        machineSize={machineSize}
+        onResetToIdle={handleReturnToIdle}
+        onRerollReel={handleRerollReel}
+      />
 
       <SlotMachineCounters
         machineSize={machineSize}
-        states={[false, true, true, true, true]}
+        states={getRerollCounterStates(rerollsRemaining)}
       />
 
       <SlotMachineLever
-        disabled={isRealSpinRunning}
+        disabled={!canStartSpin}
         machineSize={machineSize}
         onPull={handleLeverPull}
       />
-
     </div>
   );
 };
