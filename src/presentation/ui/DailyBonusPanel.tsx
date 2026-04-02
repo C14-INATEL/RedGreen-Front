@@ -71,7 +71,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
               className="w-[92vw] max-w-2xl pointer-events-auto"
               style={{ zIndex: 60 }}
             >
-              <div className="bg-secondary/95 border-2 border-casino-gold/40 shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
+              <div className="bg-secondary border-2 border-casino-gold/40 shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
                 <div className="flex items-center gap-2 px-5 py-3 border-b-2 border-border/30 bg-[hsl(var(--accent))]/10">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <rect
