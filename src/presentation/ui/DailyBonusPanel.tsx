@@ -68,12 +68,12 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="w-[92vw] max-w-2xl pointer-events-auto"
+              className="w-[92vw] max-w-5xl pointer-events-auto"
               style={{ zIndex: 60 }}
             >
               <div className="bg-secondary border-2 border-casino-gold/40 shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
-                <div className="flex items-center gap-2 px-5 py-3 border-b-2 border-border/30 bg-[hsl(var(--accent))]/10">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <div className="flex items-center gap-3 px-6 py-4 border-b-2 border-border/30 bg-[hsl(var(--accent))]/10">
+                  <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                     <rect
                       x="2"
                       y="6"
@@ -117,10 +117,10 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                       fill="hsl(var(--cassino-red))"
                     />
                   </svg>
-                  <span className="font-display text-xs uppercase tracking-[0.2em] text-foreground/80 flex-1">
+                  <span className="font-display text-sm uppercase tracking-[0.2em] text-foreground/80 flex-1">
                     Bônus Diário
                   </span>
-                  <span className="text-[8px] text-accent font-display tracking-wider">
+                  <span className="text-[10px] text-accent font-mono tracking-wider">
                     Dia {CurrentDay !== -1 ? CurrentDay + 1 : 7}/7
                   </span>
                   <button
@@ -131,7 +131,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                   </button>
                 </div>
 
-                <div className="p-4 grid grid-cols-7 gap-2.5">
+                <div className="p-6 grid grid-cols-7 gap-4">
                   {Days.map((Day, I) => {
                     const IsCurrent = I === CurrentDay;
                     const IsClaimed = Day.claimed;
@@ -143,7 +143,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.05 * I }}
                         className={`
-                        flex flex-col items-center py-4 px-2 border-2 transition-all relative
+                        flex flex-col items-center py-6 px-3 border-2 transition-all relative
                         ${
                           IsCurrent
                             ? 'border-accent bg-accent/15 shadow-[0_0_12px_hsl(var(--accent)/0.3)]'
@@ -154,7 +154,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                       `}
                       >
                         <span
-                          className={`text-[11px] font-display font-bold mb-2 ${
+                          className={`text-[18px] font-mono font-bold mb-3 ${
                             IsCurrent
                               ? 'text-accent'
                               : IsClaimed
@@ -165,11 +165,11 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                           {String(Day.day).padStart(2, '0')}
                         </span>
 
-                        <div className="mb-2">
+                        <div className="mb-3">
                           {IsClaimed ? (
                             <svg
-                              width="28"
-                              height="28"
+                              width="32"
+                              height="32"
                               viewBox="0 0 16 16"
                               fill="none"
                             >
@@ -210,12 +210,12 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                               />
                             </svg>
                           ) : (
-                            <PixelChip size={28} />
+                            <PixelChip size={32} />
                           )}
                         </div>
 
                         <span
-                          className={`text-[9px] font-display ${
+                          className={`text-[13px] font-mono font-semibold ${
                             IsCurrent
                               ? 'text-accent'
                               : IsClaimed
@@ -238,12 +238,12 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                   })}
                 </div>
 
-                <div className="px-4 pb-4">
+                <div className="px-6 pb-6">
                   <button
                     onClick={HandleClaim}
                     disabled={!CanClaim}
                     className={`
-                    w-full py-3 font-display text-xs uppercase tracking-[0.2em] border-2 transition-all
+                    w-full py-4 font-display text-sm uppercase tracking-[0.2em] border-2 transition-all
                     shadow-[3px_3px_0px_rgba(0,0,0,0.4)]
                     ${
                       CanClaim
@@ -252,9 +252,17 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                     }
                   `}
                   >
-                    {CanClaim
-                      ? `Resgatar ${Days[CurrentDay].chips.toLocaleString('pt-BR')} fichas`
-                      : 'Todos os bônus resgatados!'}
+                    {CanClaim ? (
+                      <>
+                        Resgatar{' '}
+                        <span className="font-mono font-bold">
+                          {Days[CurrentDay].chips.toLocaleString('pt-BR')}
+                        </span>{' '}
+                        fichas
+                      </>
+                    ) : (
+                      'Todos os bônus resgatados!'
+                    )}
                   </button>
                 </div>
               </div>
