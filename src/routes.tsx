@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { paths } from './paths';
-import  Home  from './presentation/pages/Home';
+import Home from './presentation/pages/Home';
 import { SlotMachineRoom } from './presentation/pages/SlotMachineRoom';
 
 const Login = () => <div>Login</div>;
