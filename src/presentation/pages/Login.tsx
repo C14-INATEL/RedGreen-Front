@@ -69,21 +69,32 @@ const Login = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const IsValidBirthDate = (value: string) => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return false;
+  const IsBirthDateFormatValid = (Value: string) => {
+    return /^\d{2}\/\d{2}\/\d{4}$/.test(Value);
+  };
 
-    const [day, month, year] = value.split('/').map(Number);
+  const IsValidBirthDate = (Value: string) => {
+    const [Day, Month, Year] = Value.split('/').map(Number);
 
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
+    if (Month < 1 || Month > 12) return false;
+    if (Day < 1 || Day > 31) return false;
 
-    const date = new Date(year, month - 1, day);
+    const DateObj = new Date(Year, Month - 1, Day);
 
-    return (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
-    );
+    const IsRealDate =
+      DateObj.getFullYear() === Year &&
+      DateObj.getMonth() === Month - 1 &&
+      DateObj.getDate() === Day;
+
+    if (!IsRealDate) return false;
+
+    const Today = new Date();
+    Today.setHours(0, 0, 0, 0);
+    DateObj.setHours(0, 0, 0, 0);
+
+    if (DateObj > Today) return false;
+
+    return true;
   };
 
   const HandleContinue = async () => {
@@ -197,8 +208,13 @@ const Login = () => {
       return;
     }
 
-    if (!IsValidBirthDate(BirthDate)) {
+    if (!IsBirthDateFormatValid(BirthDate)) {
       SetToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
+      return;
+    }
+
+    if (!IsValidBirthDate(BirthDate)) {
+      SetToastMessage('ERRO\nDATA INVÁLIDA.');
       return;
     }
 
@@ -449,15 +465,27 @@ const Login = () => {
 
                 <input
                   type="text"
-                  placeholder="Data de nascimento (dd/mm/aaaa)"
+                  placeholder="DD/MM/AAAA"
                   value={BirthDate}
                   onChange={(e) => {
-                    SetBirthDate(e.target.value);
+                    const RawValue = e.target.value
+                      .replace(/\D/g, '')
+                      .slice(0, 8);
+
+                    let FormattedValue = RawValue;
+
+                    if (RawValue.length > 2 && RawValue.length <= 4) {
+                      FormattedValue = `${RawValue.slice(0, 2)}/${RawValue.slice(2)}`;
+                    } else if (RawValue.length > 4) {
+                      FormattedValue = `${RawValue.slice(0, 2)}/${RawValue.slice(2, 4)}/${RawValue.slice(4)}`;
+                    }
+
+                    SetBirthDate(FormattedValue);
                     SetToastMessage('');
                   }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
-                  className="auth-input"
+                  inputMode="numeric"
                   maxLength={10}
+                  className="auth-input"
                 />
 
                 <input
