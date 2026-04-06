@@ -40,6 +40,7 @@ type SlotMachineButtonsProps = {
     height: number;
     width: number;
   };
+  onRedButtonPress?: () => void;
 };
 
 const getSlotButtonStyle = (
@@ -114,6 +115,7 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] =
 
 export const SlotMachineButtons = ({
   machineSize,
+  onRedButtonPress,
 }: SlotMachineButtonsProps) => (
   <div className="pointer-events-none absolute inset-0">
     {SLOT_BUTTON_LAYOUTS.map(({ centerX, centerY, color, id, label }) => (
@@ -121,6 +123,7 @@ export const SlotMachineButtons = ({
         color={color}
         key={id}
         label={label}
+        onPress={color === 'red' ? onRedButtonPress : undefined}
         style={getSlotButtonStyle(centerX, centerY, machineSize)}
       />
     ))}

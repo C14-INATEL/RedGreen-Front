@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { SlotMachineButtons } from './SlotMachineButtons';
-import { SlotMachineCounters } from './SlotMachineCounters';
+import { SLOT_COUNTER_COUNT, SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
 import { SlotMachineReels } from './SlotMachineReels';
 
@@ -26,7 +26,6 @@ const getMachineAreaStyle = (
   const yScale = machineSize.height / SLOT_MACHINE_SIZE;
   const hasMachineSize = machineSize.width > 0 && machineSize.height > 0;
 
-
   return {
     height: `${hasMachineSize ? Math.max(1, Math.round(area.height * yScale)) : 0}px`,
     left: `${Math.round(area.left * xScale)}px`,
@@ -41,6 +40,7 @@ export const SlotMachinePixi = () => {
     height: number;
     width: number;
   }>(EMPTY_MACHINE_SIZE);
+  const [redButtonPressCount, setRedButtonPressCount] = useState(0);
 
   useEffect(() => {
     const machine = machineRef.current;
@@ -72,6 +72,21 @@ export const SlotMachinePixi = () => {
     };
   }, []);
 
+  const handleRedButtonPress = () => {
+    setRedButtonPressCount((currentCount) =>
+      Math.min(currentCount + 1, SLOT_COUNTER_COUNT)
+    );
+  };
+
+  const handleLeverPull = () => {
+    setRedButtonPressCount(0);
+  };
+
+  const counterStates = Array.from(
+    { length: SLOT_COUNTER_COUNT },
+    (_, index) => index >= SLOT_COUNTER_COUNT - redButtonPressCount
+  );
+
   return (
     <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
       <img
@@ -89,15 +104,14 @@ export const SlotMachinePixi = () => {
         style={getMachineAreaStyle(machineSize, SLOT_MACHINE_REEL_AREA)}
       />
 
-      <SlotMachineButtons machineSize={machineSize} />
-
-      <SlotMachineCounters
+      <SlotMachineButtons
         machineSize={machineSize}
-        states={[false, true, true, true, true]}
+        onRedButtonPress={handleRedButtonPress}
       />
 
-      <SlotMachineLever machineSize={machineSize} />
+      <SlotMachineCounters machineSize={machineSize} states={counterStates} />
 
+      <SlotMachineLever machineSize={machineSize} onPull={handleLeverPull} />
     </div>
   );
 };
