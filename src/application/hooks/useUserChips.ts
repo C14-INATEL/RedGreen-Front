@@ -7,7 +7,7 @@ interface UserChips {
 }
 
 export const useUserChips = (enabled: boolean = true) => {
-  const { data, error, isLoading } = useSWR<UserChips>(
+  const { data, error, isLoading, mutate } = useSWR<UserChips>(
     enabled ? '/user/chips' : null,
     async (url) => {
       const response = await apiClient.get(url);
@@ -23,5 +23,6 @@ export const useUserChips = (enabled: boolean = true) => {
     chips: data?.chips ?? data?.ChipBalance,
     isLoading,
     error,
+    mutate,
   };
 };

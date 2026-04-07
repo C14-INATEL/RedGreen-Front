@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useDailyLogin } from '@application/hooks/useDailyLogin';
 
 interface DayReward {
   day: number;
@@ -21,18 +22,30 @@ const rewards: DayReward[] = [
 interface DailyBonusPanelProps {
   IsOpen: boolean;
   OnClose: () => void;
+  MutateChips?: () => void;
 }
 
-const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
+const DailyBonusPanel = ({ IsOpen, OnClose, MutateChips }: DailyBonusPanelProps) => {
   const [Days, SetDays] = useState(rewards);
   const CurrentDay = Days.findIndex((d) => !d.claimed);
-  const CanClaim = CurrentDay !== -1;
+  const {
+    ClaimDailyReward,
+    IsLoading,
+    Error,
+    LastReward,
+  } = useDailyLogin();
 
-  const HandleClaim = () => {
-    if (!CanClaim) return;
-    SetDays((Prev) =>
-      Prev.map((D, I) => (I === CurrentDay ? { ...D, claimed: true } : D))
-    );
+  const HandleClaim = async () => {
+    const Reward = await ClaimDailyReward();
+    if (Reward && CurrentDay !== -1) {
+      SetDays((Prev) =>
+        Prev.map((D, I) => (I === CurrentDay ? { ...D, claimed: true } : D))
+      );
+      // Refetch chips after successful claim
+      if (MutateChips) {
+        MutateChips();
+      }
+    }
   };
 
   const PixelChip = ({ size = 20 }: { size?: number }) => (
@@ -239,24 +252,48 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                 </div>
 
                 <div className="px-6 pb-6">
+                  {Error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-3 p-3 bg-red-500/20 border-2 border-red-500/40 text-red-400 text-sm font-mono"
+                    >
+                      {Error}
+                    </motion.div>
+                  )}
+
+                  {LastReward && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-3 p-3 bg-accent/20 border-2 border-accent/40 text-accent text-sm font-mono"
+                    >
+                      +{LastReward.Reward.toLocaleString('pt-BR')} fichas!
+                      Sequência: {LastReward.DailyStreak} dias
+                    </motion.div>
+                  )}
+
                   <button
                     onClick={HandleClaim}
-                    disabled={!CanClaim}
+                    disabled={CurrentDay === -1 || IsLoading}
                     className={`
                     w-full py-4 font-display text-sm uppercase tracking-[0.2em] border-2 transition-all
                     shadow-[3px_3px_0px_rgba(0,0,0,0.4)]
                     ${
-                      CanClaim
+                      CurrentDay !== -1 && !IsLoading
                         ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)]'
                         : 'bg-secondary/40 border-border/20 text-muted-foreground/30 cursor-not-allowed'
                     }
                   `}
                   >
-                    {CanClaim ? (
+                    {IsLoading ? (
+                      'Resgatando...'
+                    ) : CurrentDay !== -1 ? (
                       <>
                         Resgatar{' '}
                         <span className="font-mono font-bold">
-                          {Days[CurrentDay].chips.toLocaleString('pt-BR')}
+                          {Days[CurrentDay]?.chips.toLocaleString('pt-BR') ||
+                            '0'}
                         </span>{' '}
                         fichas
                       </>

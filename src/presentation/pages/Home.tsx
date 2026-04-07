@@ -27,7 +27,7 @@ const Home = () => {
   const [IsLoggedIn, SetIsLoggedIn] = useState(!!Token);
 
   const { nickname, isLoading: profileLoading } = useUserProfile(IsLoggedIn);
-  const { chips } = useUserChips(IsLoggedIn);
+  const { chips, mutate: MutateChips } = useUserChips(IsLoggedIn);
 
   const localNickname = StoredUser?.Nickname || StoredUser?.nickname;
   const localChips = StoredUser?.ChipBalance ?? StoredUser?.chips;
@@ -112,6 +112,7 @@ const Home = () => {
       <DailyBonusPanel
         IsOpen={DailyBonusOpen}
         OnClose={() => SetDailyBonusOpen(false)}
+        MutateChips={MutateChips}
       />
     </div>
   );
