@@ -7,6 +7,7 @@ import DailyBonusPanel from '@ui/DailyBonusPanel';
 import { motion } from 'framer-motion';
 import { Trophy, Gift } from 'lucide-react';
 import { useUserProfile } from '@application/hooks/useUserProfile';
+import { useUserChips } from '@application/hooks/useUserChips';
 
 const Home = () => {
   const Navigate = useNavigate();
@@ -26,12 +27,16 @@ const Home = () => {
   const [IsLoggedIn, SetIsLoggedIn] = useState(!!Token);
 
   const { nickname, isLoading: profileLoading } = useUserProfile(IsLoggedIn);
+  const { chips } = useUserChips(IsLoggedIn);
 
   const localNickname = StoredUser?.Nickname || StoredUser?.nickname;
+  const localChips = StoredUser?.ChipBalance ?? StoredUser?.chips;
+
   const PlayerName =
     nickname ??
     localNickname ??
     (IsLoggedIn && profileLoading ? 'Carregando...' : 'Convidado');
+  const Chips = chips ?? localChips ?? (IsLoggedIn ? 0 : 10000);
 
   const [RankingOpen, SetRankingOpen] = useState(false);
   const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
@@ -60,6 +65,7 @@ const Home = () => {
       <HUD
         IsLoggedIn={IsLoggedIn}
         PlayerName={PlayerName}
+        Chips={Chips}
         OnLogin={HandleLogin}
         OnLogout={HandleLogout}
       />

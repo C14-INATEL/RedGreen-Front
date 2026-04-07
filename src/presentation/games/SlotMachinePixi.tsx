@@ -26,7 +26,6 @@ const getMachineAreaStyle = (
   const yScale = machineSize.height / SLOT_MACHINE_SIZE;
   const hasMachineSize = machineSize.width > 0 && machineSize.height > 0;
 
-
   return {
     height: `${hasMachineSize ? Math.max(1, Math.round(area.height * yScale)) : 0}px`,
     left: `${Math.round(area.left * xScale)}px`,
@@ -97,7 +96,6 @@ export const SlotMachinePixi = () => {
       />
 
       <SlotMachineLever machineSize={machineSize} />
-
     </div>
   );
 };
