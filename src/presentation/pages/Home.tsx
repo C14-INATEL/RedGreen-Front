@@ -6,16 +6,33 @@ import RankingPanel from '@ui/RankingPanel';
 import DailyBonusPanel from '@ui/DailyBonusPanel';
 import { motion } from 'framer-motion';
 import { Trophy, Gift } from 'lucide-react';
+import { useUserProfile } from '@application/hooks/useUserProfile';
 
 const Home = () => {
   const Navigate = useNavigate();
 
-  const Token = localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
+  const storedUserValue = localStorage.getItem('user');
+  let StoredUser = null;
+
+  if (storedUserValue) {
+    try {
+      StoredUser = JSON.parse(storedUserValue);
+    } catch {
+      StoredUser = null;
+    }
+  }
+
   const [IsLoggedIn, SetIsLoggedIn] = useState(!!Token);
-  const [PlayerName, SetPlayerName] = useState(
-    Token ? 'Jogador Logado' : 'Convidado'
-  );
-  const [Chips, SetChips] = useState(Token ? 25000 : 10000);
+
+  const { nickname, isLoading: profileLoading } = useUserProfile(IsLoggedIn);
+
+  const localNickname = StoredUser?.Nickname || StoredUser?.nickname;
+  const PlayerName =
+    nickname ??
+    localNickname ??
+    (IsLoggedIn && profileLoading ? 'Carregando...' : 'Convidado');
+
   const [RankingOpen, SetRankingOpen] = useState(false);
   const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
 
@@ -24,10 +41,9 @@ const Home = () => {
   };
 
   const HandleLogout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     SetIsLoggedIn(false);
-    SetPlayerName('Convidado');
-    SetChips(10000);
     Navigate('/');
   };
 
@@ -44,7 +60,6 @@ const Home = () => {
       <HUD
         IsLoggedIn={IsLoggedIn}
         PlayerName={PlayerName}
-        Chips={Chips}
         OnLogin={HandleLogin}
         OnLogout={HandleLogout}
       />
