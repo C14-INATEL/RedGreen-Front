@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createElement, useState } from 'react';
 import { SlotMachineButtons } from '../src/presentation/games/SlotMachineButtons';
@@ -28,7 +21,10 @@ const getRedButtons = () =>
 const getLeverButton = () =>
   screen.getByRole('button', { name: /Alavanca da maquina/i });
 
-const countCounterSprites = (container: HTMLElement, spriteSource: string) =>
+const countCounterSprites = (
+  container: HTMLElement,
+  spriteSource: string
+) =>
   Array.from(container.querySelectorAll('img')).filter(
     (image) => image.getAttribute('src') === spriteSource
   ).length;

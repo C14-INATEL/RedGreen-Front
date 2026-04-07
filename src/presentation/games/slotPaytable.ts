@@ -60,6 +60,9 @@ export const SLOT_PAYTABLE_ENTRIES: readonly SlotPaytableEntry[] = [
   {
     id: 'watermelon-4',
     prize: '100',
-    symbols: Array.from({ length: 4 }, () => SLOT_SYMBOL_SOURCES.watermelon),
+    symbols: Array.from(
+      { length: 4 },
+      () => SLOT_SYMBOL_SOURCES.watermelon
+    ),
   },
 ] as const;

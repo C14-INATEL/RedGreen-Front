@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
   --background: 100 15% 10%;
   --foreground: 45 20% 90%;
@@ -135,7 +136,7 @@ body {
 .auth-input {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #444;
+  border: 2px solid #444;       
   border-radius: 0px;
   font-size: 9px;
   font-family: 'Press Start 2P', monospace;
