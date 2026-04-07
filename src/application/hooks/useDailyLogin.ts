@@ -18,16 +18,17 @@ export const useDailyLogin = () => {
     SetError(null);
 
     try {
-      const response = await apiClient.post<DailyLoginResponse>(
-        '/user/daily-login'
-      );
+      const response =
+        await apiClient.post<DailyLoginResponse>('/user/daily-login');
 
       console.log('Daily login response:', response.data);
       SetLastReward(response.data);
 
       return response.data;
     } catch (err) {
-      const ErrorMessage = (err as { message?: string })?.message || 'Erro ao resgatar bônus diário';
+      const ErrorMessage =
+        (err as { message?: string })?.message ||
+        'Erro ao resgatar bônus diário';
       SetError(ErrorMessage);
       console.error('Daily login error:', err);
     } finally {

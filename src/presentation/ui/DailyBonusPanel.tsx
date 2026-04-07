@@ -25,15 +25,14 @@ interface DailyBonusPanelProps {
   MutateChips?: () => void;
 }
 
-const DailyBonusPanel = ({ IsOpen, OnClose, MutateChips }: DailyBonusPanelProps) => {
+const DailyBonusPanel = ({
+  IsOpen,
+  OnClose,
+  MutateChips,
+}: DailyBonusPanelProps) => {
   const [Days, SetDays] = useState(rewards);
   const CurrentDay = Days.findIndex((d) => !d.claimed);
-  const {
-    ClaimDailyReward,
-    IsLoading,
-    Error,
-    LastReward,
-  } = useDailyLogin();
+  const { ClaimDailyReward, IsLoading, Error, LastReward } = useDailyLogin();
 
   const HandleClaim = async () => {
     const Reward = await ClaimDailyReward();
