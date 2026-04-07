@@ -30,7 +30,8 @@ export const SlotPaytableHUD = () => (
 
       <div className="space-y-2.5">
         {SLOT_PAYTABLE_ENTRIES.map(({ id, prize, symbols }) => {
-          const { count, isRepeatedSet, symbolSource } = getSymbolGroup(symbols);
+          const { count, isRepeatedSet, symbolSource } =
+            getSymbolGroup(symbols);
 
           return (
             <div
