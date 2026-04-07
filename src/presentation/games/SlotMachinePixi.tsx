@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
 import { SLOT_COUNTER_COUNT, SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
@@ -110,6 +111,8 @@ export const SlotMachinePixi = () => {
       />
 
       <SlotMachineCounters machineSize={machineSize} states={counterStates} />
+
+      <SlotMachineAmountDisplay machineSize={machineSize} value={10} />
 
       <SlotMachineLever machineSize={machineSize} onPull={handleLeverPull} />
     </div>
