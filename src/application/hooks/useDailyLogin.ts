@@ -260,7 +260,9 @@ export const useDailyLogin = (enabled: boolean = true) => {
   const [IsLoading, SetIsLoading] = useState(false);
   const [Error, SetError] = useState<string | null>(null);
   const [LastReward, SetLastReward] = useState<number | null>(null);
-  const [CanClaimOverride, SetCanClaimOverride] = useState<boolean | null>(null);
+  const [CanClaimOverride, SetCanClaimOverride] = useState<boolean | null>(
+    null
+  );
 
   const {
     data: DailyState,
@@ -297,7 +299,8 @@ export const useDailyLogin = (enabled: boolean = true) => {
     SetError(null);
 
     try {
-      const Response = await apiClient.post<DailyStatusSource>(DAILY_LOGIN_ENDPOINT);
+      const Response =
+        await apiClient.post<DailyStatusSource>(DAILY_LOGIN_ENDPOINT);
       const LocalSnapshot = ReadLocalDailySnapshot();
 
       const FallbackClaimStreak = Math.max(
@@ -342,8 +345,12 @@ export const useDailyLogin = (enabled: boolean = true) => {
   }, [DailyState]);
 
   const DerivedError = Error ?? DailyStateError?.message ?? null;
-  const CanClaimToday = CanClaimOverride ?? DailyState?.FirstLoginToday ?? false;
-  const Progress = CalculateDailyProgress(DailyState?.DailyStreak ?? 0, CanClaimToday);
+  const CanClaimToday =
+    CanClaimOverride ?? DailyState?.FirstLoginToday ?? false;
+  const Progress = CalculateDailyProgress(
+    DailyState?.DailyStreak ?? 0,
+    CanClaimToday
+  );
 
   return {
     ClaimDailyReward,

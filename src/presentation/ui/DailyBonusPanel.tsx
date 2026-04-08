@@ -67,7 +67,10 @@ const DailyBonusPanel = ({
     </svg>
   );
 
-  const SafeCurrentIndex = Math.min(Math.max(CurrentDayIndex, 0), rewards.length - 1);
+  const SafeCurrentIndex = Math.min(
+    Math.max(CurrentDayIndex, 0),
+    rewards.length - 1
+  );
   const CurrentReward = rewards[SafeCurrentIndex];
 
   return (
@@ -154,7 +157,10 @@ const DailyBonusPanel = ({
                 <div className="p-6 grid grid-cols-7 gap-4">
                   {rewards.map((Day, I) => {
                     const IsClaimed = I < ClaimedDays;
-                    const IsCurrent = CanClaimToday === true ? I === SafeCurrentIndex : IsClaimed && I === SafeCurrentIndex;
+                    const IsCurrent =
+                      CanClaimToday === true
+                        ? I === SafeCurrentIndex
+                        : IsClaimed && I === SafeCurrentIndex;
 
                     return (
                       <motion.div
@@ -275,40 +281,41 @@ const DailyBonusPanel = ({
                       animate={{ opacity: 1, y: 0 }}
                       className="mb-3 p-3 bg-accent/20 border-2 border-accent/40 text-accent text-sm font-mono"
                     >
-                      +{LastReward.toLocaleString('pt-BR')} fichas! Sequencia: {DailyState?.DailyStreak ?? 0} dias
+                      +{LastReward.toLocaleString('pt-BR')} fichas! Sequencia:{' '}
+                      {DailyState?.DailyStreak ?? 0} dias
                     </motion.div>
                   )}
 
                   <button
                     onClick={HandleClaim}
-                    disabled={!DailyState || CanClaimToday === false || IsLoading}
+                    disabled={
+                      !DailyState || CanClaimToday === false || IsLoading
+                    }
                     className={`
                     w-full py-4 font-display text-sm uppercase tracking-[0.2em] border-2 transition-all
                     shadow-[3px_3px_0px_rgba(0,0,0,0.4)]
                     ${
-                      DailyState &&
-                      CanClaimToday !== false &&
-                      !IsLoading
+                      DailyState && CanClaimToday !== false && !IsLoading
                         ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)]'
                         : 'bg-secondary/40 border-border/20 text-muted-foreground/30 cursor-not-allowed'
                     }
                   `}
                   >
-                    {IsLoading
-                      ? 'Resgatando...'
-                      : !DailyState
-                        ? 'Carregando bonus diario...'
-                        : CanClaimToday === false
-                          ? 'Bonus diario ja resgatado hoje'
-                          : (
-                            <>
-                              Resgatar{' '}
-                              <span className="font-mono font-semibold text-[13px] normal-case tracking-normal">
-                                {CurrentReward.chips.toLocaleString('pt-BR')}
-                              </span>{' '}
-                              fichas
-                            </>
-                          )}
+                    {IsLoading ? (
+                      'Resgatando...'
+                    ) : !DailyState ? (
+                      'Carregando bonus diario...'
+                    ) : CanClaimToday === false ? (
+                      'Bonus diario ja resgatado hoje'
+                    ) : (
+                      <>
+                        Resgatar{' '}
+                        <span className="font-mono font-semibold text-[13px] normal-case tracking-normal">
+                          {CurrentReward.chips.toLocaleString('pt-BR')}
+                        </span>{' '}
+                        fichas
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
