@@ -39,7 +39,7 @@ const Home = () => {
   const Chips = chips ?? localChips ?? (IsLoggedIn ? 0 : 10000);
 
   const [RankingOpen, SetRankingOpen] = useState(false);
-  const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
+  const [DailyBonusOpen, SetDailyBonusOpen] = useState(!!Token); // Abrir automaticamente se já estiver logado
 
   const HandleLogin = () => {
     Navigate('/Login');
@@ -73,15 +73,17 @@ const Home = () => {
       <main className="relative flex items-center justify-center h-full px-6 md:px-16 pt-20 pb-10">
         <Table />
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={() => SetDailyBonusOpen(true)}
-          className="fixed right-6 z-50 w-10 h-10 bg-card/60 border-2 border-cassino-gold/30 items-center justify-center text-cassino-gold hover:bg-card/80 transition-colors hidden lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)]"
-          style={{ top: RankingOpen ? 'calc(6rem + 320px)' : '10rem' }}
-        >
-          <Gift className="w-4 h-4" />
-        </motion.button>
+        {IsLoggedIn && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={() => SetDailyBonusOpen(true)}
+            className="fixed right-6 z-50 w-10 h-10 bg-card/60 border-2 border-cassino-gold/30 flex items-center justify-center text-cassino-gold hover:bg-card/80 transition-colors lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)]"
+            style={{ top: RankingOpen ? 'calc(6rem + 320px)' : '10rem' }}
+          >
+            <Gift className="w-4 h-4" />
+          </motion.button>
+        )}
       </main>
 
       <RankingPanel
