@@ -113,6 +113,7 @@ const Home = () => {
 
       <DailyBonusPanel
         IsOpen={DailyBonusOpen}
+        IsLoggedIn={IsLoggedIn}
         OnClose={() => SetDailyBonusOpen(false)}
         MutateChips={MutateChips}
       />
