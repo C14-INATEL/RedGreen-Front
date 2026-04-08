@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { SlotMachineAmountDisplay } from '../SlotMachineAmountDisplay';
+import { MAX_REROLLS } from './slotMachineGameConfig';
+import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
 import { SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
@@ -11,7 +12,6 @@ import {
 } from './SlotMachineReels';
 
 const SLOT_MACHINE_SIZE = 4096;
-const MAX_REROLLS = 5;
 const SLOT_MACHINE_REEL_AREA = {
   height: 728,
   left: 928,
@@ -167,7 +167,7 @@ export const SlotMachinePixi = () => {
   return (
     <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
       <img
-        alt="CaÃ§a-nÃ­quel de teste"
+        alt="Caca-niquel de teste"
         className="block w-full select-none"
         draggable={false}
         src="/SlotMachine/SpriteSlotMachine.png"

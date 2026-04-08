@@ -1,4 +1,5 @@
 import { SlotMachineCounter } from './SlotMachineCounter';
+import { MAX_REROLLS } from './slotMachineGameConfig';
 
 const SLOT_MACHINE_SIZE = 4096;
 const SLOT_COUNTER_SIZE = {
@@ -24,7 +25,7 @@ type SlotMachineCounterLayout = {
 };
 
 const DEFAULT_COUNTER_STATES = Array.from(
-  { length: 5 },
+  { length: MAX_REROLLS },
   () => false
 ) as readonly boolean[];
 

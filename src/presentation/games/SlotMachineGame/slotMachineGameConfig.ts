@@ -34,6 +34,7 @@ export const SLOT_MACHINE_SYMBOLS = [
 ] as const;
 
 export const SLOT_MACHINE_REEL_COUNT = 4;
+export const MAX_REROLLS = 5;
 
 export type SlotMachineSymbolId = (typeof SLOT_MACHINE_SYMBOLS)[number]['id'];
 export type SlotMachineSpinDirection = 'down' | 'up';

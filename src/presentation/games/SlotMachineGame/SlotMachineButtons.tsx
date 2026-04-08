@@ -11,10 +11,6 @@ const SLOT_BLUE_BUTTON_CENTER = {
   x: 2416,
   y: 2640,
 } as const;
-const SLOT_BUTTON_CENTER_OFFSET = {
-  x: 0,
-  y: 0,
-} as const;
 
 type SlotButtonLayout = {
   action: 'reroll' | 'resetIdle';
@@ -111,11 +107,9 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] =
           SLOT_BUTTON_PANEL_LEFT +
             SLOT_BUTTON_HALF_SIZE +
             SLOT_BUTTON_STEP * (reelIndex ?? 0)) +
-        SLOT_BUTTON_CENTER_OFFSET.x +
         offsetX,
       centerY:
         (centerY ?? SLOT_BUTTON_PANEL_TOP + SLOT_BUTTON_HALF_SIZE) +
-        SLOT_BUTTON_CENTER_OFFSET.y +
         offsetY,
       color,
       id,

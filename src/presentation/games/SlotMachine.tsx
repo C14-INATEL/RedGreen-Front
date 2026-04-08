@@ -1,5 +1,5 @@
-import { SlotMachinePixi } from './SlotMachinePixi';
-import { SlotPaytableHUD } from './SlotPaytableHUD';
+import { SlotMachinePixi } from './SlotMachineGame/SlotMachinePixi';
+import { SlotPaytableHUD } from './SlotMachineGame/SlotPaytableHUD';
 
 export const SlotMachine = () => (
   <div className="relative">
