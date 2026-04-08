@@ -87,7 +87,7 @@ describe('SlotMachineAnimation', () => {
     jest.useRealTimers();
   });
 
-  it('incrementa os LEDs ao clicar em um botao vermelho', () => {
+  it('increments the LEDs when clicking a red button', () => {
     const { container } = render(createElement(SlotMachineAnimationHarness));
     const [firstRedButton] = getRedButtons();
 
@@ -99,7 +99,7 @@ describe('SlotMachineAnimation', () => {
     expect(countInactiveCounters(container)).toBe(3);
   });
 
-  it('mantem o limite maximo de 5 LEDs ativos mesmo com cliques extras', () => {
+  it('maintains the maximum limit of 5 active LEDs even with extra clicks', () => {
     const { container } = render(createElement(SlotMachineAnimationHarness));
     const [firstRedButton] = getRedButtons();
 
@@ -111,7 +111,7 @@ describe('SlotMachineAnimation', () => {
     expect(countInactiveCounters(container)).toBe(0);
   });
 
-  it('reseta todos os LEDs ao acionar a alavanca', () => {
+  it('resets all LEDs when pulling the lever', () => {
     const { container } = render(createElement(SlotMachineAnimationHarness));
     const [firstRedButton] = getRedButtons();
     const leverButton = getLeverButton();
@@ -128,21 +128,56 @@ describe('SlotMachineAnimation', () => {
     expect(countInactiveCounters(container)).toBe(5);
   });
 
-  it('nao altera o estado apos atingir o limite maximo', () => {
-    const { container } = render(createElement(SlotMachineAnimationHarness));
-    const redButtons = getRedButtons();
+  it('blocks new lever activations during animation and releases at the end of the cycle', () => {
+    render(createElement(SlotMachineAnimationHarness));
+    const leverButton = getLeverButton();
+    const leverImage = leverButton.querySelector('img');
 
-    for (let index = 0; index < 5; index += 1) {
-      fireEvent.pointerDown(redButtons[index % redButtons.length]);
-    }
+    expect(leverButton.hasAttribute('disabled')).toBe(false);
+    expect(leverButton.getAttribute('aria-busy')).toBe('false');
+    expect(leverImage).not.toBeNull();
+    expect(leverImage?.getAttribute('src')).toBe(
+      '/SlotMachine/SpriteLever00.png'
+    );
 
-    expect(countActiveCounters(container)).toBe(5);
+    fireEvent.pointerDown(leverButton);
 
-    redButtons.forEach((button) => {
-      fireEvent.pointerDown(button);
+    expect(leverButton.hasAttribute('disabled')).toBe(true);
+    expect(leverButton.getAttribute('aria-busy')).toBe('true');
+
+    act(() => {
+      jest.advanceTimersByTime(28);
     });
 
-    expect(countActiveCounters(container)).toBe(5);
-    expect(countInactiveCounters(container)).toBe(0);
+    expect(leverImage?.getAttribute('src')).toBe(
+      '/SlotMachine/SpriteLever01.png'
+    );
+
+    fireEvent.pointerDown(leverButton);
+    fireEvent.pointerDown(leverButton);
+    fireEvent.pointerDown(leverButton);
+
+    expect(leverButton.hasAttribute('disabled')).toBe(true);
+    expect(leverButton.getAttribute('aria-busy')).toBe('true');
+    expect(leverImage?.getAttribute('src')).toBe(
+      '/SlotMachine/SpriteLever01.png'
+    );
+
+    act(() => {
+      jest.advanceTimersByTime(951);
+    });
+
+    expect(leverButton.hasAttribute('disabled')).toBe(true);
+    expect(leverButton.getAttribute('aria-busy')).toBe('true');
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+
+    expect(leverButton.hasAttribute('disabled')).toBe(false);
+    expect(leverButton.getAttribute('aria-busy')).toBe('false');
+    expect(leverImage?.getAttribute('src')).toBe(
+      '/SlotMachine/SpriteLever00.png'
+    );
   });
 });
