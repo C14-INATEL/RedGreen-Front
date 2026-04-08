@@ -60,8 +60,7 @@ export const SlotMachinePixi = () => {
     width: number;
   }>(EMPTY_MACHINE_SIZE);
   const [idleRequestId, setIdleRequestId] = useState(0);
-  const [machineMode, setMachineMode] =
-    useState<SlotMachineReelsMode>('idle');
+  const [machineMode, setMachineMode] = useState<SlotMachineReelsMode>('idle');
   const [pendingAction, setPendingAction] = useState<
     'idle' | 'reroll' | 'spin' | null
   >(null);

@@ -106,11 +106,9 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] =
         (centerX ??
           SLOT_BUTTON_PANEL_LEFT +
             SLOT_BUTTON_HALF_SIZE +
-            SLOT_BUTTON_STEP * (reelIndex ?? 0)) +
-        offsetX,
+            SLOT_BUTTON_STEP * (reelIndex ?? 0)) + offsetX,
       centerY:
-        (centerY ?? SLOT_BUTTON_PANEL_TOP + SLOT_BUTTON_HALF_SIZE) +
-        offsetY,
+        (centerY ?? SLOT_BUTTON_PANEL_TOP + SLOT_BUTTON_HALF_SIZE) + offsetY,
       color,
       id,
       label,

@@ -118,8 +118,7 @@ export const getTestSlotMachineRerollResult = (reelIndex: number) => {
 
   const currentScenarioIndex =
     testSlotMachineRerollScenarioIndexesByReel.get(reelIndex) ?? 0;
-  const nextMockResult =
-    reelResults[currentScenarioIndex % reelResults.length];
+  const nextMockResult = reelResults[currentScenarioIndex % reelResults.length];
 
   testSlotMachineRerollScenarioIndexesByReel.set(
     reelIndex,

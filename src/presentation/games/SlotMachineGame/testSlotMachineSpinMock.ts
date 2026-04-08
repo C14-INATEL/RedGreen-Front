@@ -83,10 +83,13 @@ export const getTestSlotMachineSpinResult = () => {
 
   const nextMockId =
     TEST_SLOT_MACHINE_SPIN_RESULT_IDS[
-      testSlotMachineSpinScenarioIndex % TEST_SLOT_MACHINE_SPIN_RESULT_IDS.length
+      testSlotMachineSpinScenarioIndex %
+        TEST_SLOT_MACHINE_SPIN_RESULT_IDS.length
     ];
 
   testSlotMachineSpinScenarioIndex += 1;
 
-  return cloneTestSlotMachineSpinResult(TEST_SLOT_MACHINE_SPIN_RESULTS[nextMockId]);
+  return cloneTestSlotMachineSpinResult(
+    TEST_SLOT_MACHINE_SPIN_RESULTS[nextMockId]
+  );
 };

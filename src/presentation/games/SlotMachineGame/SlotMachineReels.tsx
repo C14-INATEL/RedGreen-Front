@@ -435,8 +435,9 @@ export const SlotMachineReels = ({
   const handledRerollRequestIdRef = useRef(0);
   const handledSpinRequestIdRef = useRef(0);
   const latestIdleRequestIdRef = useRef(idleRequestId);
-  const latestRerollRequestRef =
-    useRef<SlotMachineReelsRerollRequest | null>(rerollRequest);
+  const latestRerollRequestRef = useRef<SlotMachineReelsRerollRequest | null>(
+    rerollRequest
+  );
   const latestSpinRequestIdRef = useRef(spinRequestId);
   const onMachineModeChangeRef = useRef(onMachineModeChange);
   const onRealSpinStateChangeRef = useRef(onRealSpinStateChange);
@@ -578,7 +579,8 @@ export const SlotMachineReels = ({
       }
 
       reels.forEach((currentReel, currentReelIndex) => {
-        currentReel.currentTextureIndex = getVisibleCell(currentReel).textureIndex;
+        currentReel.currentTextureIndex =
+          getVisibleCell(currentReel).textureIndex;
         currentReel.scrollOffset = 0;
         currentReel.stopPlan = null;
 
@@ -639,29 +641,32 @@ export const SlotMachineReels = ({
 
     const stopAllInSequence = (result: SlotMachineSpinResult) => {
       result.reelStopOrder.forEach((reelIndex, stopOrderIndex) => {
-        scheduleTimeout(() => {
-          const reelResult = result.reels.find(
-            (mockReelResult) => mockReelResult.reelIndex === reelIndex
-          );
+        scheduleTimeout(
+          () => {
+            const reelResult = result.reels.find(
+              (mockReelResult) => mockReelResult.reelIndex === reelIndex
+            );
 
-          if (!reelResult) {
-            return;
-          }
+            if (!reelResult) {
+              return;
+            }
 
-          const targetTextureIndex = getSlotMachineTextureIndexBySymbolId(
-            reelResult.symbolId
-          );
+            const targetTextureIndex = getSlotMachineTextureIndexBySymbolId(
+              reelResult.symbolId
+            );
 
-          if (targetTextureIndex < 0) {
-            return;
-          }
+            if (targetTextureIndex < 0) {
+              return;
+            }
 
-          stopReel(
-            reelIndex,
-            targetTextureIndex,
-            reelResult.extraSpinSteps ?? DEFAULT_EXTRA_SPIN_STEPS
-          );
-        }, result.firstStopDelayMs + result.stopDelayMs * stopOrderIndex);
+            stopReel(
+              reelIndex,
+              targetTextureIndex,
+              reelResult.extraSpinSteps ?? DEFAULT_EXTRA_SPIN_STEPS
+            );
+          },
+          result.firstStopDelayMs + result.stopDelayMs * stopOrderIndex
+        );
       });
     };
 
@@ -730,9 +735,7 @@ export const SlotMachineReels = ({
     };
 
     const consumePendingSpinRequest = () => {
-      if (
-        latestSpinRequestIdRef.current <= handledSpinRequestIdRef.current
-      ) {
+      if (latestSpinRequestIdRef.current <= handledSpinRequestIdRef.current) {
         return;
       }
 
@@ -742,9 +745,7 @@ export const SlotMachineReels = ({
     };
 
     const consumePendingIdleRequest = () => {
-      if (
-        latestIdleRequestIdRef.current <= handledIdleRequestIdRef.current
-      ) {
+      if (latestIdleRequestIdRef.current <= handledIdleRequestIdRef.current) {
         return;
       }
 
