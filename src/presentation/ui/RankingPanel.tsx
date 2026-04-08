@@ -29,7 +29,7 @@ const RankingPanel = ({ IsOpen, OnClose }: RankingPanelProps) => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 40 }}
           transition={{ duration: 0.3 }}
-          className="fixed top-24 right-6 w-72 z-50"
+          className="fixed top-24 right-6 w-72 z-40"
         >
           <div
             className="bg-card/90 backdrop-blur-md pixel-border overflow-hidden"

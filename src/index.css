@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=VT323:wght@400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -137,8 +137,8 @@ body {
   padding: 12px 16px;
   border: 2px solid #444;
   border-radius: 0px;
-  font-size: 14px;
-  font-family: 'Silkscreen', cursive;
+  font-size: 9px;
+  font-family: 'Press Start 2P', monospace;
   color: white;
   background: hsla(0, 88%, 43%, 0.4);
   margin-bottom: 20px;

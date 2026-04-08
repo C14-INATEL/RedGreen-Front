@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { SlotMachineAmountDisplay } from '../SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
 import { SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
@@ -197,6 +198,8 @@ export const SlotMachinePixi = () => {
         machineSize={machineSize}
         states={getRerollCounterStates(rerollsRemaining)}
       />
+
+      <SlotMachineAmountDisplay machineSize={machineSize} value={10} />
 
       <SlotMachineLever
         disabled={!canStartSpin}
