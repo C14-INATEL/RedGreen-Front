@@ -44,8 +44,14 @@ const getMachineAreaStyle = (
   };
 };
 
-const getRerollCounterStates = (rerollsRemaining: number) =>
-  Array.from({ length: MAX_REROLLS }, (_, index) => index < rerollsRemaining);
+const getRerollCounterStates = (rerollsRemaining: number) => {
+  const rerollsUsed = Math.max(0, MAX_REROLLS - rerollsRemaining);
+
+  return Array.from(
+    { length: MAX_REROLLS },
+    (_, index) => index >= MAX_REROLLS - rerollsUsed
+  );
+};
 
 export const SlotMachinePixi = () => {
   const machineRef = useRef<HTMLDivElement | null>(null);
