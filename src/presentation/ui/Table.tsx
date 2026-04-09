@@ -27,7 +27,7 @@ const Table = () => {
 
               <div className="relative z-10 flex items-center justify-center min-h-[280px] py-4">
                 <GameCard
-                  title="Caca-Niquel"
+                  title="Caça-Niquel"
                   subtitle="Girar"
                   icon={<SlotMachineIcon />}
                   delay={0.1}
@@ -37,7 +37,7 @@ const Table = () => {
 
               <div className="relative z-10 mt-8 pt-4 border-t-2 border-border flex items-center justify-center">
                 <p className="text-muted-foreground/50 text-[11px] tracking-[0.3em] uppercase font-display">
-                  &nbsp;&nbsp;&nbsp;? ESCOLHA SEU JOGO ?&nbsp;&nbsp;&nbsp;
+                  &nbsp;&nbsp;&nbsp;◆ ESCOLHA SEU JOGO ◆&nbsp;&nbsp;&nbsp;
                 </p>
               </div>
             </div>
