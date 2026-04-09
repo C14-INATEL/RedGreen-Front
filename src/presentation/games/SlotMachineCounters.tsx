@@ -1,7 +1,7 @@
 import { SlotMachineCounter } from './SlotMachineCounter';
 
 const SLOT_MACHINE_SIZE = 4096;
-const SLOT_COUNTER_COUNT = 5;
+export const SLOT_COUNTER_COUNT = 5;
 const SLOT_COUNTER_SIZE = {
   height: 224,
   width: 160,
