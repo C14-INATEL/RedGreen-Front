@@ -180,11 +180,16 @@ const Login = () => {
       const Token = Data?.Token;
       const User = Data?.User;
 
-      localStorage.setItem('authToken', Token);
-      localStorage.setItem('user', JSON.stringify(User));
+      if (Token) {
+        localStorage.setItem('token', Token);
+        localStorage.setItem('authToken', Token);
+      }
+
+      if (User) {
+        localStorage.setItem('user', JSON.stringify(User));
+      }
 
       SetToastMessage('');
-
       window.location.href = '/';
     } catch (error) {
       console.error('ERRO LOGIN:', error);
