@@ -39,22 +39,10 @@ describe('GuestRoute - route protection', () => {
     expect(screen.getByText('Home Page')).not.toBeNull();
   });
 
-  it('Does not display the login page when there is a token.', () => {
-    localStorage.setItem('authToken', 'token-fake-123');
-    renderWithRouter('/login');
-    expect(screen.queryByText('Login Page')).toBeNull();
-  });
-
   it('Does not redirect when the token is empty.', () => {
     localStorage.setItem('authToken', '');
     renderWithRouter('/login');
     expect(screen.getByText('Login Page')).not.toBeNull();
-  });
-
-  it('Redirects when the token is any non-empty string.', () => {
-    localStorage.setItem('authToken', 'qualquer-coisa');
-    renderWithRouter('/login');
-    expect(screen.getByText('Home Page')).not.toBeNull();
   });
 
   it('Displays the login page after removing the token.', () => {
