@@ -8,7 +8,13 @@ const HomePage = () => <div>Home Page</div>;
 
 const renderWithRouter = (initialEntry: string) => {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
+    <MemoryRouter
+      initialEntries={[initialEntry]}
+      future={{
+        v7_relativeSplatPath: true,
+        v7_startTransition: true,
+      }}
+    >
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route
@@ -23,29 +29,28 @@ const renderWithRouter = (initialEntry: string) => {
     </MemoryRouter>
   );
 };
-
-describe('GuestRoute - route protection', () => {
+describe('guestRoute - route protection', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
-  it('Displays the login page when there is no token.', () => {
+  it('displays the login page when there is no token.', () => {
     renderWithRouter('/login');
     expect(screen.getByText('Login Page')).not.toBeNull();
   });
 
-  it('Redirects to the home page when there is a valid token.', () => {
+  it('redirects to the home page when there is a valid token.', () => {
     localStorage.setItem('authToken', 'token-fake-123');
     renderWithRouter('/login');
     expect(screen.getByText('Home Page')).not.toBeNull();
   });
 
-  it('Does not redirect when the token is empty.', () => {
+  it('does not redirect when the token is empty.', () => {
     localStorage.setItem('authToken', '');
     renderWithRouter('/login');
     expect(screen.getByText('Login Page')).not.toBeNull();
   });
 
-  it('Displays the login page after removing the token.', () => {
+  it('displays the login page after removing the token.', () => {
     localStorage.setItem('authToken', 'token-fake-123');
     localStorage.removeItem('authToken');
     renderWithRouter('/login');
