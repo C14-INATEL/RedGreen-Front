@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CassinoLogo from '@ui/CassinoLogo';
+import { IsBirthDateFormatValid, IsValidBirthDate } from '../../validators';
 
 type Step = 'identify' | 'login' | 'signup';
 
@@ -69,44 +70,16 @@ const Login = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const IsBirthDateFormatValid = (Value: string) => {
-    return /^\d{2}\/\d{2}\/\d{4}$/.test(Value);
-  };
-
-  const IsValidBirthDate = (Value: string) => {
-    const [Day, Month, Year] = Value.split('/').map(Number);
-
-    if (Month < 1 || Month > 12) return false;
-    if (Day < 1 || Day > 31) return false;
-
-    const DateObj = new Date(Year, Month - 1, Day);
-
-    const IsRealDate =
-      DateObj.getFullYear() === Year &&
-      DateObj.getMonth() === Month - 1 &&
-      DateObj.getDate() === Day;
-
-    if (!IsRealDate) return false;
-
-    const Today = new Date();
-    Today.setHours(0, 0, 0, 0);
-    DateObj.setHours(0, 0, 0, 0);
-
-    if (DateObj > Today) return false;
-
-    return true;
-  };
-
   const HandleContinue = async () => {
     const Email = Identifier.trim().toLowerCase();
 
     if (!Email) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR EMAIL.');
       return;
     }
 
     if (!IsValidEmail(Email)) {
-      SetToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+      SetToastMessage('ERROR\nPLEASE ENTER A VALID EMAIL.');
       return;
     }
 
@@ -114,20 +87,20 @@ const Login = () => {
       const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(Email)}`;
       console.log('URL:', url);
 
-      const response = await fetch(url, {
+      const Response = await fetch(url, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
         },
       });
 
-      console.log('STATUS:', response.status);
+      console.log('STATUS:', Response.status);
 
-      const Data = await response.json();
+      const Data = await Response.json();
       console.log('DATA:', Data);
 
-      if (!response.ok) {
-        SetToastMessage('ERRO AO VERIFICAR E-MAIL.');
+      if (!Response.ok) {
+        SetToastMessage('ERROR CHECKING EMAIL.');
         return;
       }
 
@@ -145,19 +118,19 @@ const Login = () => {
         return;
       }
     } catch (error) {
-      console.error('ERRO CHECK EMAIL:', error);
-      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      console.error('ERROR CHECKING EMAIL:', error);
+      SetToastMessage('ERROR CONNECTING TO SERVER.');
     }
   };
 
   const HandleLogin = async () => {
     try {
       if (!Identifier || !Password) {
-        SetToastMessage('PREENCHA E-MAIL E SENHA.');
+        SetToastMessage('REQUIRED FIELD\nENTER YOUR PASSWORD.');
         return;
       }
 
-      const response = await fetch('http://localhost:3000/auth/login', {
+      const Response = await fetch('http://localhost:3000/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,11 +142,11 @@ const Login = () => {
         }),
       });
 
-      const Data = await response.json();
+      const Data = await Response.json();
       console.log('LOGIN DATA:', Data);
 
-      if (!response.ok) {
-        SetToastMessage('E-MAIL OU SENHA INVÁLIDOS.');
+      if (!Response.ok) {
+        SetToastMessage('INVALID PASSWORD.');
         return;
       }
 
@@ -192,70 +165,70 @@ const Login = () => {
       SetToastMessage('');
       window.location.href = '/';
     } catch (error) {
-      console.error('ERRO LOGIN:', error);
-      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      console.error('ERROR LOGGING IN:', error);
+      SetToastMessage('ERROR CONNECTING TO SERVER.');
     }
   };
 
-  const handleSignup = async () => {
+  const HandleSignup = async () => {
     if (!Name.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NOME.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR NAME.');
       return;
     }
 
     if (!Nickname.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NICKNAME.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR NICKNAME.');
       return;
     }
 
     if (!BirthDate.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA DATA DE NASCIMENTO.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR BIRTH DATE.');
       return;
     }
 
     if (!IsBirthDateFormatValid(BirthDate)) {
-      SetToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
+      SetToastMessage('ERROR\nFORMAT: DD/MM/YYYY');
       return;
     }
 
     if (!IsValidBirthDate(BirthDate)) {
-      SetToastMessage('ERRO\nDATA INVÁLIDA.');
+      SetToastMessage('ERROR\nINVALID DATE.');
       return;
     }
 
     if (!Identifier.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR EMAIL.');
       return;
     }
 
     if (!IsValidEmail(Identifier.trim().toLowerCase())) {
-      SetToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+      SetToastMessage('ERROR\nPLEASE ENTER A VALID EMAIL.');
       return;
     }
 
     if (!Password.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA SENHA.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR PASSWORD.');
       return;
     }
 
     if (!ConfirmPassword.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nCONFIRME SUA SENHA.');
+      SetToastMessage('REQUIRED FIELD\nCONFIRM YOUR PASSWORD.');
       return;
     }
 
     if (Password !== ConfirmPassword) {
-      SetToastMessage('ERRO\nAS SENHAS NÃO CONFEREM.');
+      SetToastMessage('ERROR\nTHE PASSWORDS DO NOT MATCH.');
       return;
     }
 
     if (Password.length < 8) {
-      SetToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
+      SetToastMessage('ERROR\nTHE PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
       return;
     }
 
     try {
       const [day, month, year] = BirthDate.split('/');
-      const formattedBirthDate = `${year}-${month}-${day}`;
+      const FormattedBirthDate = `${year}-${month}-${day}`;
 
       const Response = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
@@ -264,7 +237,7 @@ const Login = () => {
         },
         body: JSON.stringify({
           Name: Name,
-          BirthDate: formattedBirthDate,
+          BirthDate: FormattedBirthDate,
           Nickname: Nickname,
           Email: Identifier.trim().toLowerCase(),
           Password: Password,
@@ -278,18 +251,18 @@ const Login = () => {
       const Data = await Response.json();
 
       if (!Response.ok) {
-        SetToastMessage(Data.message || 'ERRO AO CRIAR CONTA.');
+        SetToastMessage(Data.message || 'ERROR CREATING ACCOUNT.');
         return;
       }
 
       SetToastMessage('');
       SetStep('login');
     } catch {
-      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      SetToastMessage('ERROR CONNECTING TO SERVER.');
     }
   };
 
-  const resetToIdentify = () => {
+  const ResetToIdentify = () => {
     SetStep('identify');
     SetIdentifier('');
     SetPassword('');
@@ -302,7 +275,7 @@ const Login = () => {
     SetToastMessage('');
   };
 
-  const panelVariants = {
+  const PanelVariants = {
     initial: { opacity: 0, y: 20, scale: 0.97 },
     animate: { opacity: 1, y: 0, scale: 1 },
     exit: { opacity: 0, y: -20, scale: 0.97 },
@@ -326,7 +299,7 @@ const Login = () => {
           {Step === 'identify' && (
             <motion.div
               key="identify"
-              variants={panelVariants}
+              variants={PanelVariants}
               initial="initial"
               animate="animate"
               exit="exit"
@@ -366,7 +339,7 @@ const Login = () => {
           {Step === 'login' && (
             <motion.div
               key="login"
-              variants={panelVariants}
+              variants={PanelVariants}
               initial="initial"
               animate="animate"
               exit="exit"
@@ -414,7 +387,7 @@ const Login = () => {
 
               <div className="mt-4 flex items-center justify-between text-xs">
                 <button
-                  onClick={resetToIdentify}
+                  onClick={ResetToIdentify}
                   className="text-[hsl(120,50%,35%)]/70 hover:text-[hsl(120,50%,35%)] transition-colors flex items-center gap-1"
                 >
                   ← Usar outra conta
@@ -430,7 +403,7 @@ const Login = () => {
           {Step === 'signup' && (
             <motion.div
               key="signup"
-              variants={panelVariants}
+              variants={PanelVariants}
               initial="initial"
               animate="animate"
               exit="exit"
@@ -537,7 +510,7 @@ const Login = () => {
                       SetConfirmPassword(e.target.value);
                       SetToastMessage('');
                     }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+                    onKeyDown={(e) => e.key === 'Enter' && HandleSignup()}
                     className="auth-input pr-12"
                   />
 
@@ -555,14 +528,14 @@ const Login = () => {
                   </button>
                 </div>
 
-                <button onClick={handleSignup} className="auth-button mt-4">
+                <button onClick={HandleSignup} className="auth-button mt-4">
                   Criar conta
                 </button>
               </div>
 
               <div className="mt-4 text-center">
                 <button
-                  onClick={resetToIdentify}
+                  onClick={ResetToIdentify}
                   className="text-xs text-white/50 hover:text-white transition-colors"
                 >
                   Já possui uma conta?{' '}

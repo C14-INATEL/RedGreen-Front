@@ -35,22 +35,19 @@ type MockSlotMachineReelsProps = {
 
 let mockLatestSlotMachineReelsProps: MockSlotMachineReelsProps | null = null;
 
-jest.mock(
-  '../src/presentation/games/SlotMachineGame/SlotMachineReels',
-  () => {
-    const React = jest.requireActual('react') as typeof import('react');
+jest.mock('../src/presentation/games/SlotMachineGame/SlotMachineReels', () => {
+  const React = jest.requireActual('react') as typeof import('react');
 
-    return {
-      SlotMachineReels: (props: MockSlotMachineReelsProps) => {
-        mockLatestSlotMachineReelsProps = props;
+  return {
+    SlotMachineReels: (props: MockSlotMachineReelsProps) => {
+      mockLatestSlotMachineReelsProps = props;
 
-        return React.createElement('div', {
-          'data-testid': 'slot-machine-reels',
-        });
-      },
-    };
-  }
-);
+      return React.createElement('div', {
+        'data-testid': 'slot-machine-reels',
+      });
+    },
+  };
+});
 
 const getLeverButton = () =>
   screen.getByRole('button', { name: /Alavanca da maquina/i });
