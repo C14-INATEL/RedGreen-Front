@@ -79,6 +79,24 @@ npm run build
 npm run format
 ```
 
+**Formata o código automaticamente com Prettier.**
+
+```bash
+npm run format
+```
+
+**Executa os testes.**
+
+```bash
+npm run test
+```
+
+**Executa os testes em mais detalhes.**
+
+```bash
+npm run test -- --verbose
+```
+
 ---
 
 ## Estrutura do Projeto
@@ -99,10 +117,10 @@ RedGreen-Front/
 │   │   └── schemas.ts
 │   ├── application/            # Regras de negócio via hooks customizados
 │   ├── infrastructure/         # Clientes HTTP, interceptors e funções puras
-│   └── presentation/           # Camada visual
-│       ├── ui/                 # Componentes React tradicionais (Botões, Modais)
-│       └── games/              # Componentes do motor WebGL (Stages PixiJS)
-│       └── pages/              # Telas que orquestram UI e Games
+│   ├── presentation/           # Camada visual
+│   │   ├── ui/                 # Componentes React tradicionais (Botões, Modais)
+│   │   ├── games/              # Componentes do motor WebGL (Stages PixiJS)
+│   │   └── pages/              # Telas que orquestram UI e Games
+├── tests/                      # Testes da aplicação
 ├── index.html                  # Template HTML
 └── vite.config.ts              # Configurações do Vite
-```
