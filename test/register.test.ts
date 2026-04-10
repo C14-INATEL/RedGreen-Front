@@ -1,7 +1,7 @@
 import { IsValidBirthDate } from '../src/validators';
 import { describe, expect, it } from '@jest/globals';
 
-describe('isValidBirthDate', () => {
+describe('IsValidBirthDate', () => {
   it('valid date', () => {
     expect(IsValidBirthDate('01/01/2001')).toBe(true);
   });

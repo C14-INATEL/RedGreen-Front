@@ -29,7 +29,7 @@ const RenderWithRouter = (initialEntry: string) => {
     </MemoryRouter>
   );
 };
-describe('guestRoute - route protection', () => {
+describe('GuestRoute - route protection', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
