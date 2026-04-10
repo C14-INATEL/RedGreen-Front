@@ -1,38 +1,55 @@
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useDailyLogin } from '@application/hooks/useDailyLogin';
 
 interface DayReward {
   day: number;
   chips: number;
-  claimed: boolean;
 }
 
 const rewards: DayReward[] = [
-  { day: 1, chips: 500, claimed: false },
-  { day: 2, chips: 1000, claimed: false },
-  { day: 3, chips: 2000, claimed: false },
-  { day: 4, chips: 3000, claimed: false },
-  { day: 5, chips: 5000, claimed: false },
-  { day: 6, chips: 8000, claimed: false },
-  { day: 7, chips: 15000, claimed: false },
+  { day: 1, chips: 50 },
+  { day: 2, chips: 100 },
+  { day: 3, chips: 150 },
+  { day: 4, chips: 200 },
+  { day: 5, chips: 250 },
+  { day: 6, chips: 300 },
+  { day: 7, chips: 350 },
 ];
 
 interface DailyBonusPanelProps {
   IsOpen: boolean;
+  IsLoggedIn?: boolean;
   OnClose: () => void;
+  MutateChips?: () => void;
 }
 
-const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
-  const [Days, SetDays] = useState(rewards);
-  const CurrentDay = Days.findIndex((d) => !d.claimed);
-  const CanClaim = CurrentDay !== -1;
+const DailyBonusPanel = ({
+  IsOpen,
+  IsLoggedIn = false,
+  OnClose,
+  MutateChips,
+}: DailyBonusPanelProps) => {
+  const {
+    ClaimDailyReward,
+    IsLoading,
+    Error,
+    LastReward,
+    DailyState,
+    CanClaimToday,
+    CurrentDay,
+    CurrentDayIndex,
+    ClaimedDays,
+  } = useDailyLogin(IsLoggedIn);
 
-  const HandleClaim = () => {
-    if (!CanClaim) return;
-    SetDays((Prev) =>
-      Prev.map((D, I) => (I === CurrentDay ? { ...D, claimed: true } : D))
-    );
+  const HandleClaim = async () => {
+    if (!CanClaimToday || IsLoading) return;
+
+    const Reward = await ClaimDailyReward();
+
+    if (Reward && MutateChips) {
+      MutateChips();
+    }
   };
 
   const PixelChip = ({ size = 20 }: { size?: number }) => (
@@ -50,6 +67,12 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
     </svg>
   );
 
+  const SafeCurrentIndex = Math.min(
+    Math.max(CurrentDayIndex, 0),
+    rewards.length - 1
+  );
+  const CurrentReward = rewards[SafeCurrentIndex];
+
   return (
     <AnimatePresence>
       {IsOpen && (
@@ -58,7 +81,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-50"
+            className="fixed inset-0 z-50 bg-black/60"
             onClick={OnClose}
           />
 
@@ -68,11 +91,11 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="w-[92vw] max-w-5xl pointer-events-auto"
+              className="pointer-events-auto w-[92vw] max-w-5xl"
               style={{ zIndex: 60 }}
             >
-              <div className="bg-secondary border-2 border-casino-gold/40 shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
-                <div className="flex items-center gap-3 px-6 py-4 border-b-2 border-border/30 bg-[hsl(var(--accent))]/10">
+              <div className="border-2 border-casino-gold/40 bg-secondary shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
+                <div className="flex items-center gap-3 border-b-2 border-border/30 bg-[hsl(var(--accent))]/10 px-6 py-4">
                   <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                     <rect
                       x="2"
@@ -117,24 +140,27 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                       fill="hsl(var(--cassino-red))"
                     />
                   </svg>
-                  <span className="font-display text-sm uppercase tracking-[0.2em] text-foreground/80 flex-1">
+                  <span className="flex-1 font-display text-sm uppercase tracking-[0.2em] text-foreground/80">
                     Bônus Diário
                   </span>
-                  <span className="text-[10px] text-accent font-mono tracking-wider">
-                    Dia {CurrentDay !== -1 ? CurrentDay + 1 : 7}/7
+                  <span className="font-mono text-[10px] tracking-wider text-accent">
+                    Dia {CurrentDay}/7
                   </span>
                   <button
                     onClick={OnClose}
-                    className="text-muted-foreground/50 hover:text-foreground/70 transition-colors ml-2"
+                    className="ml-2 text-muted-foreground/50 transition-colors hover:text-foreground/70"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
 
-                <div className="p-6 grid grid-cols-7 gap-4">
-                  {Days.map((Day, I) => {
-                    const IsCurrent = I === CurrentDay;
-                    const IsClaimed = Day.claimed;
+                <div className="grid grid-cols-7 gap-4 p-6">
+                  {rewards.map((Day, I) => {
+                    const IsClaimed = I < ClaimedDays;
+                    const IsCurrent =
+                      CanClaimToday === true
+                        ? I === SafeCurrentIndex
+                        : IsClaimed && I === SafeCurrentIndex;
 
                     return (
                       <motion.div
@@ -143,7 +169,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.05 * I }}
                         className={`
-                        flex flex-col items-center py-6 px-3 border-2 transition-all relative
+                        relative flex flex-col items-center border-2 px-3 py-6 transition-all
                         ${
                           IsCurrent
                             ? 'border-accent bg-accent/15 shadow-[0_0_12px_hsl(var(--accent)/0.3)]'
@@ -154,7 +180,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                       `}
                       >
                         <span
-                          className={`text-[18px] font-mono font-bold mb-3 ${
+                          className={`mb-3 font-mono text-[18px] font-bold ${
                             IsCurrent
                               ? 'text-accent'
                               : IsClaimed
@@ -215,7 +241,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                         </div>
 
                         <span
-                          className={`text-[13px] font-mono font-semibold ${
+                          className={`font-mono text-[13px] font-semibold ${
                             IsCurrent
                               ? 'text-accent'
                               : IsClaimed
@@ -231,7 +257,7 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                         </span>
 
                         {IsCurrent && (
-                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-accent animate-pulse" />
+                          <div className="absolute -right-1 -top-1 h-2 w-2 animate-pulse bg-accent" />
                         )}
                       </motion.div>
                     );
@@ -239,29 +265,56 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                 </div>
 
                 <div className="px-6 pb-6">
+                  {Error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-3 border-2 border-red-500/40 bg-red-500/20 p-3 font-mono text-sm text-red-400"
+                    >
+                      {Error}
+                    </motion.div>
+                  )}
+
+                  {LastReward !== null && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-3 border-2 border-accent/40 bg-accent/20 p-3 font-mono text-sm text-accent"
+                    >
+                      +{LastReward.toLocaleString('pt-BR')} fichas! Sequência:{' '}
+                      {DailyState?.DailyStreak ?? 0} dias
+                    </motion.div>
+                  )}
+
                   <button
                     onClick={HandleClaim}
-                    disabled={!CanClaim}
+                    disabled={
+                      !DailyState || CanClaimToday === false || IsLoading
+                    }
                     className={`
-                    w-full py-4 font-display text-sm uppercase tracking-[0.2em] border-2 transition-all
+                    w-full border-2 py-4 font-display text-sm uppercase tracking-[0.2em] transition-all
                     shadow-[3px_3px_0px_rgba(0,0,0,0.4)]
                     ${
-                      CanClaim
-                        ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)]'
-                        : 'bg-secondary/40 border-border/20 text-muted-foreground/30 cursor-not-allowed'
+                      DailyState && CanClaimToday !== false && !IsLoading
+                        ? 'border-accent bg-accent/20 text-accent hover:bg-accent/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)]'
+                        : 'cursor-not-allowed border-border/20 bg-secondary/40 text-muted-foreground/30'
                     }
                   `}
                   >
-                    {CanClaim ? (
+                    {IsLoading ? (
+                      'Resgatando...'
+                    ) : !DailyState ? (
+                      'Carregando bônus diário...'
+                    ) : CanClaimToday === false ? (
+                      'Bônus diário já resgatado hoje'
+                    ) : (
                       <>
                         Resgatar{' '}
-                        <span className="font-mono font-bold">
-                          {Days[CurrentDay].chips.toLocaleString('pt-BR')}
+                        <span className="font-mono text-[13px] font-semibold normal-case tracking-normal">
+                          {CurrentReward.chips.toLocaleString('pt-BR')}
                         </span>{' '}
                         fichas
                       </>
-                    ) : (
-                      'Todos os bônus resgatados!'
                     )}
                   </button>
                 </div>
