@@ -47,8 +47,8 @@ jest.mock('@ui/HUD', () => ({
       <div>
         <span data-testid="hud-player-name">{props.PlayerName}</span>
         <span data-testid="hud-chips">{props.Chips}</span>
-        <button onClick={props.OnLogin}>Entrar</button>
-        <button onClick={props.OnLogout}>Sair</button>
+        <button onClick={props.OnLogin}>Login</button>
+        <button onClick={props.OnLogout}>Logout</button>
       </div>
     );
   },
@@ -65,7 +65,7 @@ jest.mock('@ui/RankingPanel', () => ({
     mockRankingPanel(props);
 
     return (
-      <div data-testid="ranking-panel">{props.IsOpen ? 'aberto' : 'fechado'}</div>
+      <div data-testid="ranking-panel">{props.IsOpen ? 'open' : 'closed'}</div>
     );
   },
 }));
@@ -77,7 +77,7 @@ jest.mock('@ui/DailyBonusPanel', () => ({
 
     return (
       <div data-testid="daily-bonus-panel">
-        {props.IsOpen ? 'aberto' : 'fechado'}
+        {props.IsOpen ? 'open' : 'closed'}
       </div>
     );
   },
@@ -91,7 +91,7 @@ const renderHome = () =>
     >
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<div>Tela de login</div>} />
+        <Route path="/Login" element={<div>Login page</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -121,9 +121,9 @@ describe('Home', () => {
   it('redirects the guest user to the login page after clicking the login action', () => {
     renderHome();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
-    expect(screen.getByText('Tela de login')).not.toBeNull();
+    expect(screen.getByText('Login page')).not.toBeNull();
     expect(mockUseUserProfile).toHaveBeenCalledWith(false);
     expect(mockUseUserChips).toHaveBeenCalledWith(false);
   });
@@ -133,16 +133,16 @@ describe('Home', () => {
     localStorage.setItem(
       'user',
       JSON.stringify({
-        Nickname: 'JogadorLocal',
+        Nickname: 'LocalPlayer',
         ChipBalance: 24500,
       })
     );
 
     renderHome();
 
-    expect(screen.getByText('JogadorLocal')).not.toBeNull();
+    expect(screen.getByText('LocalPlayer')).not.toBeNull();
     expect(screen.getByText('24500')).not.toBeNull();
-    expect(screen.getByTestId('daily-bonus-panel').textContent).toBe('aberto');
+    expect(screen.getByTestId('daily-bonus-panel').textContent).toBe('open');
     expect(mockUseUserProfile).toHaveBeenCalledWith(true);
     expect(mockUseUserChips).toHaveBeenCalledWith(true);
   });
@@ -152,13 +152,13 @@ describe('Home', () => {
     localStorage.setItem(
       'user',
       JSON.stringify({
-        Nickname: 'JogadorAntigo',
+        Nickname: 'OldPlayer',
         ChipBalance: 1200,
       })
     );
 
     mockUseUserProfile.mockReturnValue({
-      nickname: 'JogadorAtual',
+      nickname: 'CurrentPlayer',
       isLoading: false,
     });
 
@@ -169,9 +169,9 @@ describe('Home', () => {
 
     renderHome();
 
-    expect(screen.getByText('JogadorAtual')).not.toBeNull();
+    expect(screen.getByText('CurrentPlayer')).not.toBeNull();
     expect(screen.getByText('32000')).not.toBeNull();
-    expect(screen.queryByText('JogadorAntigo')).toBeNull();
+    expect(screen.queryByText('OldPlayer')).toBeNull();
     expect(screen.queryByText('1200')).toBeNull();
   });
 });
