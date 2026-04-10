@@ -174,4 +174,24 @@ describe('Home', () => {
     expect(screen.queryByText('OldPlayer')).toBeNull();
     expect(screen.queryByText('1200')).toBeNull();
   });
+
+  it('clears localStorage and disables hooks when logout is clicked', () => {
+    localStorage.setItem('token', 'token-fake-123');
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        Nickname: 'LoggedInPlayer',
+        ChipBalance: 5000,
+      })
+    );
+
+    renderHome();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(mockUseUserProfile).toHaveBeenLastCalledWith(false);
+    expect(mockUseUserChips).toHaveBeenLastCalledWith(false);
+  });
 });
