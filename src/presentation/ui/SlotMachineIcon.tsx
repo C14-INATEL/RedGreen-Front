@@ -2,7 +2,7 @@ const SlotMachineIcon = () => (
   <img
     src="/caca-niquel.png"
     alt="Caça-Níquel"
-    className="w-20 h-20 object-contain"
+    className="h-20 w-20 object-contain"
   />
 );
 

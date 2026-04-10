@@ -8,6 +8,7 @@ export type SlotButtonColor = 'blue' | 'red';
 
 type SlotButtonProps = {
   color: SlotButtonColor;
+  disabled?: boolean;
   label: string;
   onPress?: () => void;
   style: CSSProperties;
@@ -27,6 +28,7 @@ const getSlotButtonSpriteSources = (color: SlotButtonColor) => {
 
 const SlotButtonComponent = ({
   color,
+  disabled = false,
   label,
   onPress,
   style,
@@ -49,6 +51,11 @@ const SlotButtonComponent = ({
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
+
+    if (disabled) {
+      return;
+    }
+
     clearResetTimeout();
     setPressed(true);
     onPress?.();
@@ -80,9 +87,11 @@ const SlotButtonComponent = ({
 
   return (
     <button
+      aria-disabled={disabled}
       aria-label={label}
       aria-pressed={pressed}
       className="pointer-events-auto absolute block"
+      disabled={disabled}
       onBlur={endPressFeedback}
       onPointerCancel={endPressFeedback}
       onPointerDown={handlePointerDown}
@@ -94,6 +103,7 @@ const SlotButtonComponent = ({
         background: 'transparent',
         border: 'none',
         boxShadow: 'none',
+        cursor: disabled ? 'default' : 'pointer',
         imageRendering: 'pixelated',
         margin: 0,
         outline: 'none',
