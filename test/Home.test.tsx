@@ -127,4 +127,23 @@ describe('Home', () => {
     expect(mockUseUserProfile).toHaveBeenCalledWith(false);
     expect(mockUseUserChips).toHaveBeenCalledWith(false);
   });
+
+  it('uses the user data stored in localStorage and opens the daily bonus when a token exists', () => {
+    localStorage.setItem('token', 'token-fake-123');
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        Nickname: 'JogadorLocal',
+        ChipBalance: 24500,
+      })
+    );
+
+    renderHome();
+
+    expect(screen.getByText('JogadorLocal')).not.toBeNull();
+    expect(screen.getByText('24500')).not.toBeNull();
+    expect(screen.getByTestId('daily-bonus-panel').textContent).toBe('aberto');
+    expect(mockUseUserProfile).toHaveBeenCalledWith(true);
+    expect(mockUseUserChips).toHaveBeenCalledWith(true);
+  });
 });
