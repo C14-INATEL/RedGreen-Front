@@ -23,25 +23,25 @@ type DailyBonusPanelProps = {
   MutateChips?: () => void;
 };
 
-const mockUseUserProfile = jest.fn();
-const mockUseUserChips = jest.fn();
-const mockHud = jest.fn();
-const mockRankingPanel = jest.fn();
-const mockDailyBonusPanel = jest.fn();
-const mockMutateChips = jest.fn();
+const MockUseUserProfile = jest.fn();
+const MockUseUserChips = jest.fn();
+const MockHud = jest.fn();
+const MockRankingPanel = jest.fn();
+const MockDailyBonusPanel = jest.fn();
+const MockMutateChips = jest.fn();
 
 jest.mock('@application/hooks/useUserProfile', () => ({
-  useUserProfile: (enabled: boolean) => mockUseUserProfile(enabled),
+  useUserProfile: (enabled: boolean) => MockUseUserProfile(enabled),
 }));
 
 jest.mock('@application/hooks/useUserChips', () => ({
-  useUserChips: (enabled: boolean) => mockUseUserChips(enabled),
+  useUserChips: (enabled: boolean) => MockUseUserChips(enabled),
 }));
 
 jest.mock('@ui/HUD', () => ({
   __esModule: true,
   default: (props: HudProps) => {
-    mockHud(props);
+    MockHud(props);
 
     return (
       <div>
@@ -62,7 +62,7 @@ jest.mock('@ui/Table', () => ({
 jest.mock('@ui/RankingPanel', () => ({
   __esModule: true,
   default: (props: RankingPanelProps) => {
-    mockRankingPanel(props);
+    MockRankingPanel(props);
 
     return (
       <div data-testid="ranking-panel">{props.IsOpen ? 'open' : 'closed'}</div>
@@ -73,7 +73,7 @@ jest.mock('@ui/RankingPanel', () => ({
 jest.mock('@ui/DailyBonusPanel', () => ({
   __esModule: true,
   default: (props: DailyBonusPanelProps) => {
-    mockDailyBonusPanel(props);
+    MockDailyBonusPanel(props);
 
     return (
       <div data-testid="daily-bonus-panel">
@@ -83,7 +83,7 @@ jest.mock('@ui/DailyBonusPanel', () => ({
   },
 }));
 
-const renderHome = () =>
+const RenderHome = () =>
   render(
     <MemoryRouter
       initialEntries={['/']}
@@ -100,32 +100,32 @@ describe('Home', () => {
   beforeEach(() => {
     localStorage.clear();
 
-    mockUseUserProfile.mockReset();
-    mockUseUserChips.mockReset();
-    mockHud.mockClear();
-    mockRankingPanel.mockClear();
-    mockDailyBonusPanel.mockClear();
-    mockMutateChips.mockReset();
+    MockUseUserProfile.mockReset();
+    MockUseUserChips.mockReset();
+    MockHud.mockClear();
+    MockRankingPanel.mockClear();
+    MockDailyBonusPanel.mockClear();
+    MockMutateChips.mockReset();
 
-    mockUseUserProfile.mockReturnValue({
+    MockUseUserProfile.mockReturnValue({
       nickname: undefined,
       isLoading: false,
     });
 
-    mockUseUserChips.mockReturnValue({
+    MockUseUserChips.mockReturnValue({
       chips: undefined,
-      mutate: mockMutateChips,
+      mutate: MockMutateChips,
     });
   });
 
   it('redirects the guest user to the login page after clicking the login action', () => {
-    renderHome();
+    RenderHome();
 
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
     expect(screen.getByText('Login page')).not.toBeNull();
-    expect(mockUseUserProfile).toHaveBeenCalledWith(false);
-    expect(mockUseUserChips).toHaveBeenCalledWith(false);
+    expect(MockUseUserProfile).toHaveBeenCalledWith(false);
+    expect(MockUseUserChips).toHaveBeenCalledWith(false);
   });
 
   it('uses the user data stored in localStorage and opens the daily bonus when a token exists', () => {
@@ -138,13 +138,13 @@ describe('Home', () => {
       })
     );
 
-    renderHome();
+    RenderHome();
 
     expect(screen.getByText('LocalPlayer')).not.toBeNull();
     expect(screen.getByText('24500')).not.toBeNull();
     expect(screen.getByTestId('daily-bonus-panel').textContent).toBe('open');
-    expect(mockUseUserProfile).toHaveBeenCalledWith(true);
-    expect(mockUseUserChips).toHaveBeenCalledWith(true);
+    expect(MockUseUserProfile).toHaveBeenCalledWith(true);
+    expect(MockUseUserChips).toHaveBeenCalledWith(true);
   });
 
   it('prioritizes the values returned by the hooks over stale data from localStorage', () => {
@@ -157,17 +157,17 @@ describe('Home', () => {
       })
     );
 
-    mockUseUserProfile.mockReturnValue({
+    MockUseUserProfile.mockReturnValue({
       nickname: 'CurrentPlayer',
       isLoading: false,
     });
 
-    mockUseUserChips.mockReturnValue({
+    MockUseUserChips.mockReturnValue({
       chips: 32000,
-      mutate: mockMutateChips,
+      mutate: MockMutateChips,
     });
 
-    renderHome();
+    RenderHome();
 
     expect(screen.getByText('CurrentPlayer')).not.toBeNull();
     expect(screen.getByText('32000')).not.toBeNull();
@@ -185,13 +185,13 @@ describe('Home', () => {
       })
     );
 
-    renderHome();
+    RenderHome();
 
     fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
 
     expect(localStorage.getItem('token')).toBeNull();
     expect(localStorage.getItem('user')).toBeNull();
-    expect(mockUseUserProfile).toHaveBeenLastCalledWith(false);
-    expect(mockUseUserChips).toHaveBeenLastCalledWith(false);
+    expect(MockUseUserProfile).toHaveBeenLastCalledWith(false);
+    expect(MockUseUserChips).toHaveBeenLastCalledWith(false);
   });
 });
