@@ -74,12 +74,12 @@ const Login = () => {
     const Email = Identifier.trim().toLowerCase();
 
     if (!Email) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR EMAIL.');
       return;
     }
 
     if (!IsValidEmail(Email)) {
-      SetToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+      SetToastMessage('ERROR\nPLEASE ENTER A VALID EMAIL.');
       return;
     }
 
@@ -100,7 +100,7 @@ const Login = () => {
       console.log('DATA:', Data);
 
       if (!response.ok) {
-        SetToastMessage('ERRO AO VERIFICAR E-MAIL.');
+        SetToastMessage('ERROR CHECKING EMAIL.');
         return;
       }
 
@@ -118,15 +118,15 @@ const Login = () => {
         return;
       }
     } catch (error) {
-      console.error('ERRO CHECK EMAIL:', error);
-      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      console.error('ERROR CHECKING EMAIL:', error);
+      SetToastMessage('ERROR CONNECTING TO SERVER.');
     }
   };
 
   const HandleLogin = async () => {
     try {
       if (!Identifier || !Password) {
-        SetToastMessage('PREENCHA E-MAIL E SENHA.');
+        SetToastMessage('REQUIRED FIELD\nENTER YOUR PASSWORD.');
         return;
       }
 
@@ -146,7 +146,7 @@ const Login = () => {
       console.log('LOGIN DATA:', Data);
 
       if (!response.ok) {
-        SetToastMessage('E-MAIL OU SENHA INVÁLIDOS.');
+        SetToastMessage('INVALID PASSWORD.');
         return;
       }
 
@@ -160,64 +160,64 @@ const Login = () => {
 
       window.location.href = '/';
     } catch (error) {
-      console.error('ERRO LOGIN:', error);
-      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      console.error('ERROR LOGGING IN:', error);
+      SetToastMessage('ERROR CONNECTING TO SERVER.');
     }
   };
 
   const handleSignup = async () => {
     if (!Name.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NOME.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR NAME.');
       return;
     }
 
     if (!Nickname.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU NICKNAME.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR NICKNAME.');
       return;
     }
 
     if (!BirthDate.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA DATA DE NASCIMENTO.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR BIRTH DATE.');
       return;
     }
 
     if (!IsBirthDateFormatValid(BirthDate)) {
-      SetToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
+      SetToastMessage('ERROR\nFORMAT: DD/MM/YYYY');
       return;
     }
 
     if (!IsValidBirthDate(BirthDate)) {
-      SetToastMessage('ERRO\nDATA INVÁLIDA.');
+      SetToastMessage('ERROR\nINVALID DATE.');
       return;
     }
 
     if (!Identifier.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SEU E-MAIL.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR EMAIL.');
       return;
     }
 
     if (!IsValidEmail(Identifier.trim().toLowerCase())) {
-      SetToastMessage('ERRO\nDIGITE UM E-MAIL VÁLIDO.');
+      SetToastMessage('ERROR\nPLEASE ENTER A VALID EMAIL.');
       return;
     }
 
     if (!Password.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nDIGITE SUA SENHA.');
+      SetToastMessage('REQUIRED FIELD\nENTER YOUR PASSWORD.');
       return;
     }
 
     if (!ConfirmPassword.trim()) {
-      SetToastMessage('CAMPO OBRIGATÓRIO\nCONFIRME SUA SENHA.');
+      SetToastMessage('REQUIRED FIELD\nCONFIRM YOUR PASSWORD.');
       return;
     }
 
     if (Password !== ConfirmPassword) {
-      SetToastMessage('ERRO\nAS SENHAS NÃO CONFEREM.');
+      SetToastMessage('ERROR\nTHE PASSWORDS DO NOT MATCH.');
       return;
     }
 
     if (Password.length < 8) {
-      SetToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
+      SetToastMessage('ERROR\nTHE PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
       return;
     }
 
@@ -246,14 +246,14 @@ const Login = () => {
       const Data = await Response.json();
 
       if (!Response.ok) {
-        SetToastMessage(Data.message || 'ERRO AO CRIAR CONTA.');
+        SetToastMessage(Data.message || 'ERROR CREATING ACCOUNT.');
         return;
       }
 
       SetToastMessage('');
       SetStep('login');
     } catch {
-      SetToastMessage('ERRO DE CONEXÃO COM O SERVIDOR.');
+      SetToastMessage('ERROR CONNECTING TO SERVER.');
     }
   };
 
