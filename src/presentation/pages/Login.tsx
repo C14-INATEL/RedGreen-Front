@@ -87,19 +87,19 @@ const Login = () => {
       const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(Email)}`;
       console.log('URL:', url);
 
-      const response = await fetch(url, {
+      const Response = await fetch(url, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
         },
       });
 
-      console.log('STATUS:', response.status);
+      console.log('STATUS:', Response.status);
 
-      const Data = await response.json();
+      const Data = await Response.json();
       console.log('DATA:', Data);
 
-      if (!response.ok) {
+      if (!Response.ok) {
         SetToastMessage('ERROR CHECKING EMAIL.');
         return;
       }
@@ -130,7 +130,7 @@ const Login = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/auth/login', {
+      const Response = await fetch('http://localhost:3000/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,10 +142,10 @@ const Login = () => {
         }),
       });
 
-      const Data = await response.json();
+      const Data = await Response.json();
       console.log('LOGIN DATA:', Data);
 
-      if (!response.ok) {
+      if (!Response.ok) {
         SetToastMessage('INVALID PASSWORD.');
         return;
       }
@@ -170,7 +170,7 @@ const Login = () => {
     }
   };
 
-  const handleSignup = async () => {
+  const HandleSignup = async () => {
     if (!Name.trim()) {
       SetToastMessage('REQUIRED FIELD\nENTER YOUR NAME.');
       return;
@@ -228,7 +228,7 @@ const Login = () => {
 
     try {
       const [day, month, year] = BirthDate.split('/');
-      const formattedBirthDate = `${year}-${month}-${day}`;
+      const FormattedBirthDate = `${year}-${month}-${day}`;
 
       const Response = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
@@ -237,7 +237,7 @@ const Login = () => {
         },
         body: JSON.stringify({
           Name: Name,
-          BirthDate: formattedBirthDate,
+          BirthDate: FormattedBirthDate,
           Nickname: Nickname,
           Email: Identifier.trim().toLowerCase(),
           Password: Password,
@@ -262,7 +262,7 @@ const Login = () => {
     }
   };
 
-  const resetToIdentify = () => {
+  const ResetToIdentify = () => {
     SetStep('identify');
     SetIdentifier('');
     SetPassword('');
@@ -275,7 +275,7 @@ const Login = () => {
     SetToastMessage('');
   };
 
-  const panelVariants = {
+  const PanelVariants = {
     initial: { opacity: 0, y: 20, scale: 0.97 },
     animate: { opacity: 1, y: 0, scale: 1 },
     exit: { opacity: 0, y: -20, scale: 0.97 },
@@ -299,7 +299,7 @@ const Login = () => {
           {Step === 'identify' && (
             <motion.div
               key="identify"
-              variants={panelVariants}
+              variants={PanelVariants}
               initial="initial"
               animate="animate"
               exit="exit"
@@ -339,7 +339,7 @@ const Login = () => {
           {Step === 'login' && (
             <motion.div
               key="login"
-              variants={panelVariants}
+              variants={PanelVariants}
               initial="initial"
               animate="animate"
               exit="exit"
@@ -387,7 +387,7 @@ const Login = () => {
 
               <div className="mt-4 flex items-center justify-between text-xs">
                 <button
-                  onClick={resetToIdentify}
+                  onClick={ResetToIdentify}
                   className="text-[hsl(120,50%,35%)]/70 hover:text-[hsl(120,50%,35%)] transition-colors flex items-center gap-1"
                 >
                   ← Usar outra conta
@@ -403,7 +403,7 @@ const Login = () => {
           {Step === 'signup' && (
             <motion.div
               key="signup"
-              variants={panelVariants}
+              variants={PanelVariants}
               initial="initial"
               animate="animate"
               exit="exit"
@@ -510,7 +510,7 @@ const Login = () => {
                       SetConfirmPassword(e.target.value);
                       SetToastMessage('');
                     }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+                    onKeyDown={(e) => e.key === 'Enter' && HandleSignup()}
                     className="auth-input pr-12"
                   />
 
@@ -528,14 +528,14 @@ const Login = () => {
                   </button>
                 </div>
 
-                <button onClick={handleSignup} className="auth-button mt-4">
+                <button onClick={HandleSignup} className="auth-button mt-4">
                   Criar conta
                 </button>
               </div>
 
               <div className="mt-4 text-center">
                 <button
-                  onClick={resetToIdentify}
+                  onClick={ResetToIdentify}
                   className="text-xs text-white/50 hover:text-white transition-colors"
                 >
                   Já possui uma conta?{' '}
