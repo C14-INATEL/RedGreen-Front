@@ -1,11 +1,15 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import TableDecorations from '@ui/TableDecorations';
 import GameCard from '@ui/GameCard';
 import SlotMachineIcon from '@ui/SlotMachineIcon';
+import { paths } from '../../paths';
 
 const Table = () => {
+  const Navigate = useNavigate();
+
   const handleStartGame = () => {
-    console.log('Iniciando o Caça-Níquel...');
+    Navigate(paths.slotmachineroom);
   };
 
   return (
@@ -23,7 +27,7 @@ const Table = () => {
 
               <div className="relative z-10 flex items-center justify-center min-h-[280px] py-4">
                 <GameCard
-                  title="Caça-Níquel"
+                  title="Caça-Niquel"
                   subtitle="Girar"
                   icon={<SlotMachineIcon />}
                   delay={0.1}

@@ -6,28 +6,49 @@ import RankingPanel from '@ui/RankingPanel';
 import DailyBonusPanel from '@ui/DailyBonusPanel';
 import { motion } from 'framer-motion';
 import { Trophy, Gift } from 'lucide-react';
+import { useUserProfile } from '@application/hooks/useUserProfile';
+import { useUserChips } from '@application/hooks/useUserChips';
 
 const Home = () => {
   const Navigate = useNavigate();
 
-  const Token = localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
+  const storedUserValue = localStorage.getItem('user');
+  let StoredUser = null;
+
+  if (storedUserValue) {
+    try {
+      StoredUser = JSON.parse(storedUserValue);
+    } catch {
+      StoredUser = null;
+    }
+  }
+
   const [IsLoggedIn, SetIsLoggedIn] = useState(!!Token);
-  const [PlayerName, SetPlayerName] = useState(
-    Token ? 'Jogador Logado' : 'Convidado'
-  );
-  const [Chips, SetChips] = useState(Token ? 25000 : 10000);
+
+  const { nickname, isLoading: profileLoading } = useUserProfile(IsLoggedIn);
+  const { chips, mutate: MutateChips } = useUserChips(IsLoggedIn);
+
+  const localNickname = StoredUser?.Nickname || StoredUser?.nickname;
+  const localChips = StoredUser?.ChipBalance ?? StoredUser?.chips;
+
+  const PlayerName =
+    nickname ??
+    localNickname ??
+    (IsLoggedIn && profileLoading ? 'Carregando...' : 'Convidado');
+  const Chips = chips ?? localChips ?? (IsLoggedIn ? 0 : 10000);
+
   const [RankingOpen, SetRankingOpen] = useState(false);
-  const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
+  const [DailyBonusOpen, SetDailyBonusOpen] = useState(!!Token); // Abrir automaticamente se já estiver logado
 
   const HandleLogin = () => {
     Navigate('/Login');
   };
 
   const HandleLogout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     SetIsLoggedIn(false);
-    SetPlayerName('Convidado');
-    SetChips(10000);
     Navigate('/');
   };
 
@@ -52,15 +73,17 @@ const Home = () => {
       <main className="relative flex items-center justify-center h-full px-6 md:px-16 pt-20 pb-10">
         <Table />
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={() => SetDailyBonusOpen(true)}
-          className="fixed right-6 z-50 w-10 h-10 bg-card/60 border-2 border-cassino-gold/30 items-center justify-center text-cassino-gold hover:bg-card/80 transition-colors hidden lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)]"
-          style={{ top: RankingOpen ? 'calc(6rem + 320px)' : '10rem' }}
-        >
-          <Gift className="w-4 h-4" />
-        </motion.button>
+        {IsLoggedIn && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={() => SetDailyBonusOpen(true)}
+            className="fixed right-6 z-50 w-10 h-10 bg-card/60 border-2 border-cassino-gold/30 flex items-center justify-center text-cassino-gold hover:bg-card/80 transition-colors lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)]"
+            style={{ top: RankingOpen ? 'calc(6rem + 320px)' : '10rem' }}
+          >
+            <Gift className="w-4 h-4" />
+          </motion.button>
+        )}
       </main>
 
       <RankingPanel
@@ -90,7 +113,9 @@ const Home = () => {
 
       <DailyBonusPanel
         IsOpen={DailyBonusOpen}
+        IsLoggedIn={IsLoggedIn}
         OnClose={() => SetDailyBonusOpen(false)}
+        MutateChips={MutateChips}
       />
     </div>
   );

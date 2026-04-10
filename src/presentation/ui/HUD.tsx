@@ -73,7 +73,7 @@ const HUD = ({
 
       <CassinoLogo />
 
-      {IsLoggedIn && (
+      {IsLoggedIn && Chips != null && (
         <div className="flex items-center gap-3 bg-card/60 pixel-border-gold px-5 py-3">
           <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
             <rect

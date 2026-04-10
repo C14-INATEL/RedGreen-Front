@@ -1,38 +1,55 @@
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useDailyLogin } from '@application/hooks/useDailyLogin';
 
 interface DayReward {
   day: number;
   chips: number;
-  claimed: boolean;
 }
 
 const rewards: DayReward[] = [
-  { day: 1, chips: 500, claimed: false },
-  { day: 2, chips: 1000, claimed: false },
-  { day: 3, chips: 2000, claimed: false },
-  { day: 4, chips: 3000, claimed: false },
-  { day: 5, chips: 5000, claimed: false },
-  { day: 6, chips: 8000, claimed: false },
-  { day: 7, chips: 15000, claimed: false },
+  { day: 1, chips: 50 },
+  { day: 2, chips: 100 },
+  { day: 3, chips: 150 },
+  { day: 4, chips: 200 },
+  { day: 5, chips: 250 },
+  { day: 6, chips: 300 },
+  { day: 7, chips: 350 },
 ];
 
 interface DailyBonusPanelProps {
   IsOpen: boolean;
+  IsLoggedIn: boolean;
   OnClose: () => void;
+  MutateChips?: () => void;
 }
 
-const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
-  const [Days, SetDays] = useState(rewards);
-  const CurrentDay = Days.findIndex((d) => !d.claimed);
-  const CanClaim = CurrentDay !== -1;
+const DailyBonusPanel = ({
+  IsOpen,
+  IsLoggedIn,
+  OnClose,
+  MutateChips,
+}: DailyBonusPanelProps) => {
+  const {
+    ClaimDailyReward,
+    IsLoading,
+    Error,
+    LastReward,
+    DailyState,
+    CanClaimToday,
+    CurrentDay,
+    CurrentDayIndex,
+    ClaimedDays,
+  } = useDailyLogin(IsLoggedIn);
 
-  const HandleClaim = () => {
-    if (!CanClaim) return;
-    SetDays((Prev) =>
-      Prev.map((D, I) => (I === CurrentDay ? { ...D, claimed: true } : D))
-    );
+  const HandleClaim = async () => {
+    if (!CanClaimToday || IsLoading) return;
+
+    const Reward = await ClaimDailyReward();
+
+    if (Reward && MutateChips) {
+      MutateChips();
+    }
   };
 
   const PixelChip = ({ size = 20 }: { size?: number }) => (
@@ -49,6 +66,12 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
       />
     </svg>
   );
+
+  const SafeCurrentIndex = Math.min(
+    Math.max(CurrentDayIndex, 0),
+    rewards.length - 1
+  );
+  const CurrentReward = rewards[SafeCurrentIndex];
 
   return (
     <AnimatePresence>
@@ -118,10 +141,10 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                     />
                   </svg>
                   <span className="font-display text-sm uppercase tracking-[0.2em] text-foreground/80 flex-1">
-                    Bônus Diário
+                    Bonus Diario
                   </span>
                   <span className="text-[10px] text-accent font-mono tracking-wider">
-                    Dia {CurrentDay !== -1 ? CurrentDay + 1 : 7}/7
+                    Dia {CurrentDay}/7
                   </span>
                   <button
                     onClick={OnClose}
@@ -132,9 +155,12 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                 </div>
 
                 <div className="p-6 grid grid-cols-7 gap-4">
-                  {Days.map((Day, I) => {
-                    const IsCurrent = I === CurrentDay;
-                    const IsClaimed = Day.claimed;
+                  {rewards.map((Day, I) => {
+                    const IsClaimed = I < ClaimedDays;
+                    const IsCurrent =
+                      CanClaimToday === true
+                        ? I === SafeCurrentIndex
+                        : IsClaimed && I === SafeCurrentIndex;
 
                     return (
                       <motion.div
@@ -239,29 +265,56 @@ const DailyBonusPanel = ({ IsOpen, OnClose }: DailyBonusPanelProps) => {
                 </div>
 
                 <div className="px-6 pb-6">
+                  {Error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-3 p-3 bg-red-500/20 border-2 border-red-500/40 text-red-400 text-sm font-mono"
+                    >
+                      {Error}
+                    </motion.div>
+                  )}
+
+                  {LastReward !== null && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-3 p-3 bg-accent/20 border-2 border-accent/40 text-accent text-sm font-mono"
+                    >
+                      +{LastReward.toLocaleString('pt-BR')} fichas! Sequencia:{' '}
+                      {DailyState?.DailyStreak ?? 0} dias
+                    </motion.div>
+                  )}
+
                   <button
                     onClick={HandleClaim}
-                    disabled={!CanClaim}
+                    disabled={
+                      !DailyState || CanClaimToday === false || IsLoading
+                    }
                     className={`
                     w-full py-4 font-display text-sm uppercase tracking-[0.2em] border-2 transition-all
                     shadow-[3px_3px_0px_rgba(0,0,0,0.4)]
                     ${
-                      CanClaim
+                      DailyState && CanClaimToday !== false && !IsLoading
                         ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)]'
                         : 'bg-secondary/40 border-border/20 text-muted-foreground/30 cursor-not-allowed'
                     }
                   `}
                   >
-                    {CanClaim ? (
+                    {IsLoading ? (
+                      'Resgatando...'
+                    ) : !DailyState ? (
+                      'Carregando bonus diario...'
+                    ) : CanClaimToday === false ? (
+                      'Bonus diario ja resgatado hoje'
+                    ) : (
                       <>
                         Resgatar{' '}
-                        <span className="font-mono font-bold">
-                          {Days[CurrentDay].chips.toLocaleString('pt-BR')}
+                        <span className="font-mono font-semibold text-[13px] normal-case tracking-normal">
+                          {CurrentReward.chips.toLocaleString('pt-BR')}
                         </span>{' '}
                         fichas
                       </>
-                    ) : (
-                      'Todos os bônus resgatados!'
                     )}
                   </button>
                 </div>
