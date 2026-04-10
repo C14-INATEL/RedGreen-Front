@@ -146,4 +146,32 @@ describe('Home', () => {
     expect(mockUseUserProfile).toHaveBeenCalledWith(true);
     expect(mockUseUserChips).toHaveBeenCalledWith(true);
   });
+
+  it('prioritizes the values returned by the hooks over stale data from localStorage', () => {
+    localStorage.setItem('token', 'token-fake-123');
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        Nickname: 'JogadorAntigo',
+        ChipBalance: 1200,
+      })
+    );
+
+    mockUseUserProfile.mockReturnValue({
+      nickname: 'JogadorAtual',
+      isLoading: false,
+    });
+
+    mockUseUserChips.mockReturnValue({
+      chips: 32000,
+      mutate: mockMutateChips,
+    });
+
+    renderHome();
+
+    expect(screen.getByText('JogadorAtual')).not.toBeNull();
+    expect(screen.getByText('32000')).not.toBeNull();
+    expect(screen.queryByText('JogadorAntigo')).toBeNull();
+    expect(screen.queryByText('1200')).toBeNull();
+  });
 });
