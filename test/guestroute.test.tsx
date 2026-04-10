@@ -33,7 +33,7 @@ describe('guestRoute - route protection', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
-  it('displays the login page when there is no token.', () => {
+  it('displays the login page when there is no token', () => {
     renderWithRouter('/login');
     expect(screen.getByText('Login Page')).not.toBeNull();
   });

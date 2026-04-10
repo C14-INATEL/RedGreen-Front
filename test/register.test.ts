@@ -3,14 +3,14 @@ import { describe, expect, it } from '@jest/globals';
 
 describe('isValidBirthDate', () => {
   it('valid date', () => {
-    expect(IsValidBirthDate('01/01/2000')).toBe(true);
+    expect(IsValidBirthDate('01/01/2001')).toBe(true);
   });
 
   it('invalid date', () => {
-    expect(IsValidBirthDate('31/02/2000')).toBe(false);
+    expect(IsValidBirthDate('30/02/2000')).toBe(false);
   });
 
   it('future date', () => {
-    expect(IsValidBirthDate('01/01/3000')).toBe(false);
+    expect(IsValidBirthDate('01/01/3001')).toBe(false);
   });
 });
