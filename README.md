@@ -79,12 +79,6 @@ npm run build
 npm run format
 ```
 
-**Formata o código automaticamente com Prettier.**
-
-```bash
-npm run format
-```
-
 **Executa os testes.**
 
 ```bash
