@@ -12,6 +12,12 @@ import {
 } from './SlotMachineReels';
 
 const SLOT_MACHINE_SIZE = 4096;
+const SLOT_MACHINE_BASE_SPRITE = '/SlotMachine/SpriteSlotMachine.png';
+const SLOT_MACHINE_ANIMATION_FRAME_SOURCES = Array.from(
+  { length: 8 },
+  (_, index) => `/SlotMachine/SpriteSlotMachine${index}.png`
+);
+const SLOT_MACHINE_ANIMATION_FRAME_DURATION_MS = 333;
 const SLOT_MACHINE_REEL_AREA = {
   height: 728,
   left: 928,
@@ -53,7 +59,13 @@ const getRerollCounterStates = (rerollsRemaining: number) => {
   );
 };
 
-export const SlotMachinePixi = () => {
+type SlotMachinePixiProps = {
+  animateMachineSprite?: boolean;
+};
+
+export const SlotMachinePixi = ({
+  animateMachineSprite = false,
+}: SlotMachinePixiProps) => {
   const machineRef = useRef<HTMLDivElement | null>(null);
   const [machineSize, setMachineSize] = useState<{
     height: number;
@@ -69,6 +81,7 @@ export const SlotMachinePixi = () => {
     useState<SlotMachineReelsRerollRequest | null>(null);
   const [rerollsRemaining, setRerollsRemaining] = useState(MAX_REROLLS);
   const [isMachineAnimating, setIsMachineAnimating] = useState(false);
+  const [machineSpriteFrameIndex, setMachineSpriteFrameIndex] = useState(0);
 
   useEffect(() => {
     const machine = machineRef.current;
@@ -99,6 +112,33 @@ export const SlotMachinePixi = () => {
       observer?.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    [SLOT_MACHINE_BASE_SPRITE, ...SLOT_MACHINE_ANIMATION_FRAME_SOURCES].forEach(
+      (source) => {
+        const image = new Image();
+        image.src = source;
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!animateMachineSprite) {
+      setMachineSpriteFrameIndex(0);
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setMachineSpriteFrameIndex(
+        (currentValue) =>
+          (currentValue + 1) % SLOT_MACHINE_ANIMATION_FRAME_SOURCES.length
+      );
+    }, SLOT_MACHINE_ANIMATION_FRAME_DURATION_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [animateMachineSprite]);
 
   const canReturnToIdle =
     machineMode === 'resultHold' &&
@@ -163,13 +203,17 @@ export const SlotMachinePixi = () => {
     });
   };
 
+  const currentMachineSpriteSource = animateMachineSprite
+    ? SLOT_MACHINE_ANIMATION_FRAME_SOURCES[machineSpriteFrameIndex]
+    : SLOT_MACHINE_BASE_SPRITE;
+
   return (
     <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
       <img
         alt="Caca-niquel de teste"
         className="block w-full select-none"
         draggable={false}
-        src="/SlotMachine/SpriteSlotMachine.png"
+        src={currentMachineSpriteSource}
         style={{
           imageRendering: 'pixelated',
         }}
