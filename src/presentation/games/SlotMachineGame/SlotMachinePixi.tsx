@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MAX_REROLLS } from './slotMachineGameConfig';
 import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
@@ -18,6 +18,7 @@ const SLOT_MACHINE_ANIMATION_FRAME_SOURCES = Array.from(
   (_, index) => `/SlotMachine/SpriteSlotMachine${index}.png`
 );
 const SLOT_MACHINE_ANIMATION_FRAME_DURATION_MS = 333;
+const SLOT_RED_BUTTON_TOGGLE_FRAME_DURATION_MS = 120;
 const SLOT_MACHINE_REEL_AREA = {
   height: 728,
   left: 928,
@@ -81,6 +82,8 @@ export const SlotMachinePixi = ({
     useState<SlotMachineReelsRerollRequest | null>(null);
   const [rerollsRemaining, setRerollsRemaining] = useState(MAX_REROLLS);
   const [isMachineAnimating, setIsMachineAnimating] = useState(false);
+  const [isLeverAnimating, setIsLeverAnimating] = useState(false);
+  const [isLeverToggleActive, setIsLeverToggleActive] = useState(false);
   const [machineSpriteFrameIndex, setMachineSpriteFrameIndex] = useState(0);
 
   useEffect(() => {
@@ -124,7 +127,6 @@ export const SlotMachinePixi = ({
 
   useEffect(() => {
     if (!animateMachineSprite) {
-      setMachineSpriteFrameIndex(0);
       return undefined;
     }
 
@@ -139,6 +141,20 @@ export const SlotMachinePixi = ({
       window.clearInterval(intervalId);
     };
   }, [animateMachineSprite]);
+
+  useEffect(() => {
+    if (!isLeverAnimating) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setIsLeverToggleActive((currentValue) => !currentValue);
+    }, SLOT_RED_BUTTON_TOGGLE_FRAME_DURATION_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isLeverAnimating]);
 
   const canReturnToIdle =
     machineMode === 'resultHold' &&
@@ -203,9 +219,18 @@ export const SlotMachinePixi = ({
     });
   };
 
+  const handleLeverAnimationStateChange = useCallback(
+    (nextIsAnimating: boolean) => {
+      setIsLeverAnimating(nextIsAnimating);
+      setIsLeverToggleActive(false);
+    },
+    []
+  );
+
   const currentMachineSpriteSource = animateMachineSprite
     ? SLOT_MACHINE_ANIMATION_FRAME_SOURCES[machineSpriteFrameIndex]
     : SLOT_MACHINE_BASE_SPRITE;
+  const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
 
   return (
     <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
@@ -238,6 +263,8 @@ export const SlotMachinePixi = ({
       <SlotMachineButtons
         canResetToIdle={canReturnToIdle}
         canReroll={canUseReroll}
+        isLeverAnimating={isLeverAnimating}
+        isLeverToggleActive={currentLeverToggleActive}
         machineSize={machineSize}
         onResetToIdle={handleReturnToIdle}
         onRerollReel={handleRerollReel}
@@ -253,6 +280,7 @@ export const SlotMachinePixi = ({
       <SlotMachineLever
         disabled={!canStartSpin}
         machineSize={machineSize}
+        onAnimationStateChange={handleLeverAnimationStateChange}
         onPull={handleLeverPull}
       />
     </div>
