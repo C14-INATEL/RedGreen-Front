@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import CassinoLogo from '@ui/CassinoLogo';
+import DeleteAccountModal from '@ui/DeleteAccountModal';
 import EditProfileModal from '@ui/EditProfileModal';
 import type { HUDProps } from '@domain/types';
 
@@ -40,6 +41,7 @@ const UserAvatar = ({ IsActive = false }: { IsActive?: boolean }) => (
 const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => {
   const [IsMenuOpen, SetIsMenuOpen] = useState(false);
   const [IsEditProfileOpen, SetIsEditProfileOpen] = useState(false);
+  const [IsDeleteAccountOpen, SetIsDeleteAccountOpen] = useState(false);
   const UserMenuId = useId();
   const UserMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -74,7 +76,7 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
 
   const MenuItems: MenuItem[] = [
     {
-      Label: 'Editar perfil',
+      Label: 'Edit profile',
       Icon: UserRoundPen,
       OnSelect: () => {
         CloseMenu();
@@ -82,13 +84,16 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
       },
     },
     {
-      Label: 'Apagar conta',
+      Label: 'Delete account',
       Icon: Trash2,
-      OnSelect: CloseMenu,
+      OnSelect: () => {
+        CloseMenu();
+        SetIsDeleteAccountOpen(true);
+      },
       Tone: 'destructive',
     },
     {
-      Label: 'Sair',
+      Label: 'Sign out',
       Icon: LogOut,
       OnSelect: HandleLogout,
     },
@@ -148,9 +153,6 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
                         <div className="min-w-0">
                           <p className="truncate font-display text-xl font-bold text-foreground">
                             {PlayerName}
-                          </p>
-                          <p className="mt-1 font-body text-[9px] uppercase tracking-[0.35em] text-[#b0b78e]">
-                            conta ativa
                           </p>
                         </div>
                       </div>
@@ -233,6 +235,15 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
       <EditProfileModal
         IsOpen={IsEditProfileOpen}
         OnClose={() => SetIsEditProfileOpen(false)}
+      />
+
+      <DeleteAccountModal
+        IsOpen={IsDeleteAccountOpen}
+        OnClose={() => SetIsDeleteAccountOpen(false)}
+        OnDeleted={() => {
+          SetIsDeleteAccountOpen(false);
+          OnLogout();
+        }}
       />
     </>
   );
