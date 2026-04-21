@@ -29,7 +29,13 @@ const PixelChip = ({ Size = 20 }: { Size?: number }) => (
     <rect x="4" y="2" width="8" height="2" fill="hsl(var(--cassino-gold))" />
     <rect x="2" y="4" width="12" height="8" fill="hsl(var(--cassino-gold))" />
     <rect x="4" y="12" width="8" height="2" fill="hsl(var(--cassino-gold))" />
-    <rect x="7" y="5" width="2" height="6" fill="hsl(var(--accent-foreground) / 0.3)" />
+    <rect
+      x="7"
+      y="5"
+      width="2"
+      height="6"
+      fill="hsl(var(--accent-foreground) / 0.3)"
+    />
   </svg>
 );
 
@@ -67,7 +73,10 @@ const DailyBonusPanel = ({
     if (Reward && MutateChips) MutateChips();
   };
 
-  const SafeCurrentIndex = Math.min(Math.max(CurrentDayIndex, 0), Rewards.length - 1);
+  const SafeCurrentIndex = Math.min(
+    Math.max(CurrentDayIndex, 0),
+    Rewards.length - 1
+  );
   const CurrentReward = Rewards[SafeCurrentIndex];
 
   return (
@@ -94,12 +103,48 @@ const DailyBonusPanel = ({
               <div className="border-2 border-casino-gold/40 bg-secondary shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
                 <div className="flex items-center gap-3 border-b-2 border-border/30 bg-[hsl(var(--accent))]/10 px-6 py-4">
                   <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="6" width="12" height="2" fill="hsl(var(--cassino-red))" />
-                    <rect x="7" y="2" width="2" height="4" fill="hsl(var(--cassino-red))" />
-                    <rect x="5" y="3" width="2" height="2" fill="hsl(var(--cassino-red))" />
-                    <rect x="9" y="3" width="2" height="2" fill="hsl(var(--cassino-red))" />
-                    <rect x="3" y="8" width="10" height="6" fill="hsl(var(--cassino-gold))" />
-                    <rect x="7" y="8" width="2" height="6" fill="hsl(var(--cassino-red))" />
+                    <rect
+                      x="2"
+                      y="6"
+                      width="12"
+                      height="2"
+                      fill="hsl(var(--cassino-red))"
+                    />
+                    <rect
+                      x="7"
+                      y="2"
+                      width="2"
+                      height="4"
+                      fill="hsl(var(--cassino-red))"
+                    />
+                    <rect
+                      x="5"
+                      y="3"
+                      width="2"
+                      height="2"
+                      fill="hsl(var(--cassino-red))"
+                    />
+                    <rect
+                      x="9"
+                      y="3"
+                      width="2"
+                      height="2"
+                      fill="hsl(var(--cassino-red))"
+                    />
+                    <rect
+                      x="3"
+                      y="8"
+                      width="10"
+                      height="6"
+                      fill="hsl(var(--cassino-gold))"
+                    />
+                    <rect
+                      x="7"
+                      y="8"
+                      width="2"
+                      height="6"
+                      fill="hsl(var(--cassino-red))"
+                    />
                   </svg>
                   <span className="flex-1 font-display text-sm uppercase tracking-[0.2em] text-foreground/80">
                     Bônus Diário
@@ -165,7 +210,9 @@ const DailyBonusPanel = ({
                           }`}
                         >
                           {DayReward.Chips >= 1000
-                            ? (DayReward.Chips / 1000).toFixed(DayReward.Chips % 1000 === 0 ? 0 : 1) + 'k'
+                            ? (DayReward.Chips / 1000).toFixed(
+                                DayReward.Chips % 1000 === 0 ? 0 : 1
+                              ) + 'k'
                             : DayReward.Chips}
                         </span>
 
@@ -201,7 +248,9 @@ const DailyBonusPanel = ({
 
                   <button
                     onClick={HandleClaim}
-                    disabled={!DailyState || CanClaimToday === false || IsLoading}
+                    disabled={
+                      !DailyState || CanClaimToday === false || IsLoading
+                    }
                     className={`
                       w-full border-2 py-4 font-display text-sm uppercase tracking-[0.2em] transition-all
                       shadow-[3px_3px_0px_rgba(0,0,0,0.4)]

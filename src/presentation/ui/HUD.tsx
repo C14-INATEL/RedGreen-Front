@@ -38,7 +38,13 @@ const UserAvatar = ({ IsActive = false }: { IsActive?: boolean }) => (
   </div>
 );
 
-const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => {
+const HUD = ({
+  IsLoggedIn,
+  PlayerName,
+  Chips,
+  OnLogin,
+  OnLogout,
+}: HUDProps) => {
   const [IsMenuOpen, SetIsMenuOpen] = useState(false);
   const [IsEditProfileOpen, SetIsEditProfileOpen] = useState(false);
   const [IsDeleteAccountOpen, SetIsDeleteAccountOpen] = useState(false);
@@ -120,7 +126,11 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
                 aria-controls={UserMenuId}
                 aria-expanded={IsMenuOpen}
                 aria-haspopup="menu"
-                aria-label={IsMenuOpen ? 'Fechar menu do usuario' : 'Abrir menu do usuario'}
+                aria-label={
+                  IsMenuOpen
+                    ? 'Fechar menu do usuario'
+                    : 'Abrir menu do usuario'
+                }
                 data-testid="user-menu-toggle"
               >
                 <UserAvatar IsActive={IsMenuOpen} />
@@ -159,27 +169,32 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
                     </div>
 
                     <div className="py-1">
-                      {MenuItems.map(({ Label, Icon, OnSelect, Tone = 'default' }) => {
-                        const IsDestructive = Tone === 'destructive';
-                        return (
-                          <button
-                            key={Label}
-                            type="button"
-                            role="menuitem"
-                            onClick={OnSelect}
-                            className={`flex w-full items-center gap-4 border-b border-[#9f741b]/35 px-6 py-5 text-left transition-colors last:border-b-0 ${
-                              IsDestructive
-                                ? 'text-cassino-red hover:bg-[#733322]'
-                                : 'text-foreground hover:bg-[#745628]'
-                            }`}
-                          >
-                            <Icon className="h-5 w-5 shrink-0" strokeWidth={2.2} />
-                            <span className="font-mono text-[11px] uppercase tracking-[0.25em]">
-                              {Label}
-                            </span>
-                          </button>
-                        );
-                      })}
+                      {MenuItems.map(
+                        ({ Label, Icon, OnSelect, Tone = 'default' }) => {
+                          const IsDestructive = Tone === 'destructive';
+                          return (
+                            <button
+                              key={Label}
+                              type="button"
+                              role="menuitem"
+                              onClick={OnSelect}
+                              className={`flex w-full items-center gap-4 border-b border-[#9f741b]/35 px-6 py-5 text-left transition-colors last:border-b-0 ${
+                                IsDestructive
+                                  ? 'text-cassino-red hover:bg-[#733322]'
+                                  : 'text-foreground hover:bg-[#745628]'
+                              }`}
+                            >
+                              <Icon
+                                className="h-5 w-5 shrink-0"
+                                strokeWidth={2.2}
+                              />
+                              <span className="font-mono text-[11px] uppercase tracking-[0.25em]">
+                                {Label}
+                              </span>
+                            </button>
+                          );
+                        }
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -207,15 +222,69 @@ const HUD = ({ IsLoggedIn, PlayerName, Chips, OnLogin, OnLogout }: HUDProps) => 
           {IsLoggedIn && Chips != null ? (
             <div className="flex items-center gap-3 bg-card/60 px-5 py-3 pixel-border-gold">
               <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
-                <rect x="4" y="2" width="8" height="2" fill="hsl(var(--cassino-gold))" />
-                <rect x="2" y="4" width="2" height="2" fill="hsl(var(--cassino-gold))" />
-                <rect x="12" y="4" width="2" height="2" fill="hsl(var(--cassino-gold))" />
-                <rect x="2" y="6" width="12" height="4" fill="hsl(var(--cassino-gold))" />
-                <rect x="6" y="4" width="4" height="8" fill="hsl(var(--cassino-gold) / 0.7)" />
-                <rect x="2" y="10" width="2" height="2" fill="hsl(var(--cassino-gold))" />
-                <rect x="12" y="10" width="2" height="2" fill="hsl(var(--cassino-gold))" />
-                <rect x="4" y="12" width="8" height="2" fill="hsl(var(--cassino-gold))" />
-                <rect x="7" y="5" width="2" height="6" fill="hsl(var(--background) / 0.5)" />
+                <rect
+                  x="4"
+                  y="2"
+                  width="8"
+                  height="2"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="2"
+                  y="4"
+                  width="2"
+                  height="2"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="12"
+                  y="4"
+                  width="2"
+                  height="2"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="2"
+                  y="6"
+                  width="12"
+                  height="4"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="6"
+                  y="4"
+                  width="4"
+                  height="8"
+                  fill="hsl(var(--cassino-gold) / 0.7)"
+                />
+                <rect
+                  x="2"
+                  y="10"
+                  width="2"
+                  height="2"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="12"
+                  y="10"
+                  width="2"
+                  height="2"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="4"
+                  y="12"
+                  width="8"
+                  height="2"
+                  fill="hsl(var(--cassino-gold))"
+                />
+                <rect
+                  x="7"
+                  y="5"
+                  width="2"
+                  height="6"
+                  fill="hsl(var(--background) / 0.5)"
+                />
               </svg>
               <div className="flex flex-col items-end">
                 <span className="font-body text-[8px] uppercase tracking-wider text-muted-foreground">

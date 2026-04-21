@@ -39,7 +39,8 @@ const ParseDateKey = (DateKey: string) => {
 
 const NormalizeDateKey = (Value: unknown): string | null => {
   if (!Value) return null;
-  if (Value instanceof Date && Number.isFinite(Value.getTime())) return GetLocalDateKey(Value);
+  if (Value instanceof Date && Number.isFinite(Value.getTime()))
+    return GetLocalDateKey(Value);
   if (typeof Value === 'string') {
     const Match = Value.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (Match) return `${Match[1]}-${Match[2]}-${Match[3]}`;
@@ -49,13 +50,18 @@ const NormalizeDateKey = (Value: unknown): string | null => {
   return null;
 };
 
-const GetDaysSinceDateKey = (DateKey: string, Now: Date = new Date()): number => {
+const GetDaysSinceDateKey = (
+  DateKey: string,
+  Now: Date = new Date()
+): number => {
   const Target = ParseDateKey(DateKey);
   const Today = new Date(Now.getFullYear(), Now.getMonth(), Now.getDate());
   return Math.round((Today.getTime() - Target.getTime()) / MillisecondsInDay);
 };
 
-const DeriveCanClaimFromLastLoginDate = (LastLoginDate: string | null): boolean => {
+const DeriveCanClaimFromLastLoginDate = (
+  LastLoginDate: string | null
+): boolean => {
   if (!LastLoginDate) return true;
   return GetDaysSinceDateKey(LastLoginDate) > 0;
 };
@@ -82,19 +88,33 @@ export const CalculateDailyProgress = (
       : null;
 
   if (typeof SafeSequenceDay === 'number') {
-    const ClaimedDays = CanClaim ? Math.max(SafeSequenceDay - 1, 0) : SafeSequenceDay;
-    return { ClaimedDays, CurrentDay: SafeSequenceDay, CurrentDayIndex: SafeSequenceDay - 1 };
+    const ClaimedDays = CanClaim
+      ? Math.max(SafeSequenceDay - 1, 0)
+      : SafeSequenceDay;
+    return {
+      ClaimedDays,
+      CurrentDay: SafeSequenceDay,
+      CurrentDayIndex: SafeSequenceDay - 1,
+    };
   }
 
   const IsCapped = SafeStreak >= TotalRewardDays;
 
   if (IsCapped) {
     const ClaimedDays = CanClaim ? TotalRewardDays - 1 : TotalRewardDays;
-    return { ClaimedDays, CurrentDay: TotalRewardDays, CurrentDayIndex: TotalRewardDays - 1 };
+    return {
+      ClaimedDays,
+      CurrentDay: TotalRewardDays,
+      CurrentDayIndex: TotalRewardDays - 1,
+    };
   }
 
   if (CanClaim) {
-    return { ClaimedDays: SafeStreak, CurrentDay: SafeStreak + 1, CurrentDayIndex: SafeStreak };
+    return {
+      ClaimedDays: SafeStreak,
+      CurrentDay: SafeStreak + 1,
+      CurrentDayIndex: SafeStreak,
+    };
   }
 
   return {
@@ -108,7 +128,9 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
   const [IsLoading, SetIsLoading] = useState(false);
   const [Error, SetError] = useState<string | null>(null);
   const [LastReward, SetLastReward] = useState<number | null>(null);
-  const [CanClaimOverride, SetCanClaimOverride] = useState<boolean | null>(null);
+  const [CanClaimOverride, SetCanClaimOverride] = useState<boolean | null>(
+    null
+  );
 
   const {
     data: DailyState,
@@ -119,19 +141,34 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
     Enabled ? DailyStatusEndpoint : null,
     async (Url) => {
       const Response = await apiClient.get<Record<string, unknown>>(Url);
-      const Data = (Response.data?.User ?? Response.data) as Record<string, unknown>;
+      const Data = (Response.data?.User ?? Response.data) as Record<
+        string,
+        unknown
+      >;
 
       const LastLoginDate = NormalizeDateKey(
-        Data.LastLoginDate ?? Data.lastLoginDate ?? Data.LastDailyLoginAt ?? Data.lastDailyLoginAt
+        Data.LastLoginDate ??
+          Data.lastLoginDate ??
+          Data.LastDailyLoginAt ??
+          Data.lastDailyLoginAt
       );
 
       const StoredStreak = Math.max(
         0,
-        Number(Data.DailyLoginStreak ?? Data.dailyLoginStreak ?? Data.DailyStreak ?? Data.dailyStreak ?? 0)
+        Number(
+          Data.DailyLoginStreak ??
+            Data.dailyLoginStreak ??
+            Data.DailyStreak ??
+            Data.dailyStreak ??
+            0
+        )
       );
 
       const CanClaim = DeriveCanClaimFromLastLoginDate(LastLoginDate);
-      const ResolvedStreak = DeriveStreakFromLastLoginDate(LastLoginDate, StoredStreak);
+      const ResolvedStreak = DeriveStreakFromLastLoginDate(
+        LastLoginDate,
+        StoredStreak
+      );
 
       const SequenceDay = CanClaim
         ? Math.min(ResolvedStreak + 1, TotalRewardDays)
@@ -158,7 +195,8 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
     SetError(null);
 
     try {
-      const Response = await apiClient.post<Record<string, unknown>>(DailyLoginEndpoint);
+      const Response =
+        await apiClient.post<Record<string, unknown>>(DailyLoginEndpoint);
       const Data = Response.data;
 
       const NewStreak = Math.min(
@@ -172,7 +210,9 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
         FirstLoginToday: false,
         DailyStreak: NewStreak,
         Reward,
-        ChipBalance: Number(Data.ChipBalance ?? Data.chipBalance ?? DailyState?.ChipBalance ?? 0),
+        ChipBalance: Number(
+          Data.ChipBalance ?? Data.chipBalance ?? DailyState?.ChipBalance ?? 0
+        ),
         LastLoginDate: TodayKey,
         SequenceDay: Math.min(NewStreak, TotalRewardDays),
       };
@@ -184,7 +224,8 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
       return UpdatedState;
     } catch (Err) {
       const ErrorMessage =
-        (Err as { message?: string })?.message ?? 'Erro ao resgatar bonus diario';
+        (Err as { message?: string })?.message ??
+        'Erro ao resgatar bonus diario';
       SetError(ErrorMessage);
       return null;
     } finally {
@@ -193,13 +234,14 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
   };
 
   useEffect(() => {
-  if (DailyState && CanClaimOverride !== null) {
-    SetCanClaimOverride(null);
-  }
-}, [DailyState, CanClaimOverride]);
+    if (DailyState && CanClaimOverride !== null) {
+      SetCanClaimOverride(null);
+    }
+  }, [DailyState, CanClaimOverride]);
 
   const DerivedError = Error ?? DailyStateError?.message ?? null;
-  const CanClaimToday = CanClaimOverride ?? DailyState?.FirstLoginToday ?? false;
+  const CanClaimToday =
+    CanClaimOverride ?? DailyState?.FirstLoginToday ?? false;
   const Progress = CalculateDailyProgress(
     DailyState?.DailyStreak ?? 0,
     CanClaimToday,

@@ -69,7 +69,11 @@ const FormatDateToISO = (BrDate: string): string => {
   return `${Year}-${Month}-${Day}`;
 };
 
-const EditProfileModal = ({ IsOpen, OnClose, OnSuccess }: EditProfileModalProps) => {
+const EditProfileModal = ({
+  IsOpen,
+  OnClose,
+  OnSuccess,
+}: EditProfileModalProps) => {
   const StoredUser = (() => {
     try {
       return JSON.parse(localStorage.getItem('user') ?? '{}');
@@ -235,7 +239,9 @@ const EditProfileModal = ({ IsOpen, OnClose, OnSuccess }: EditProfileModalProps)
                     placeholder="DD/MM/YYYY"
                     value={BirthDate}
                     onChange={(e) => {
-                      const RawValue = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      const RawValue = e.target.value
+                        .replace(/\D/g, '')
+                        .slice(0, 8);
                       let FormattedValue = RawValue;
                       if (RawValue.length > 2 && RawValue.length <= 4) {
                         FormattedValue = `${RawValue.slice(0, 2)}/${RawValue.slice(2)}`;
@@ -267,7 +273,9 @@ const EditProfileModal = ({ IsOpen, OnClose, OnSuccess }: EditProfileModalProps)
                       type="button"
                       onClick={() => SetShowPassword(!ShowPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                      aria-label={ShowPassword ? 'Hide password' : 'Show password'}
+                      aria-label={
+                        ShowPassword ? 'Hide password' : 'Show password'
+                      }
                     >
                       {ShowPassword ? EyeClosedIcon : EyeOpenIcon}
                     </button>
@@ -288,9 +296,15 @@ const EditProfileModal = ({ IsOpen, OnClose, OnSuccess }: EditProfileModalProps)
                     />
                     <button
                       type="button"
-                      onClick={() => SetShowConfirmPassword(!ShowConfirmPassword)}
+                      onClick={() =>
+                        SetShowConfirmPassword(!ShowConfirmPassword)
+                      }
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                      aria-label={ShowConfirmPassword ? 'Hide confirmation' : 'Show confirmation'}
+                      aria-label={
+                        ShowConfirmPassword
+                          ? 'Hide confirmation'
+                          : 'Show confirmation'
+                      }
                     >
                       {ShowConfirmPassword ? EyeClosedIcon : EyeOpenIcon}
                     </button>
@@ -301,7 +315,10 @@ const EditProfileModal = ({ IsOpen, OnClose, OnSuccess }: EditProfileModalProps)
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="text-center text-[10px] uppercase tracking-widest text-[hsl(120,50%,45%)]"
-                      style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+                      style={{
+                        fontFamily:
+                          '"Press Start 2P", "Courier New", monospace',
+                      }}
                     >
                       {SuccessMessage}
                     </motion.p>
