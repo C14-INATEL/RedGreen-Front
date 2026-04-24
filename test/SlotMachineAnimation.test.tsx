@@ -9,9 +9,7 @@ import {
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createElement, useState } from 'react';
 import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
-import {
-  SlotMachineCounters,
-} from '../src/presentation/games/SlotMachineGame/SlotMachineCounters';
+import { SlotMachineCounters } from '../src/presentation/games/SlotMachineGame/SlotMachineCounters';
 import { SlotMachineLever } from '../src/presentation/games/SlotMachineGame/SlotMachineLever';
 import { MAX_REROLLS } from '../src/presentation/games/SlotMachineGame/slotMachineGameConfig';
 

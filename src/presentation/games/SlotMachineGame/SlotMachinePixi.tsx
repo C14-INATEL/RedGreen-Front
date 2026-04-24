@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
@@ -27,6 +27,13 @@ import {
 } from './SlotMachineReels';
 
 const SLOT_MACHINE_SIZE = 4096;
+const SLOT_MACHINE_BASE_SPRITE = '/SlotMachine/SpriteSlotMachine.png';
+const SLOT_MACHINE_ANIMATION_FRAME_SOURCES = Array.from(
+  { length: 8 },
+  (_, index) => `/SlotMachine/SpriteSlotMachine${index}.png`
+);
+const SLOT_MACHINE_ANIMATION_FRAME_DURATION_MS = 333;
+const SLOT_RED_BUTTON_TOGGLE_FRAME_DURATION_MS = 120;
 const SLOT_MACHINE_REEL_AREA = {
   height: 728,
   left: 928,
@@ -37,6 +44,10 @@ const SLOT_MACHINE_REEL_AREA = {
 const EMPTY_MACHINE_SIZE = {
   height: 0,
   width: 0,
+};
+
+type SlotMachinePixiProps = {
+  animateMachineSprite?: boolean;
 };
 
 const getMachineAreaStyle = (
@@ -72,7 +83,9 @@ const getRerollCounterStates = (
   );
 };
 
-export const SlotMachinePixi = () => {
+export const SlotMachinePixi = ({
+  animateMachineSprite = false,
+}: SlotMachinePixiProps) => {
   const { mutate: mutateUserChips } = useUserChips();
   const machineRef = useRef<HTMLDivElement | null>(null);
   const [machineSize, setMachineSize] = useState<{
@@ -101,8 +114,11 @@ export const SlotMachinePixi = () => {
     useState<SlotMachineReelsRerollRequest | null>(null);
   const [rerollsRemaining, setRerollsRemaining] = useState(0);
   const [isMachineAnimating, setIsMachineAnimating] = useState(false);
+  const [isLeverAnimating, setIsLeverAnimating] = useState(false);
+  const [isLeverToggleActive, setIsLeverToggleActive] = useState(false);
   const [isLoadingSlotData, setIsLoadingSlotData] = useState(true);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [machineSpriteFrameIndex, setMachineSpriteFrameIndex] = useState(0);
 
   useEffect(() => {
     const machine = machineRef.current;
@@ -133,6 +149,47 @@ export const SlotMachinePixi = () => {
       observer?.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    [SLOT_MACHINE_BASE_SPRITE, ...SLOT_MACHINE_ANIMATION_FRAME_SOURCES].forEach(
+      (source) => {
+        const image = new Image();
+        image.src = source;
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!animateMachineSprite) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setMachineSpriteFrameIndex(
+        (currentValue) =>
+          (currentValue + 1) % SLOT_MACHINE_ANIMATION_FRAME_SOURCES.length
+      );
+    }, SLOT_MACHINE_ANIMATION_FRAME_DURATION_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [animateMachineSprite]);
+
+  useEffect(() => {
+    if (!isLeverAnimating) {
+      setIsLeverToggleActive(false);
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setIsLeverToggleActive((currentValue) => !currentValue);
+    }, SLOT_RED_BUTTON_TOGGLE_FRAME_DURATION_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isLeverAnimating]);
 
   const applySessionState = (nextSession: SlotMachineApiSession) => {
     const sessionState = getSlotMachineSessionState(nextSession);
@@ -221,6 +278,14 @@ export const SlotMachinePixi = () => {
       isMounted = false;
     };
   }, []);
+
+  const handleLeverAnimationStateChange = useCallback(
+    (nextIsAnimating: boolean) => {
+      setIsLeverAnimating(nextIsAnimating);
+      setIsLeverToggleActive(false);
+    },
+    []
+  );
 
   const canReturnToIdle =
     slotSession !== null &&
@@ -345,13 +410,18 @@ export const SlotMachinePixi = () => {
     });
   };
 
+  const currentMachineSpriteSource = animateMachineSprite
+    ? SLOT_MACHINE_ANIMATION_FRAME_SOURCES[machineSpriteFrameIndex]
+    : SLOT_MACHINE_BASE_SPRITE;
+  const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
+
   return (
     <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
       <img
         alt="Caca-niquel de teste"
         className="block w-full select-none"
         draggable={false}
-        src="/SlotMachine/SpriteSlotMachine.png"
+        src={currentMachineSpriteSource}
         style={{
           imageRendering: 'pixelated',
         }}
@@ -377,6 +447,8 @@ export const SlotMachinePixi = () => {
       <SlotMachineButtons
         canResetToIdle={canReturnToIdle}
         canReroll={canUseReroll}
+        isLeverAnimating={isLeverAnimating}
+        isLeverToggleActive={currentLeverToggleActive}
         machineSize={machineSize}
         onResetToIdle={handleReturnToIdle}
         onRerollReel={handleRerollReel}
@@ -395,6 +467,7 @@ export const SlotMachinePixi = () => {
       <SlotMachineLever
         disabled={!canStartSpin}
         machineSize={machineSize}
+        onAnimationStateChange={handleLeverAnimationStateChange}
         onPull={handleLeverPull}
       />
 

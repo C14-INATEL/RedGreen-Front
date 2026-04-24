@@ -392,7 +392,9 @@ describe('reset flow', () => {
       expect(getReelsProps().rerollRequest?.reelIndex).toBe(2);
     });
 
-    expect(mockApiPost.mock.calls).toContainEqual(['/sessions/active/reroll/2']);
+    expect(mockApiPost.mock.calls).toContainEqual([
+      '/sessions/active/reroll/2',
+    ]);
   });
 
   it('cashes out through the backend before returning the machine to idle', async () => {
@@ -412,7 +414,9 @@ describe('reset flow', () => {
       expect(getReelsProps().idleRequestId).toBe(1);
     });
 
-    expect(mockApiPost.mock.calls).toContainEqual(['/sessions/active/cash-out']);
+    expect(mockApiPost.mock.calls).toContainEqual([
+      '/sessions/active/cash-out',
+    ]);
   });
 
   it('shows the backend empty-state message when no slot machine is available', async () => {
