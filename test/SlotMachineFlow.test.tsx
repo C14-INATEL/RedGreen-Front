@@ -220,6 +220,57 @@ describe('reset flow', () => {
   });
 });
 
+describe('reroll limits', () => {
+  beforeEach(() => {
+    startFakeTimers();
+  });
+
+  afterEach(() => {
+    stopFakeTimers();
+  });
+
+  it('stops accepting reroll requests after consuming the configured limit', () => {
+    render(createElement(SlotMachinePixi));
+
+    fireEvent.pointerDown(getLeverButton());
+    transitionToResultHold();
+
+    for (let rerollCount = 1; rerollCount <= 5; rerollCount += 1) {
+      const [firstRedButton] = getRedButtons();
+
+      expect(firstRedButton.hasAttribute('disabled')).toBe(false);
+
+      fireEvent.pointerDown(firstRedButton);
+
+      expect(getReelsProps().rerollRequest).toEqual({
+        id: rerollCount,
+        reelIndex: 0,
+      });
+
+      act(() => {
+        getReelsProps().onMachineModeChange?.('rerollSpin');
+        getReelsProps().onRealSpinStateChange?.(true);
+      });
+
+      act(() => {
+        getReelsProps().onMachineModeChange?.('resultHold');
+        getReelsProps().onRealSpinStateChange?.(false);
+      });
+    }
+
+    const [firstRedButton] = getRedButtons();
+
+    expect(firstRedButton.hasAttribute('disabled')).toBe(true);
+
+    fireEvent.pointerDown(firstRedButton);
+
+    expect(getReelsProps().rerollRequest).toEqual({
+      id: 5,
+      reelIndex: 0,
+    });
+  });
+});
+
 describe('spin mock', () => {
   it('cycles through the configured spin sets and protects the base mock from external mutation', () => {
     const firstResult = getTestSlotMachineSpinResult();

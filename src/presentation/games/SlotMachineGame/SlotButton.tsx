@@ -9,6 +9,8 @@ export type SlotButtonColor = 'blue' | 'red';
 type SlotButtonProps = {
   color: SlotButtonColor;
   disabled?: boolean;
+  isLeverAnimating?: boolean;
+  isLeverToggleActive?: boolean;
   label: string;
   onPress?: () => void;
   style: CSSProperties;
@@ -19,9 +21,14 @@ const toPascalCase = (value: string) =>
 
 const getSlotButtonSpriteSources = (color: SlotButtonColor) => {
   const colorName = toPascalCase(color);
+  const normal = `${SLOT_MACHINE_TEXTURE_BASE_PATH}/Sprite${colorName}Button.png`;
 
   return {
-    normal: `${SLOT_MACHINE_TEXTURE_BASE_PATH}/Sprite${colorName}Button.png`,
+    idle:
+      color === 'red'
+        ? `${SLOT_MACHINE_TEXTURE_BASE_PATH}/SpriteRedButtonOff.png`
+        : normal,
+    normal,
     pressed: `${SLOT_MACHINE_TEXTURE_BASE_PATH}/Sprite${colorName}ButtonPressed.png`,
   };
 };
@@ -29,16 +36,34 @@ const getSlotButtonSpriteSources = (color: SlotButtonColor) => {
 const SlotButtonComponent = ({
   color,
   disabled = false,
+  isLeverAnimating = false,
+  isLeverToggleActive = false,
   label,
   onPress,
   style,
 }: SlotButtonProps) => {
+  const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
   const resetTimeoutRef = useRef<number | null>(null);
   const spriteSources = getSlotButtonSpriteSources(color);
-  const currentSpriteSource = pressed
-    ? spriteSources.pressed
-    : spriteSources.normal;
+
+  const getCurrentSpriteSource = () => {
+    if (pressed) {
+      return spriteSources.pressed;
+    }
+
+    if (color === 'red' && isLeverAnimating) {
+      return isLeverToggleActive ? spriteSources.normal : spriteSources.idle;
+    }
+
+    if (color === 'red' && hovered) {
+      return spriteSources.normal;
+    }
+
+    return spriteSources.idle;
+  };
+
+  const currentSpriteSource = getCurrentSpriteSource();
 
   const clearResetTimeout = () => {
     if (resetTimeoutRef.current === null) {
@@ -72,11 +97,13 @@ const SlotButtonComponent = ({
   };
 
   useEffect(() => {
-    [spriteSources.normal, spriteSources.pressed].forEach((source) => {
-      const image = new Image();
-      image.src = source;
-    });
-  }, [spriteSources.normal, spriteSources.pressed]);
+    [spriteSources.idle, spriteSources.normal, spriteSources.pressed].forEach(
+      (source) => {
+        const image = new Image();
+        image.src = source;
+      }
+    );
+  }, [spriteSources.idle, spriteSources.normal, spriteSources.pressed]);
 
   useEffect(
     () => () => {
@@ -93,6 +120,12 @@ const SlotButtonComponent = ({
       className="pointer-events-auto absolute block"
       disabled={disabled}
       onBlur={endPressFeedback}
+      onPointerEnter={() => {
+        setHovered(true);
+      }}
+      onPointerLeave={() => {
+        setHovered(false);
+      }}
       onPointerCancel={endPressFeedback}
       onPointerDown={handlePointerDown}
       style={{

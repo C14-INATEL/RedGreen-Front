@@ -21,6 +21,7 @@ type SlotMachineLeverProps = {
     height: number;
     width: number;
   };
+  onAnimationStateChange?: (isAnimating: boolean) => void;
   onPull?: () => void;
   onPullComplete?: () => void;
 };
@@ -64,6 +65,7 @@ const SlotMachineLeverComponent = ({
   disabled = false,
   label = 'Alavanca da maquina',
   machineSize,
+  onAnimationStateChange,
   onPull,
   onPullComplete,
 }: SlotMachineLeverProps) => {
@@ -86,6 +88,7 @@ const SlotMachineLeverComponent = ({
     isAnimatingRef.current = false;
     setCurrentFrameIndex(0);
     setIsAnimating(false);
+    onAnimationStateChange?.(false);
     onPullComplete?.();
   };
 
@@ -114,6 +117,7 @@ const SlotMachineLeverComponent = ({
     clearAnimationTimeout();
     isAnimatingRef.current = true;
     setIsAnimating(true);
+    onAnimationStateChange?.(true);
     onPull?.();
     runAnimationStep(0);
   };
@@ -129,8 +133,9 @@ const SlotMachineLeverComponent = ({
     () => () => {
       clearAnimationTimeout();
       isAnimatingRef.current = false;
+      onAnimationStateChange?.(false);
     },
-    []
+    [onAnimationStateChange]
   );
 
   return (
