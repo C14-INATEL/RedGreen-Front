@@ -24,13 +24,13 @@ export const SlotMachine = () => {
   return (
     <div className="relative">
       <motion.div
+        initial={false}
         animate={
           hasEnteredMachineView
             ? { opacity: 1, scale: 1, y: 0 }
             : { opacity: 0.88, scale: 0.66, y: 46 }
         }
         className="origin-center"
-        initial={false}
         transition={MACHINE_ENTRY_TRANSITION}
       >
         <SlotMachinePixi animateMachineSprite={hasEnteredMachineView} />
@@ -38,12 +38,12 @@ export const SlotMachine = () => {
 
       <div className="pointer-events-none absolute left-0 top-3 z-10 hidden -translate-x-[calc(100%+18px)] lg:block">
         <motion.div
+          initial={false}
           animate={
             hasEnteredMachineView
               ? { opacity: 1, x: 0 }
               : { opacity: 0, x: -120 }
           }
-          initial={false}
           transition={{
             ...MACHINE_ENTRY_TRANSITION,
             delay: hasEnteredMachineView ? 0.08 : 0,
