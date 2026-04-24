@@ -449,8 +449,9 @@ export const SlotMachineReels = ({
   const handledRerollRequestIdRef = useRef(0);
   const handledSpinRequestIdRef = useRef(0);
   const latestIdleRequestIdRef = useRef(idleRequestId);
-  const latestRestoreRequestRef =
-    useRef<SlotMachineReelsRestoreRequest | null>(restoreRequest);
+  const latestRestoreRequestRef = useRef<SlotMachineReelsRestoreRequest | null>(
+    restoreRequest
+  );
   const latestRerollRequestRef = useRef<SlotMachineReelsRerollRequest | null>(
     rerollRequest
   );
@@ -605,7 +606,8 @@ export const SlotMachineReels = ({
 
       if (
         hasInvalidTexture ||
-        textureIndexByReel.length < Math.min(reels.length, SLOT_MACHINE_REEL_COUNT)
+        textureIndexByReel.length <
+          Math.min(reels.length, SLOT_MACHINE_REEL_COUNT)
       ) {
         return false;
       }

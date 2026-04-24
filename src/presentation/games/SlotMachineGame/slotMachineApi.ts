@@ -107,7 +107,9 @@ const mapBackendSymbolToFrontendSymbolId = (
     BACKEND_TO_FRONTEND_SYMBOL_ID[backendSymbol as BackendSlotSymbol];
 
   if (!nextSymbolId) {
-    throw new Error(`Unsupported slot symbol received from backend: ${backendSymbol}`);
+    throw new Error(
+      `Unsupported slot symbol received from backend: ${backendSymbol}`
+    );
   }
 
   return nextSymbolId;
@@ -118,9 +120,10 @@ export const getPreferredSlotMachine = (
   activeSession: SlotMachineApiSession | null
 ) => {
   const activeSessionMachine = activeSession
-    ? slotMachines.find(
-        (slotMachine) => slotMachine.SlotMachineId === activeSession.SlotMachineId
-      ) ?? null
+    ? (slotMachines.find(
+        (slotMachine) =>
+          slotMachine.SlotMachineId === activeSession.SlotMachineId
+      ) ?? null)
     : null;
 
   if (activeSessionMachine) {
@@ -187,7 +190,9 @@ export const buildRerollAnimationFromSession = (
   );
 
   if (!reelResult) {
-    throw new Error(`Slot reel ${reelIndex} was not returned by the backend session.`);
+    throw new Error(
+      `Slot reel ${reelIndex} was not returned by the backend session.`
+    );
   }
 
   return {
@@ -203,7 +208,8 @@ export const buildRerollAnimationFromSession = (
 };
 
 export const fetchSlotMachines = async () => {
-  const response = await apiClient.get<SlotMachineApiMachine[]>('/slot/machine');
+  const response =
+    await apiClient.get<SlotMachineApiMachine[]>('/slot/machine');
   return Array.isArray(response.data) ? response.data : [];
 };
 

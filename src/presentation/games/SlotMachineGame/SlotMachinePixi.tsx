@@ -176,7 +176,9 @@ export const SlotMachinePixi = () => {
         );
 
         setSelectedMachineId(
-          preferredMachine?.SlotMachineId ?? activeSession?.SlotMachineId ?? null
+          preferredMachine?.SlotMachineId ??
+            activeSession?.SlotMachineId ??
+            null
         );
 
         if (activeSession) {
@@ -385,7 +387,10 @@ export const SlotMachinePixi = () => {
         states={getRerollCounterStates(rerollsRemaining, defaultMaxRerolls)}
       />
 
-      <SlotMachineAmountDisplay machineSize={machineSize} value={displayValue} />
+      <SlotMachineAmountDisplay
+        machineSize={machineSize}
+        value={displayValue}
+      />
 
       <SlotMachineLever
         disabled={!canStartSpin}

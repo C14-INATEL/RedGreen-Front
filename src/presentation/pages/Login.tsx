@@ -222,7 +222,9 @@ const Login = () => {
     }
 
     if (Password.length < 8) {
-      SetToastMessage('ERROR\nTHE PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
+      SetToastMessage(
+        'ERROR\nTHE PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.'
+      );
       return;
     }
 
