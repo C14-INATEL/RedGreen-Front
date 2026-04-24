@@ -7,7 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { createElement } from 'react';
-import { SlotMachineButtons } from '../src/presentation/games/SlotMachineButtons';
+import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
 import { SlotMachinePixi } from '../src/presentation/games/SlotMachineGame/SlotMachinePixi';
 import type {
   SlotMachineApiMachine,
@@ -147,8 +147,10 @@ const configureSlotMachineBootstrap = ({
 
 const configureSlotMachinePosts = ({
   createdSession = createSlotMachineSession(),
+  rerolledSession = createdSession,
 }: {
   createdSession?: SlotMachineApiSession;
+  rerolledSession?: SlotMachineApiSession;
 } = {}) => {
   mockApiPost.mockImplementation(async (url: string) => {
     if (url === `/slot-machines/${createdSession.SlotMachineId}/sessions`) {
@@ -173,7 +175,7 @@ const configureSlotMachinePosts = ({
       return {
         data: {
           currentBalance: 900,
-          session: createdSession,
+          session: rerolledSession,
         },
       };
     }
@@ -189,6 +191,37 @@ const renderReadySlotMachine = async () => {
     expect(getLeverButton()).not.toBeDisabled();
   });
 };
+
+describe('backend bootstrap', () => {
+  beforeEach(() => {
+    mockLatestSlotMachineReelsProps = null;
+    mockApiGet.mockReset();
+    mockApiPost.mockReset();
+    mockMutateUserChips.mockReset();
+  });
+
+  it('restores the active backend session into the visual machine state', async () => {
+    const activeSession = createSlotMachineSession({
+      CurrentRewardSnapshot: 42,
+    });
+
+    configureSlotMachineBootstrap({
+      activeSession,
+      slotMachines: [createSlotMachine()],
+    });
+    configureSlotMachinePosts();
+
+    render(createElement(SlotMachinePixi));
+
+    await waitFor(() => {
+      expect(getReelsProps().restoreRequestId).toBe(1);
+    });
+
+    expect(mockApiGet).toHaveBeenCalledWith('/sessions/active');
+    expect(mockApiGet).toHaveBeenCalledWith('/slot/machine');
+    expect(screen.getByLabelText('Valor atual 42$')).toBeInTheDocument();
+  });
+});
 
 describe('reroll buttons', () => {
   beforeEach(() => {
@@ -257,6 +290,7 @@ describe('input lock', () => {
     expect(getReelsProps().spinRequestId).toBe(1);
     expect(getReelsProps().idleRequestId).toBe(0);
     expect(getReelsProps().rerollRequest).toBeNull();
+    expect(mockApiPost).toHaveBeenCalledWith('/slot-machines/7/sessions', {});
 
     fireEvent.pointerDown(firstRedButton);
     fireEvent.pointerDown(blueButton);
@@ -324,6 +358,61 @@ describe('reset flow', () => {
     );
 
     expect(getBlueButton()).toBeDisabled();
+  });
+
+  it('rerolls through the backend before updating the visual motor', async () => {
+    const rerolledSession = createSlotMachineSession({
+      CurrentRerollsSpent: {
+        Rerolls: {
+          Max: 5,
+          Used: 1,
+        },
+      },
+    });
+
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts({
+      createdSession: createSlotMachineSession(),
+      rerolledSession,
+    });
+
+    await renderReadySlotMachine();
+
+    fireEvent.pointerDown(getLeverButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
+    transitionToResultHold();
+
+    fireEvent.pointerDown(getRedButtons()[2]);
+
+    await waitFor(() => {
+      expect(getReelsProps().rerollRequest?.reelIndex).toBe(2);
+    });
+
+    expect(mockApiPost.mock.calls).toContainEqual(['/sessions/active/reroll/2']);
+  });
+
+  it('cashes out through the backend before returning the machine to idle', async () => {
+    await renderReadySlotMachine();
+
+    fireEvent.pointerDown(getLeverButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
+    transitionToResultHold();
+
+    fireEvent.pointerDown(getBlueButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().idleRequestId).toBe(1);
+    });
+
+    expect(mockApiPost.mock.calls).toContainEqual(['/sessions/active/cash-out']);
   });
 
   it('shows the backend empty-state message when no slot machine is available', async () => {
