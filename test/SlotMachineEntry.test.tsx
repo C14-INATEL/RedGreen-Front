@@ -102,7 +102,9 @@ describe('SlotMachine entry flow', () => {
       }
     );
     expect(screen.queryByLabelText('Aproximar da Slot Machine')).toBeNull();
-    expect(screen.getByTestId('slot-machine-pixi').textContent).toBe('animated');
+    expect(screen.getByTestId('slot-machine-pixi').textContent).toBe(
+      'animated'
+    );
     expect(mockSlotMachinePixi).toHaveBeenLastCalledWith({
       animateMachineSprite: true,
     });

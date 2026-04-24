@@ -8,7 +8,7 @@ import {
 } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
-import { SlotMachineButtons } from '../src/presentation/games/SlotMachineButtons';
+import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
 import { SlotMachinePixi } from '../src/presentation/games/SlotMachineGame/SlotMachinePixi';
 import {
   getTestSlotMachineSpinResult,

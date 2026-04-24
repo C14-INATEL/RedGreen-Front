@@ -8,12 +8,12 @@ import {
 } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createElement, useState } from 'react';
-import { SlotMachineButtons } from '../src/presentation/games/SlotMachineButtons';
+import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
+import { MAX_REROLLS } from '../src/presentation/games/SlotMachineGame/slotMachineGameConfig';
 import {
-  SLOT_COUNTER_COUNT,
   SlotMachineCounters,
-} from '../src/presentation/games/SlotMachineCounters';
-import { SlotMachineLever } from '../src/presentation/games/SlotMachineLever';
+} from '../src/presentation/games/SlotMachineGame/SlotMachineCounters';
+import { SlotMachineLever } from '../src/presentation/games/SlotMachineGame/SlotMachineLever';
 
 const ACTIVE_COUNTER_SPRITE = '/SlotMachine/SpriteCounterOn.png';
 const INACTIVE_COUNTER_SPRITE = '/SlotMachine/SpriteCounterOff.png';
@@ -21,6 +21,7 @@ const MACHINE_SIZE = {
   height: 4096,
   width: 4096,
 };
+const SLOT_COUNTER_COUNT = MAX_REROLLS;
 
 const getRedButtons = () =>
   screen.getAllByRole('button', { name: /Botao \d+ da maquina/i });
@@ -61,8 +62,9 @@ const SlotMachineAnimationHarness = () => {
     'div',
     null,
     createElement(SlotMachineButtons, {
+      canReroll: true,
       machineSize: MACHINE_SIZE,
-      onRedButtonPress: handleRedButtonPress,
+      onRerollReel: handleRedButtonPress,
     }),
     createElement(SlotMachineCounters, {
       machineSize: MACHINE_SIZE,

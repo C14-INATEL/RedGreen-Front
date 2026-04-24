@@ -118,3 +118,4 @@ RedGreen-Front/
 ├── tests/                      # Testes da aplicação
 ├── index.html                  # Template HTML
 └── vite.config.ts              # Configurações do Vite
+```
