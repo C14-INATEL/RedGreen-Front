@@ -50,6 +50,10 @@ type SlotMachinePixiProps = {
   animateMachineSprite?: boolean;
 };
 
+type ApplySessionStateOptions = {
+  deferDisplayValue?: boolean;
+};
+
 const getMachineAreaStyle = (
   machineSize: { height: number; width: number },
   area: typeof SLOT_MACHINE_REEL_AREA
@@ -97,6 +101,9 @@ export const SlotMachinePixi = ({
   );
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [displayValue, setDisplayValue] = useState(0);
+  const [pendingDisplayValue, setPendingDisplayValue] = useState<number | null>(
+    null
+  );
   const [selectedMachineId, setSelectedMachineId] = useState<number | null>(
     null
   );
@@ -191,14 +198,24 @@ export const SlotMachinePixi = ({
     };
   }, [isLeverAnimating]);
 
-  const applySessionState = (nextSession: SlotMachineApiSession) => {
+  const applySessionState = (
+    nextSession: SlotMachineApiSession,
+    options: ApplySessionStateOptions = {}
+  ) => {
     const sessionState = getSlotMachineSessionState(nextSession);
 
     setSlotSession(nextSession);
     setSelectedMachineId(nextSession.SlotMachineId);
     setDefaultMaxRerolls(sessionState.rerollsMax);
     setRerollsRemaining(sessionState.rerollsRemaining);
+
+    if (options.deferDisplayValue) {
+      setPendingDisplayValue(sessionState.reward);
+      return;
+    }
+
     setDisplayValue(sessionState.reward);
+    setPendingDisplayValue(null);
   };
 
   const clearSessionState = (nextMaxRerolls: number) => {
@@ -206,6 +223,7 @@ export const SlotMachinePixi = ({
 
     setSlotSession(null);
     setDisplayValue(0);
+    setPendingDisplayValue(null);
     setDefaultMaxRerolls(safeMaxRerolls);
     setRerollsRemaining(safeMaxRerolls);
   };
@@ -320,7 +338,9 @@ export const SlotMachinePixi = ({
     try {
       const { session } = await createSlotSession(selectedMachineId);
 
-      applySessionState(session);
+      applySessionState(session, {
+        deferDisplayValue: true,
+      });
       setRealSpinRequest((currentValue) => ({
         id: (currentValue?.id ?? 0) + 1,
         result: buildSpinAnimationFromSession(session),
@@ -374,7 +394,9 @@ export const SlotMachinePixi = ({
     try {
       const { session } = await rerollActiveSlotSession(reelIndex);
 
-      applySessionState(session);
+      applySessionState(session, {
+        deferDisplayValue: true,
+      });
       setRerollRequest((currentValue) => ({
         id: (currentValue?.id ?? 0) + 1,
         reelIndex,
@@ -393,6 +415,12 @@ export const SlotMachinePixi = ({
 
   const handleMachineModeChange = (nextMode: SlotMachineReelsMode) => {
     setMachineMode(nextMode);
+
+    if (nextMode === 'resultHold' && pendingDisplayValue !== null) {
+      setDisplayValue(pendingDisplayValue);
+      setPendingDisplayValue(null);
+    }
+
     setPendingAction((currentValue) => {
       if (currentValue === 'idle' && nextMode === 'idle') {
         return null;
