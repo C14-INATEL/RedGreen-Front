@@ -438,14 +438,6 @@ export const SlotMachinePixi = ({
     });
   };
 
-  const handleLeverAnimationStateChange = useCallback(
-    (nextIsAnimating: boolean) => {
-      setIsLeverAnimating(nextIsAnimating);
-      setIsLeverToggleActive(false);
-    },
-    []
-  );
-
   const currentMachineSpriteSource = animateMachineSprite
     ? SLOT_MACHINE_ANIMATION_FRAME_SOURCES[machineSpriteFrameIndex]
     : SLOT_MACHINE_BASE_SPRITE;

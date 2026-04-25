@@ -54,7 +54,7 @@ const getDisplayStyle = (
 
 export const SlotMachineAmountDisplay = ({
   machineSize,
-  value = 11,
+  value = 0,
 }: SlotMachineAmountDisplayProps) => {
   const displayValue = `${clampDisplayValue(value)}$`;
   const { width } = getScaledDisplayDimensions(machineSize);

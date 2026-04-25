@@ -314,6 +314,40 @@ describe('reset flow', () => {
     configureSlotMachinePosts();
   });
 
+  it('only reveals the backend reward after the reels settle into result hold', async () => {
+    const createdSession = createSlotMachineSession({
+      CurrentRewardSnapshot: 87,
+    });
+
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts({
+      createdSession,
+    });
+
+    await renderReadySlotMachine();
+
+    expect(screen.getByLabelText('Valor atual 0$')).toBeInTheDocument();
+
+    fireEvent.pointerDown(getLeverButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
+    expect(screen.getByLabelText('Valor atual 0$')).toBeInTheDocument();
+
+    enterMainSpinState();
+
+    expect(screen.getByLabelText('Valor atual 0$')).toBeInTheDocument();
+
+    act(() => {
+      getReelsProps().onMachineModeChange?.('resultHold');
+      getReelsProps().onRealSpinStateChange?.(false);
+    });
+
+    expect(screen.getByLabelText('Valor atual 87$')).toBeInTheDocument();
+  });
+
   it('keeps the machine in result hold until the blue button explicitly requests idle', async () => {
     await renderReadySlotMachine();
 
