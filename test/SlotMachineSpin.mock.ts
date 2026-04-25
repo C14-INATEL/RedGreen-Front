@@ -1,4 +1,4 @@
-import type { SlotMachineSpinResult } from './slotMachineGameConfig';
+import type { SlotMachineSpinResult } from '../src/presentation/games/SlotMachineGame/slotMachineGameConfig';
 
 export const TEST_SLOT_MACHINE_SPIN_RESULTS: Record<
   string,
@@ -75,6 +75,10 @@ const cloneTestSlotMachineSpinResult = (
     ...reelResult,
   })),
 });
+
+export const resetTestSlotMachineSpinResultSequence = () => {
+  testSlotMachineSpinScenarioIndex = 0;
+};
 
 export const getTestSlotMachineSpinResult = () => {
   if (!TEST_SLOT_MACHINE_SPIN_RESULT_IDS.length) {
