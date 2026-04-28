@@ -48,6 +48,13 @@ export const SlotMachineRoom = () => {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden suit-pattern">
+      <button
+        onClick={() => navigate('/')}
+        className="back-button"
+      >
+        ← Voltar
+      </button>
+
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -56,8 +63,8 @@ export const SlotMachineRoom = () => {
         }}
       />
 
-      <div className="absolute top-6 left-6 z-20">
-        <div className="flex items-center gap-3 bg-card/60 backdrop-blur-sm pixel-border px-4 py-3">
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="w-12 h-12 bg-card pixel-border-gold relative flex items-center justify-center">
             <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
               <rect x="5" y="2" width="6" height="6" fill="hsl(var(--cassino-gold))" />
@@ -69,15 +76,11 @@ export const SlotMachineRoom = () => {
             <div className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-accent-green border-2 border-background" />
           </div>
 
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-foreground font-display">
-              {PlayerName}
-            </span>
-          </div>
+          <span className="text-sm font-bold text-foreground font-display">
+            {PlayerName}
+          </span>
         </div>
-      </div>
 
-      <div className="absolute top-6 right-6 z-20 flex flex-col gap-3">
         <div className="flex items-center gap-3 bg-card/60 pixel-border-gold px-5 py-3 backdrop-blur-sm">
           <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
             <rect x="4" y="2" width="8" height="2" fill="hsl(var(--cassino-gold))" />
@@ -102,12 +105,6 @@ export const SlotMachineRoom = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => navigate('/')}
-          className="bg-card/60 pixel-border px-4 py-3 text-sm font-bold text-foreground hover:bg-card/80 transition-colors backdrop-blur-sm"
-        >
-          Voltar
-        </button>
       </div>
 
       <div className="relative z-10 flex items-center justify-center">
