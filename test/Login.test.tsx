@@ -10,20 +10,20 @@ import {
 } from '@jest/globals';
 import Login from '../src/presentation/pages/Login';
 
-const mockFetch = jest.fn<() => Promise<Partial<Response>>>();
+const MockFetch = jest.fn<() => Promise<Partial<Response>>>();
 
 beforeEach(() => {
-  globalThis.fetch = mockFetch as unknown as typeof fetch;
+  globalThis.fetch = MockFetch as unknown as typeof fetch;
   localStorage.clear();
 });
 
 afterEach(() => {
-  mockFetch.mockReset();
+  MockFetch.mockReset();
   localStorage.clear();
 });
 
-const goToLoginStep = async () => {
-  mockFetch.mockResolvedValueOnce({
+const GoToLoginStep = async () => {
+  MockFetch.mockResolvedValueOnce({
     ok: true,
     json: async () => ({ taken: true }),
   });
@@ -49,12 +49,12 @@ const goToLoginStep = async () => {
 
 describe('handleLogin — login successful.', () => {
   it('the token is saved to localStorage when the API returns success.', async () => {
-    await goToLoginStep();
+    await GoToLoginStep();
 
     const FakeToken = 'jwt-token-abc123';
     const FakeUser = { Nickname: 'Usuário1', ChipBalance: 10000 };
 
-    mockFetch.mockResolvedValueOnce({
+    MockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ Token: FakeToken, User: FakeUser }),
     });
@@ -73,9 +73,9 @@ describe('handleLogin — login successful.', () => {
 
 describe('handleLogin — wrong password', () => {
   it('displays an invalid password toast message when the API returns an error.', async () => {
-    await goToLoginStep();
+    await GoToLoginStep();
 
-    mockFetch.mockResolvedValueOnce({
+    MockFetch.mockResolvedValueOnce({
       ok: false,
       json: async () => ({ message: 'Unauthorized' }),
     });
