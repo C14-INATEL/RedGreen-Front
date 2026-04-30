@@ -87,7 +87,7 @@ describe('handleLogin — wrong password', () => {
     fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/INVALID PASSWORD/i)).toBeTruthy();
+      expect(screen.getByText(/SENHA INVÁLIDA/i)).toBeTruthy();
     });
 
     expect(localStorage.getItem('token')).toBeNull();
