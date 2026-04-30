@@ -17,7 +17,7 @@ type SlotMachineAmountDisplayProps = {
 };
 
 const clampDisplayValue = (value: number) =>
-  Math.min(1000, Math.max(1, Math.trunc(value)));
+  Math.min(1000, Math.max(0, Math.trunc(value)));
 
 const getScaledDisplayDimensions = (
   machineSize: SlotMachineAmountDisplayProps['machineSize']
@@ -54,7 +54,7 @@ const getDisplayStyle = (
 
 export const SlotMachineAmountDisplay = ({
   machineSize,
-  value = 11,
+  value = 0,
 }: SlotMachineAmountDisplayProps) => {
   const displayValue = `${clampDisplayValue(value)}$`;
   const { width } = getScaledDisplayDimensions(machineSize);
