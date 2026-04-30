@@ -49,7 +49,7 @@ export const SlotMachineRoom = () => {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden suit-pattern">
       <button onClick={() => navigate('/')} className="back-button">
-        ← Voltar
+        ← 
       </button>
 
       <div
