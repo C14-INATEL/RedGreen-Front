@@ -15,248 +15,116 @@ interface DailyProgress {
   CurrentDayIndex: number;
 }
 
-interface DailyStateSnapshot extends DailyLoginResponse {
-  EligibilityDefined: boolean;
+interface DailyStateSnapshot {
+  FirstLoginToday: boolean;
+  DailyStreak: number;
+  Reward: number;
+  ChipBalance: number;
+  LastLoginDate: string | null;
+  SequenceDay: number | null;
 }
 
-const DAILY_LOGIN_ENDPOINT = '/user/daily-login';
-const DAILY_STATUS_ENDPOINT = '/user/profile';
-const TOTAL_REWARD_DAYS = 7;
+const DailyLoginEndpoint = '/user/daily-login';
+const DailyStatusEndpoint = '/user/profile';
+const TotalRewardDays = 7;
+const MillisecondsInDay = 24 * 60 * 60 * 1000;
 
-type AnyRecord = Record<string, unknown>;
+const GetLocalDateKey = (Value: Date = new Date()) =>
+  `${Value.getFullYear()}-${String(Value.getMonth() + 1).padStart(2, '0')}-${String(Value.getDate()).padStart(2, '0')}`;
 
-type DailyStatusSource = AnyRecord & {
-  User?: AnyRecord;
+const ParseDateKey = (DateKey: string) => {
+  const [Year, Month, Day] = DateKey.split('-').map(Number);
+  return new Date(Year, Month - 1, Day);
 };
 
-const ToBoolean = (Value: unknown): boolean | undefined => {
-  if (typeof Value === 'boolean') {
-    return Value;
-  }
-
-  if (typeof Value === 'number') {
-    if (Value === 1) return true;
-    if (Value === 0) return false;
-    return undefined;
-  }
-
+const NormalizeDateKey = (Value: unknown): string | null => {
+  if (!Value) return null;
+  if (Value instanceof Date && Number.isFinite(Value.getTime()))
+    return GetLocalDateKey(Value);
   if (typeof Value === 'string') {
-    const Normalized = Value.trim().toLowerCase();
-    if (Normalized === 'true' || Normalized === '1') return true;
-    if (Normalized === 'false' || Normalized === '0') return false;
+    const Match = Value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (Match) return `${Match[1]}-${Match[2]}-${Match[3]}`;
+    const Parsed = new Date(Value);
+    if (Number.isFinite(Parsed.getTime())) return GetLocalDateKey(Parsed);
   }
-
-  return undefined;
+  return null;
 };
 
-const ToNumber = (Value: unknown): number | undefined => {
-  if (typeof Value === 'number' && Number.isFinite(Value)) {
-    return Value;
-  }
-
-  if (typeof Value === 'string' && Value.trim().length > 0) {
-    const Parsed = Number(Value);
-    if (Number.isFinite(Parsed)) {
-      return Parsed;
-    }
-  }
-
-  return undefined;
+const GetDaysSinceDateKey = (
+  DateKey: string,
+  Now: Date = new Date()
+): number => {
+  const Target = ParseDateKey(DateKey);
+  const Today = new Date(Now.getFullYear(), Now.getMonth(), Now.getDate());
+  return Math.round((Today.getTime() - Target.getTime()) / MillisecondsInDay);
 };
 
-const ExtractFromCandidates = (
-  Source: AnyRecord | undefined,
-  Keys: string[]
-): unknown => {
-  if (!Source) {
-    return undefined;
-  }
-
-  for (const Key of Keys) {
-    if (Object.prototype.hasOwnProperty.call(Source, Key)) {
-      const Value = Source[Key];
-      if (Value !== undefined && Value !== null) {
-        return Value;
-      }
-    }
-  }
-
-  return undefined;
+const DeriveCanClaimFromLastLoginDate = (
+  LastLoginDate: string | null
+): boolean => {
+  if (!LastLoginDate) return true;
+  return GetDaysSinceDateKey(LastLoginDate) > 0;
 };
 
-const ExtractEligibility = (Source?: DailyStatusSource) => {
-  const PositiveCandidates = [
-    'FirstLoginToday',
-    'firstLoginToday',
-    'CanClaimToday',
-    'canClaimToday',
-    'CanClaimDailyBonus',
-    'canClaimDailyBonus',
-  ];
-
-  const ClaimedTodayCandidates = [
-    'HasClaimedToday',
-    'hasClaimedToday',
-    'DailyBonusClaimedToday',
-    'dailyBonusClaimedToday',
-    'ClaimedToday',
-    'claimedToday',
-  ];
-
-  const PositiveValue =
-    ToBoolean(ExtractFromCandidates(Source, PositiveCandidates)) ??
-    ToBoolean(ExtractFromCandidates(Source?.User, PositiveCandidates));
-
-  if (typeof PositiveValue === 'boolean') {
-    return PositiveValue;
-  }
-
-  const ClaimedTodayValue =
-    ToBoolean(ExtractFromCandidates(Source, ClaimedTodayCandidates)) ??
-    ToBoolean(ExtractFromCandidates(Source?.User, ClaimedTodayCandidates));
-
-  if (typeof ClaimedTodayValue === 'boolean') {
-    return !ClaimedTodayValue;
-  }
-
-  return undefined;
-};
-
-const ExtractDailyStreak = (Source?: DailyStatusSource) => {
-  const Candidates = [
-    'DailyStreak',
-    'dailyStreak',
-    'DailyLoginStreak',
-    'dailyLoginStreak',
-    'LoginStreak',
-    'loginStreak',
-  ];
-
-  return (
-    ToNumber(ExtractFromCandidates(Source, Candidates)) ??
-    ToNumber(ExtractFromCandidates(Source?.User, Candidates))
-  );
-};
-
-const ExtractReward = (Source?: DailyStatusSource) => {
-  const Candidates = ['Reward', 'reward'];
-  return (
-    ToNumber(ExtractFromCandidates(Source, Candidates)) ??
-    ToNumber(ExtractFromCandidates(Source?.User, Candidates))
-  );
-};
-
-const ExtractChipBalance = (Source?: DailyStatusSource) => {
-  const Candidates = ['ChipBalance', 'chipBalance', 'chips'];
-  return (
-    ToNumber(ExtractFromCandidates(Source, Candidates)) ??
-    ToNumber(ExtractFromCandidates(Source?.User, Candidates))
-  );
-};
-
-const ReadLocalDailySnapshot = () => {
-  try {
-    const RawUser = localStorage.getItem('user');
-    if (!RawUser) {
-      return {
-        DailyStreak: 0,
-        FirstLoginToday: undefined as boolean | undefined,
-      };
-    }
-
-    const Parsed = JSON.parse(RawUser) as AnyRecord;
-    const Wrapped = { ...Parsed, User: Parsed } as DailyStatusSource;
-
-    return {
-      DailyStreak: Math.max(0, ExtractDailyStreak(Wrapped) ?? 0),
-      FirstLoginToday: ExtractEligibility(Wrapped),
-    };
-  } catch {
-    return {
-      DailyStreak: 0,
-      FirstLoginToday: undefined as boolean | undefined,
-    };
-  }
-};
-
-const PersistLocalDailyStreak = (DailyStreak: number) => {
-  try {
-    const RawUser = localStorage.getItem('user');
-    if (!RawUser) return;
-
-    const Parsed = JSON.parse(RawUser) as AnyRecord;
-    const SafeStreak = Math.max(0, DailyStreak);
-
-    const Updated = {
-      ...Parsed,
-      DailyStreak: SafeStreak,
-      dailyStreak: SafeStreak,
-      DailyLoginStreak: SafeStreak,
-      dailyLoginStreak: SafeStreak,
-    };
-
-    localStorage.setItem('user', JSON.stringify(Updated));
-  } catch {
-    // no-op
-  }
-};
-
-const NormalizeDailyState = (
-  Source: DailyStatusSource | undefined,
-  FallbackEligibility: boolean,
-  FallbackStreak: number
-): DailyStateSnapshot => {
-  const EligibilityFromApi = ExtractEligibility(Source);
-  const StreakFromApi = ExtractDailyStreak(Source);
-
-  return {
-    FirstLoginToday: EligibilityFromApi ?? FallbackEligibility,
-    DailyStreak: Math.max(0, StreakFromApi ?? FallbackStreak),
-    Reward: ExtractReward(Source) ?? 0,
-    ChipBalance: ExtractChipBalance(Source) ?? 0,
-    EligibilityDefined: typeof EligibilityFromApi === 'boolean',
-  };
+const DeriveStreakFromLastLoginDate = (
+  LastLoginDate: string | null,
+  StoredStreak: number
+): number => {
+  if (!LastLoginDate) return 0;
+  const DaysSince = GetDaysSinceDateKey(LastLoginDate);
+  if (DaysSince <= 1) return StoredStreak;
+  return 0;
 };
 
 export const CalculateDailyProgress = (
   DailyStreak: number,
-  FirstLoginToday: boolean
+  CanClaim: boolean,
+  SequenceDay?: number | null
 ): DailyProgress => {
   const SafeStreak = Math.max(0, DailyStreak);
-  const IsCappedAtLastDay = SafeStreak >= TOTAL_REWARD_DAYS;
+  const SafeSequenceDay =
+    typeof SequenceDay === 'number'
+      ? Math.min(Math.max(Math.trunc(SequenceDay), 1), TotalRewardDays)
+      : null;
 
-  if (IsCappedAtLastDay) {
-    const ClaimedDays = FirstLoginToday
-      ? TOTAL_REWARD_DAYS - 1
-      : TOTAL_REWARD_DAYS;
-
+  if (typeof SafeSequenceDay === 'number') {
+    const ClaimedDays = CanClaim
+      ? Math.max(SafeSequenceDay - 1, 0)
+      : SafeSequenceDay;
     return {
       ClaimedDays,
-      CurrentDay: TOTAL_REWARD_DAYS,
-      CurrentDayIndex: TOTAL_REWARD_DAYS - 1,
+      CurrentDay: SafeSequenceDay,
+      CurrentDayIndex: SafeSequenceDay - 1,
     };
   }
 
-  if (FirstLoginToday) {
-    const ClaimedDays = SafeStreak;
+  const IsCapped = SafeStreak >= TotalRewardDays;
+
+  if (IsCapped) {
+    const ClaimedDays = CanClaim ? TotalRewardDays - 1 : TotalRewardDays;
     return {
       ClaimedDays,
-      CurrentDay: ClaimedDays + 1,
-      CurrentDayIndex: ClaimedDays,
+      CurrentDay: TotalRewardDays,
+      CurrentDayIndex: TotalRewardDays - 1,
     };
   }
 
-  const ClaimedDays = SafeStreak;
-  const LastClaimedDayIndex = Math.max(SafeStreak - 1, 0);
+  if (CanClaim) {
+    return {
+      ClaimedDays: SafeStreak,
+      CurrentDay: SafeStreak + 1,
+      CurrentDayIndex: SafeStreak,
+    };
+  }
 
   return {
-    ClaimedDays: Math.max(ClaimedDays, 0),
+    ClaimedDays: SafeStreak,
     CurrentDay: SafeStreak > 0 ? SafeStreak : 1,
-    CurrentDayIndex: LastClaimedDayIndex,
+    CurrentDayIndex: Math.max(SafeStreak - 1, 0),
   };
 };
 
-export const useDailyLogin = (enabled: boolean = true) => {
+export const UseDailyLogin = (Enabled: boolean = true) => {
   const [IsLoading, SetIsLoading] = useState(false);
   const [Error, SetError] = useState<string | null>(null);
   const [LastReward, SetLastReward] = useState<number | null>(null);
@@ -270,19 +138,50 @@ export const useDailyLogin = (enabled: boolean = true) => {
     isLoading: IsStateLoading,
     mutate: MutateDailyState,
   } = useSWR<DailyStateSnapshot>(
-    enabled ? DAILY_STATUS_ENDPOINT : null,
+    Enabled ? DailyStatusEndpoint : null,
     async (Url) => {
-      const Response = await apiClient.get<DailyStatusSource>(Url);
-      const LocalSnapshot = ReadLocalDailySnapshot();
-      const FallbackEligibility =
-        LocalSnapshot.FirstLoginToday ??
-        (LocalSnapshot.DailyStreak === 0 ? true : false);
+      const Response = await apiClient.get<Record<string, unknown>>(Url);
+      const Data = (Response.data?.User ?? Response.data) as Record<
+        string,
+        unknown
+      >;
 
-      return NormalizeDailyState(
-        Response.data,
-        FallbackEligibility,
-        LocalSnapshot.DailyStreak
+      const LastLoginDate = NormalizeDateKey(
+        Data.LastLoginDate ??
+          Data.lastLoginDate ??
+          Data.LastDailyLoginAt ??
+          Data.lastDailyLoginAt
       );
+
+      const StoredStreak = Math.max(
+        0,
+        Number(
+          Data.DailyLoginStreak ??
+            Data.dailyLoginStreak ??
+            Data.DailyStreak ??
+            Data.dailyStreak ??
+            0
+        )
+      );
+
+      const CanClaim = DeriveCanClaimFromLastLoginDate(LastLoginDate);
+      const ResolvedStreak = DeriveStreakFromLastLoginDate(
+        LastLoginDate,
+        StoredStreak
+      );
+
+      const SequenceDay = CanClaim
+        ? Math.min(ResolvedStreak + 1, TotalRewardDays)
+        : Math.min(ResolvedStreak, TotalRewardDays) || 1;
+
+      return {
+        FirstLoginToday: CanClaim,
+        DailyStreak: ResolvedStreak,
+        Reward: 0,
+        ChipBalance: Number(Data.ChipBalance ?? Data.chipBalance ?? 0),
+        LastLoginDate,
+        SequenceDay,
+      };
     },
     {
       revalidateOnFocus: false,
@@ -291,47 +190,43 @@ export const useDailyLogin = (enabled: boolean = true) => {
   );
 
   const ClaimDailyReward = async () => {
-    if (IsLoading) {
-      return null;
-    }
-
+    if (IsLoading) return null;
     SetIsLoading(true);
     SetError(null);
 
     try {
       const Response =
-        await apiClient.post<DailyStatusSource>(DAILY_LOGIN_ENDPOINT);
-      const LocalSnapshot = ReadLocalDailySnapshot();
+        await apiClient.post<Record<string, unknown>>(DailyLoginEndpoint);
+      const Data = Response.data;
 
-      const FallbackClaimStreak = Math.max(
-        DailyState?.DailyStreak ?? LocalSnapshot.DailyStreak,
-        0
+      const NewStreak = Math.min(
+        Math.max(0, Number(Data.DailyStreak ?? Data.dailyStreak ?? 1)),
+        TotalRewardDays
       );
+      const Reward = Number(Data.Reward ?? Data.reward ?? 0);
+      const TodayKey = GetLocalDateKey();
 
-      const NormalizedResponse = NormalizeDailyState(
-        Response.data,
-        false,
-        FallbackClaimStreak
-      );
-
-      const LockedAfterClaim: DailyStateSnapshot = {
-        ...NormalizedResponse,
+      const UpdatedState: DailyStateSnapshot = {
         FirstLoginToday: false,
+        DailyStreak: NewStreak,
+        Reward,
+        ChipBalance: Number(
+          Data.ChipBalance ?? Data.chipBalance ?? DailyState?.ChipBalance ?? 0
+        ),
+        LastLoginDate: TodayKey,
+        SequenceDay: Math.min(NewStreak, TotalRewardDays),
       };
 
-      SetLastReward(LockedAfterClaim.Reward);
+      SetLastReward(Reward);
       SetCanClaimOverride(false);
-      PersistLocalDailyStreak(LockedAfterClaim.DailyStreak);
+      await MutateDailyState(UpdatedState, false);
 
-      await MutateDailyState(LockedAfterClaim, false);
-
-      return LockedAfterClaim;
-    } catch (err) {
+      return UpdatedState;
+    } catch (Err) {
       const ErrorMessage =
-        (err as { message?: string })?.message ||
+        (Err as { message?: string })?.message ??
         'Erro ao resgatar bonus diario';
       SetError(ErrorMessage);
-      console.error('Daily login error:', err);
       return null;
     } finally {
       SetIsLoading(false);
@@ -339,17 +234,18 @@ export const useDailyLogin = (enabled: boolean = true) => {
   };
 
   useEffect(() => {
-    if (DailyState?.EligibilityDefined) {
+    if (DailyState && CanClaimOverride !== null) {
       SetCanClaimOverride(null);
     }
-  }, [DailyState]);
+  }, [DailyState, CanClaimOverride]);
 
   const DerivedError = Error ?? DailyStateError?.message ?? null;
   const CanClaimToday =
     CanClaimOverride ?? DailyState?.FirstLoginToday ?? false;
   const Progress = CalculateDailyProgress(
     DailyState?.DailyStreak ?? 0,
-    CanClaimToday
+    CanClaimToday,
+    DailyState?.SequenceDay
   );
 
   return {
