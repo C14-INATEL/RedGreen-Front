@@ -38,10 +38,10 @@ export const SlotMachineRoom = () => {
   }, []);
 
   useEffect(() => {
-  if (!IsLoggedIn) {
-    sessionStorage.removeItem('hudActive');
-  }
-}, [IsLoggedIn]);
+    if (!IsLoggedIn) {
+      sessionStorage.removeItem('hudActive');
+    }
+  }, [IsLoggedIn]);
 
   const StoredUserValue = localStorage.getItem('user');
   let StoredUser: StoredUserSnapshot | null = null;

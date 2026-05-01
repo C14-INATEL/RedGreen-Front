@@ -8,12 +8,10 @@ import {
 } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createElement, useState } from 'react';
-import { SlotMachineButtons } from '../src/presentation/games/SlotMachineButtons';
-import {
-  SLOT_COUNTER_COUNT,
-  SlotMachineCounters,
-} from '../src/presentation/games/SlotMachineCounters';
-import { SlotMachineLever } from '../src/presentation/games/SlotMachineLever';
+import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
+import { SlotMachineCounters } from '../src/presentation/games/SlotMachineGame/SlotMachineCounters';
+import { SlotMachineLever } from '../src/presentation/games/SlotMachineGame/SlotMachineLever';
+import { MAX_REROLLS } from '../src/presentation/games/SlotMachineGame/slotMachineGameConfig';
 
 const ACTIVE_COUNTER_SPRITE = '/SlotMachine/SpriteCounterOn.png';
 const INACTIVE_COUNTER_SPRITE = '/SlotMachine/SpriteCounterOff.png';
@@ -42,9 +40,9 @@ const countInactiveCounters = (container: HTMLElement) =>
 const SlotMachineAnimationHarness = () => {
   const [redButtonPressCount, setRedButtonPressCount] = useState(0);
 
-  const handleRedButtonPress = () => {
+  const handleRerollReel = () => {
     setRedButtonPressCount((currentCount) =>
-      Math.min(currentCount + 1, SLOT_COUNTER_COUNT)
+      Math.min(currentCount + 1, MAX_REROLLS)
     );
   };
 
@@ -53,16 +51,17 @@ const SlotMachineAnimationHarness = () => {
   };
 
   const counterStates = Array.from(
-    { length: SLOT_COUNTER_COUNT },
-    (_, index) => index >= SLOT_COUNTER_COUNT - redButtonPressCount
+    { length: MAX_REROLLS },
+    (_, index) => index >= MAX_REROLLS - redButtonPressCount
   );
 
   return createElement(
     'div',
     null,
     createElement(SlotMachineButtons, {
+      canReroll: true,
       machineSize: MACHINE_SIZE,
-      onRedButtonPress: handleRedButtonPress,
+      onRerollReel: handleRerollReel,
     }),
     createElement(SlotMachineCounters, {
       machineSize: MACHINE_SIZE,

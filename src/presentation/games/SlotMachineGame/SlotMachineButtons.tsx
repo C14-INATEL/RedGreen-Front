@@ -37,6 +37,8 @@ type SlotButtonLayoutConfig = {
 type SlotMachineButtonsProps = {
   canResetToIdle?: boolean;
   canReroll?: boolean;
+  isLeverAnimating?: boolean;
+  isLeverToggleActive?: boolean;
   machineSize: {
     height: number;
     width: number;
@@ -119,6 +121,8 @@ const SLOT_BUTTON_LAYOUTS: readonly SlotButtonLayout[] =
 export const SlotMachineButtons = ({
   canResetToIdle = false,
   canReroll = false,
+  isLeverAnimating = false,
+  isLeverToggleActive = false,
   machineSize,
   onResetToIdle,
   onRerollReel,
@@ -133,6 +137,8 @@ export const SlotMachineButtons = ({
               ? !canResetToIdle
               : !canReroll || reelIndex === undefined
           }
+          isLeverAnimating={color === 'red' ? isLeverAnimating : false}
+          isLeverToggleActive={color === 'red' ? isLeverToggleActive : false}
           key={id}
           label={label}
           onPress={() => {

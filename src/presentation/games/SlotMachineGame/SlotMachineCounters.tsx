@@ -63,7 +63,7 @@ export const SlotMachineCounters = ({
   machineSize,
   states = DEFAULT_COUNTER_STATES,
 }: SlotMachineCountersProps) => {
-  const normalizedStates = states.length > 0 ? states : DEFAULT_COUNTER_STATES;
+  const normalizedStates = states;
   const counterLayouts = getSlotCounterLayouts(normalizedStates.length);
 
   return (

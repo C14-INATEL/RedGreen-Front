@@ -9,7 +9,11 @@ const Table = () => {
   const Navigate = useNavigate();
 
   const handleStartGame = () => {
-    Navigate(paths.slotmachineroom);
+    Navigate(paths.slotmachineroom, {
+      state: {
+        slotMachineIntroCompleted: false,
+      },
+    });
   };
 
   return (

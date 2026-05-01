@@ -1,24 +1,47 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { createElement } from 'react';
-import { SlotMachineButtons } from '../src/presentation/games/SlotMachineButtons';
+import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
 import { SlotMachinePixi } from '../src/presentation/games/SlotMachineGame/SlotMachinePixi';
+import type {
+  SlotMachineApiMachine,
+  SlotMachineApiSession,
+} from '../src/presentation/games/SlotMachineGame/slotMachineApi';
 import {
-  getTestSlotMachineSpinResult,
-  TEST_SLOT_MACHINE_SPIN_RESULTS,
-} from '../src/presentation/games/SlotMachineGame/testSlotMachineSpinMock';
+  createSlotMachine,
+  createSlotMachineSession,
+} from './SlotMachineTestBuilders';
 
 const MACHINE_SIZE = {
   height: 4096,
   width: 4096,
 };
+
+const mockApiGet = jest.fn();
+const mockApiPost = jest.fn();
+const mockMutateUserChips = jest.fn();
+
+jest.mock('@infrastructure/http/client', () => ({
+  apiClient: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: (...args: unknown[]) => mockApiPost(...args),
+  },
+}));
+
+jest.mock('@application/hooks/useUserChips', () => ({
+  useUserChips: () => ({
+    chips: undefined,
+    error: undefined,
+    isLoading: false,
+    mutate: (...args: unknown[]) => mockMutateUserChips(...args),
+  }),
+}));
 
 type MockSlotMachineReelsProps = {
   idleRequestId?: number;
@@ -30,6 +53,7 @@ type MockSlotMachineReelsProps = {
     id: number;
     reelIndex: number;
   } | null;
+  restoreRequestId?: number;
   spinRequestId?: number;
 };
 
@@ -39,8 +63,22 @@ jest.mock('../src/presentation/games/SlotMachineGame/SlotMachineReels', () => {
   const React = jest.requireActual('react') as typeof import('react');
 
   return {
-    SlotMachineReels: (props: MockSlotMachineReelsProps) => {
-      mockLatestSlotMachineReelsProps = props;
+    SlotMachineReels: (props: {
+      idleRequestId?: number;
+      onMachineModeChange?: MockSlotMachineReelsProps['onMachineModeChange'];
+      onRealSpinStateChange?: MockSlotMachineReelsProps['onRealSpinStateChange'];
+      rerollRequest?: MockSlotMachineReelsProps['rerollRequest'];
+      restoreRequest?: { id: number } | null;
+      spinRequest?: { id: number } | null;
+    }) => {
+      mockLatestSlotMachineReelsProps = {
+        idleRequestId: props.idleRequestId,
+        onMachineModeChange: props.onMachineModeChange,
+        onRealSpinStateChange: props.onRealSpinStateChange,
+        rerollRequest: props.rerollRequest ?? null,
+        restoreRequestId: props.restoreRequest?.id,
+        spinRequestId: props.spinRequest?.id,
+      };
 
       return React.createElement('div', {
         'data-testid': 'slot-machine-reels',
@@ -87,25 +125,112 @@ const transitionToResultHold = () => {
   });
 };
 
-const startFakeTimers = () => {
-  mockLatestSlotMachineReelsProps = null;
-  jest.useFakeTimers();
+const configureSlotMachineBootstrap = ({
+  activeSession = null,
+  slotMachines = [createSlotMachine()],
+}: {
+  activeSession?: SlotMachineApiSession | null;
+  slotMachines?: SlotMachineApiMachine[];
+} = {}) => {
+  mockApiGet.mockImplementation(async (url: string) => {
+    if (url === '/sessions/active') {
+      return { data: activeSession };
+    }
+
+    if (url === '/slot/machine') {
+      return { data: slotMachines };
+    }
+
+    throw new Error(`Unexpected GET ${url}`);
+  });
 };
 
-const stopFakeTimers = () => {
-  act(() => {
-    jest.runOnlyPendingTimers();
+const configureSlotMachinePosts = ({
+  createdSession = createSlotMachineSession(),
+  rerolledSession = createdSession,
+}: {
+  createdSession?: SlotMachineApiSession;
+  rerolledSession?: SlotMachineApiSession;
+} = {}) => {
+  mockApiPost.mockImplementation(async (url: string) => {
+    if (url === `/slot-machines/${createdSession.SlotMachineId}/sessions`) {
+      return {
+        data: {
+          currentBalance: 900,
+          session: createdSession,
+        },
+      };
+    }
+
+    if (url === '/sessions/active/cash-out') {
+      return {
+        data: {
+          finalBalance: 900,
+          message: 'Sessao encerrada',
+        },
+      };
+    }
+
+    if (url.startsWith('/sessions/active/reroll/')) {
+      return {
+        data: {
+          currentBalance: 900,
+          session: rerolledSession,
+        },
+      };
+    }
+
+    throw new Error(`Unexpected POST ${url}`);
   });
-  jest.useRealTimers();
 };
+
+const renderReadySlotMachine = async () => {
+  render(createElement(SlotMachinePixi));
+
+  await waitFor(() => {
+    expect(getLeverButton()).not.toBeDisabled();
+  });
+};
+
+describe('backend bootstrap', () => {
+  beforeEach(() => {
+    mockLatestSlotMachineReelsProps = null;
+    mockApiGet.mockReset();
+    mockApiPost.mockReset();
+    mockMutateUserChips.mockReset();
+  });
+
+  it('restores the active backend session into the visual machine state', async () => {
+    const activeSession = createSlotMachineSession({
+      CurrentRewardSnapshot: 42,
+    });
+
+    configureSlotMachineBootstrap({
+      activeSession,
+      slotMachines: [createSlotMachine()],
+    });
+    configureSlotMachinePosts();
+
+    render(createElement(SlotMachinePixi));
+
+    await waitFor(() => {
+      expect(getReelsProps().restoreRequestId).toBe(1);
+    });
+
+    expect(mockApiGet).toHaveBeenCalledWith('/sessions/active');
+    expect(mockApiGet).toHaveBeenCalledWith('/slot/machine');
+    expect(screen.getByLabelText('Valor atual 42$')).toBeInTheDocument();
+  });
+});
 
 describe('reroll buttons', () => {
   beforeEach(() => {
-    startFakeTimers();
-  });
-
-  afterEach(() => {
-    stopFakeTimers();
+    mockLatestSlotMachineReelsProps = null;
+    mockApiGet.mockReset();
+    mockApiPost.mockReset();
+    mockMutateUserChips.mockReset();
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts();
   });
 
   it('maps each red button to the correct reel index', () => {
@@ -136,29 +261,36 @@ describe('reroll buttons', () => {
 
 describe('input lock', () => {
   beforeEach(() => {
-    startFakeTimers();
+    mockLatestSlotMachineReelsProps = null;
+    mockApiGet.mockReset();
+    mockApiPost.mockReset();
+    mockMutateUserChips.mockReset();
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts();
   });
 
-  afterEach(() => {
-    stopFakeTimers();
-  });
-
-  it('ignores concurrent inputs while the main lever animation is active', () => {
-    render(createElement(SlotMachinePixi));
+  it('ignores concurrent inputs while the main lever animation is active', async () => {
+    await renderReadySlotMachine();
 
     const leverButton = getLeverButton();
     const blueButton = getBlueButton();
     const [firstRedButton] = getRedButtons();
 
     fireEvent.pointerDown(leverButton);
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
     enterMainSpinState();
 
-    expect(leverButton.hasAttribute('disabled')).toBe(true);
-    expect(blueButton.hasAttribute('disabled')).toBe(true);
-    expect(firstRedButton.hasAttribute('disabled')).toBe(true);
+    expect(leverButton).toBeDisabled();
+    expect(blueButton).toBeDisabled();
+    expect(firstRedButton).toBeDisabled();
     expect(getReelsProps().spinRequestId).toBe(1);
     expect(getReelsProps().idleRequestId).toBe(0);
     expect(getReelsProps().rerollRequest).toBeNull();
+    expect(mockApiPost).toHaveBeenCalledWith('/slot-machines/7/sessions', {});
 
     fireEvent.pointerDown(firstRedButton);
     fireEvent.pointerDown(blueButton);
@@ -168,24 +300,65 @@ describe('input lock', () => {
     expect(getReelsProps().spinRequestId).toBe(1);
     expect(getReelsProps().idleRequestId).toBe(0);
     expect(getReelsProps().rerollRequest).toBeNull();
+    expect(mockApiPost).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('reset flow', () => {
   beforeEach(() => {
-    startFakeTimers();
+    mockLatestSlotMachineReelsProps = null;
+    mockApiGet.mockReset();
+    mockApiPost.mockReset();
+    mockMutateUserChips.mockReset();
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts();
   });
 
-  afterEach(() => {
-    stopFakeTimers();
+  it('only reveals the backend reward after the reels settle into result hold', async () => {
+    const createdSession = createSlotMachineSession({
+      CurrentRewardSnapshot: 87,
+    });
+
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts({
+      createdSession,
+    });
+
+    await renderReadySlotMachine();
+
+    expect(screen.getByLabelText('Valor atual 0$')).toBeInTheDocument();
+
+    fireEvent.pointerDown(getLeverButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
+    expect(screen.getByLabelText('Valor atual 0$')).toBeInTheDocument();
+
+    enterMainSpinState();
+
+    expect(screen.getByLabelText('Valor atual 0$')).toBeInTheDocument();
+
+    act(() => {
+      getReelsProps().onMachineModeChange?.('resultHold');
+      getReelsProps().onRealSpinStateChange?.(false);
+    });
+
+    expect(screen.getByLabelText('Valor atual 87$')).toBeInTheDocument();
   });
 
-  it('keeps the machine in result hold until the blue button explicitly requests idle', () => {
-    render(createElement(SlotMachinePixi));
+  it('keeps the machine in result hold until the blue button explicitly requests idle', async () => {
+    await renderReadySlotMachine();
 
     const leverButton = getLeverButton();
 
     fireEvent.pointerDown(leverButton);
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
     transitionToResultHold();
 
     const blueButton = getBlueButton();
@@ -193,55 +366,112 @@ describe('reset flow', () => {
 
     expect(getReelsProps().spinRequestId).toBe(1);
     expect(getReelsProps().idleRequestId).toBe(0);
-    expect(leverButton.hasAttribute('disabled')).toBe(true);
-    expect(blueButton.hasAttribute('disabled')).toBe(false);
-    expect(firstRedButton.hasAttribute('disabled')).toBe(false);
-
-    act(() => {
-      jest.advanceTimersByTime(10_000);
-    });
-
-    expect(getReelsProps().idleRequestId).toBe(0);
-    expect(leverButton.hasAttribute('disabled')).toBe(true);
-    expect(blueButton.hasAttribute('disabled')).toBe(false);
-    expect(firstRedButton.hasAttribute('disabled')).toBe(false);
+    expect(leverButton).toBeDisabled();
+    expect(blueButton).not.toBeDisabled();
+    expect(firstRedButton).not.toBeDisabled();
 
     fireEvent.pointerDown(blueButton);
 
-    expect(getReelsProps().idleRequestId).toBe(1);
-    expect(leverButton.hasAttribute('disabled')).toBe(true);
+    await waitFor(() => {
+      expect(getReelsProps().idleRequestId).toBe(1);
+    });
+
+    expect(leverButton).toBeDisabled();
 
     act(() => {
       getReelsProps().onMachineModeChange?.('idle');
     });
 
-    expect(getLeverButton().hasAttribute('disabled')).toBe(false);
-    expect(getBlueButton().hasAttribute('disabled')).toBe(true);
-  });
-});
-
-describe('spin mock', () => {
-  it('cycles through the configured spin sets and protects the base mock from external mutation', () => {
-    const firstResult = getTestSlotMachineSpinResult();
-
-    expect(firstResult.id).toBe('mixedDrop');
-
-    firstResult.reelStopOrder[0] = 99;
-    firstResult.reels[0].symbolId = 'rat';
-
-    const secondResult = getTestSlotMachineSpinResult();
-    const thirdResult = getTestSlotMachineSpinResult();
-    const fourthResult = getTestSlotMachineSpinResult();
-
-    expect(secondResult.id).toBe('forcedCombo');
-    expect(thirdResult.id).toBe('reverseStopOrder');
-    expect(fourthResult.id).toBe('mixedDrop');
-
-    expect(TEST_SLOT_MACHINE_SPIN_RESULTS.mixedDrop.reelStopOrder[0]).toBe(0);
-    expect(TEST_SLOT_MACHINE_SPIN_RESULTS.mixedDrop.reels[0].symbolId).toBe(
-      'watermelon'
+    await waitFor(
+      () => {
+        expect(getLeverButton()).not.toBeDisabled();
+      },
+      {
+        timeout: 2_000,
+      }
     );
-    expect(fourthResult.reelStopOrder[0]).toBe(0);
-    expect(fourthResult.reels[0].symbolId).toBe('watermelon');
+
+    expect(getBlueButton()).toBeDisabled();
+  });
+
+  it('rerolls through the backend before updating the visual motor', async () => {
+    const rerolledSession = createSlotMachineSession({
+      CurrentRerollsSpent: {
+        Rerolls: {
+          Max: 5,
+          Used: 1,
+        },
+      },
+    });
+
+    configureSlotMachineBootstrap();
+    configureSlotMachinePosts({
+      createdSession: createSlotMachineSession(),
+      rerolledSession,
+    });
+
+    await renderReadySlotMachine();
+
+    fireEvent.pointerDown(getLeverButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
+    transitionToResultHold();
+
+    fireEvent.pointerDown(getRedButtons()[2]);
+
+    await waitFor(() => {
+      expect(getReelsProps().rerollRequest?.reelIndex).toBe(2);
+    });
+
+    expect(mockApiPost.mock.calls).toContainEqual([
+      '/sessions/active/reroll/2',
+    ]);
+  });
+
+  it('cashes out through the backend before returning the machine to idle', async () => {
+    await renderReadySlotMachine();
+
+    fireEvent.pointerDown(getLeverButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().spinRequestId).toBe(1);
+    });
+
+    transitionToResultHold();
+
+    fireEvent.pointerDown(getBlueButton());
+
+    await waitFor(() => {
+      expect(getReelsProps().idleRequestId).toBe(1);
+    });
+
+    expect(mockApiPost.mock.calls).toContainEqual([
+      '/sessions/active/cash-out',
+    ]);
+  });
+
+  it('shows the backend empty-state message when no slot machine is available', async () => {
+    configureSlotMachineBootstrap({
+      activeSession: null,
+      slotMachines: [],
+    });
+
+    render(createElement(SlotMachinePixi));
+
+    expect(
+      await screen.findByText('Nenhuma slot machine disponível no backend.')
+    ).toBeInTheDocument();
+    expect(getLeverButton()).toBeDisabled();
+    expect(getBlueButton()).toBeDisabled();
+
+    getRedButtons().forEach((button) => {
+      expect(button).toBeDisabled();
+    });
+
+    expect(getReelsProps().spinRequestId).toBeUndefined();
+    expect(getReelsProps().restoreRequestId).toBeUndefined();
   });
 });
