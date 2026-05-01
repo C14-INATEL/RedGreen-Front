@@ -263,20 +263,20 @@ describe('Home', () => {
       <EditProfileModal IsOpen={true} OnClose={OnClose} OnSuccess={OnSuccess} />
     );
 
-    fireEvent.change(screen.getByPlaceholderText('Name'), {
+    fireEvent.change(screen.getByPlaceholderText('Nome'), {
       target: { value: 'New Name' },
     });
-    fireEvent.change(screen.getByPlaceholderText('DD/MM/YYYY'), {
+    fireEvent.change(screen.getByPlaceholderText('DD/MM/AAAA'), {
       target: { value: '03/04/1999' },
     });
-    fireEvent.change(screen.getByPlaceholderText('New password (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Nova senha (opcional)'), {
       target: { value: 'strong123' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
+    fireEvent.change(screen.getByPlaceholderText('Confirmar nova senha'), {
       target: { value: 'strong123' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alteracoes' }));
 
     await waitFor(() => {
       expect(MockApiPatch).toHaveBeenCalledWith('/user', {
@@ -320,10 +320,10 @@ describe('Home', () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
+    fireEvent.change(screen.getByPlaceholderText('Senha'), {
       target: { value: 'strong123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Delete account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir conta' }));
 
     await waitFor(() => {
       expect(MockApiDelete).toHaveBeenCalledWith('/user');

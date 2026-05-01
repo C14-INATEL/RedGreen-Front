@@ -106,37 +106,37 @@ const EditProfileModal = ({
 
   const HandleSubmit = async () => {
     if (!Name.trim()) {
-      SetToastMessage('REQUIRED FIELD\nENTER YOUR NAME.');
+      SetToastMessage('CAMPO OBRIGATORIO\nINFORME SEU NOME.');
       return;
     }
 
     if (!BirthDate.trim()) {
-      SetToastMessage('REQUIRED FIELD\nENTER YOUR BIRTH DATE.');
+      SetToastMessage('CAMPO OBRIGATORIO\nINFORME SUA DATA DE NASCIMENTO.');
       return;
     }
 
     if (!IsBirthDateFormatValid(BirthDate)) {
-      SetToastMessage('ERROR\nFORMAT: DD/MM/YYYY');
+      SetToastMessage('ERRO\nFORMATO: DD/MM/AAAA');
       return;
     }
 
     if (!IsValidBirthDate(BirthDate)) {
-      SetToastMessage('ERROR\nINVALID DATE.');
+      SetToastMessage('ERRO\nDATA INVALIDA.');
       return;
     }
 
     if (Password && Password.length < 8) {
-      SetToastMessage('ERROR\nPASSWORD MUST BE AT LEAST 8 CHARACTERS.');
+      SetToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
       return;
     }
 
     if (Password && Password !== ConfirmPassword) {
-      SetToastMessage('ERROR\nPASSWORDS DO NOT MATCH.');
+      SetToastMessage('ERRO\nAS SENHAS NAO CONFEREM.');
       return;
     }
 
     if (ConfirmPassword && !Password) {
-      SetToastMessage('ERROR\nENTER YOUR NEW PASSWORD.');
+      SetToastMessage('ERRO\nINFORME SUA NOVA SENHA.');
       return;
     }
 
@@ -159,7 +159,7 @@ const EditProfileModal = ({
       const UpdatedUser = { ...StoredUser, ...Response.data };
       localStorage.setItem('user', JSON.stringify(UpdatedUser));
 
-      SetSuccessMessage('PROFILE UPDATED SUCCESSFULLY!');
+      SetSuccessMessage('PERFIL ATUALIZADO COM SUCESSO!');
       SetPassword('');
       SetConfirmPassword('');
 
@@ -170,7 +170,7 @@ const EditProfileModal = ({
       }, 1000);
     } catch (Err) {
       const ErrorMessage =
-        (Err as { message?: string })?.message ?? 'ERROR UPDATING PROFILE.';
+        (Err as { message?: string })?.message ?? 'ERRO AO ATUALIZAR PERFIL.';
       SetToastMessage(ErrorMessage.toUpperCase());
     } finally {
       SetIsLoading(false);
@@ -201,22 +201,22 @@ const EditProfileModal = ({
                 <button
                   onClick={HandleClose}
                   className="absolute right-4 top-4 text-white/40 hover:text-white transition-colors"
-                  aria-label="Close"
+                  aria-label="Fechar"
                 >
                   <X className="h-4 w-4" />
                 </button>
 
                 <h2 className="font-display text-lg font-semibold text-white text-center mb-1">
-                  Edit Profile
+                  Editar perfil
                 </h2>
                 <p className="text-white/80 text-xs text-center mb-6">
-                  Nickname cannot be changed
+                  O apelido nao pode ser alterado
                 </p>
 
                 <div className="space-y-2">
                   <input
                     type="text"
-                    placeholder="Nickname"
+                    placeholder="Apelido"
                     value={StoredUser.Nickname ?? ''}
                     disabled
                     className="auth-input opacity-40 cursor-not-allowed"
@@ -224,7 +224,7 @@ const EditProfileModal = ({
 
                   <input
                     type="text"
-                    placeholder="Name"
+                    placeholder="Nome"
                     value={Name}
                     onChange={(e) => {
                       SetName(e.target.value);
@@ -236,7 +236,7 @@ const EditProfileModal = ({
 
                   <input
                     type="text"
-                    placeholder="DD/MM/YYYY"
+                    placeholder="DD/MM/AAAA"
                     value={BirthDate}
                     onChange={(e) => {
                       const RawValue = e.target.value
@@ -260,7 +260,7 @@ const EditProfileModal = ({
                   <div className="relative">
                     <input
                       type={ShowPassword ? 'text' : 'password'}
-                      placeholder="New password (optional)"
+                      placeholder="Nova senha (opcional)"
                       value={Password}
                       onChange={(e) => {
                         SetPassword(e.target.value);
@@ -274,7 +274,7 @@ const EditProfileModal = ({
                       onClick={() => SetShowPassword(!ShowPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={
-                        ShowPassword ? 'Hide password' : 'Show password'
+                        ShowPassword ? 'Ocultar senha' : 'Mostrar senha'
                       }
                     >
                       {ShowPassword ? EyeClosedIcon : EyeOpenIcon}
@@ -284,7 +284,7 @@ const EditProfileModal = ({
                   <div className="relative">
                     <input
                       type={ShowConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirm new password"
+                      placeholder="Confirmar nova senha"
                       value={ConfirmPassword}
                       onChange={(e) => {
                         SetConfirmPassword(e.target.value);
@@ -302,8 +302,8 @@ const EditProfileModal = ({
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={
                         ShowConfirmPassword
-                          ? 'Hide confirmation'
-                          : 'Show confirmation'
+                          ? 'Ocultar confirmacao'
+                          : 'Mostrar confirmacao'
                       }
                     >
                       {ShowConfirmPassword ? EyeClosedIcon : EyeOpenIcon}
@@ -329,7 +329,7 @@ const EditProfileModal = ({
                     disabled={IsLoading}
                     className="auth-button mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {IsLoading ? 'Saving...' : 'Save changes'}
+                    {IsLoading ? 'Salvando...' : 'Salvar alteracoes'}
                   </button>
                 </div>
               </div>
@@ -350,7 +350,7 @@ const EditProfileModal = ({
                   onClick={CloseToast}
                   className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center border-2 border-transparent text-[10px] text-white hover:border-white/40"
                   style={{ borderRadius: 0, imageRendering: 'pixelated' }}
-                  aria-label="Close"
+                  aria-label="Fechar"
                 >
                   X
                 </button>

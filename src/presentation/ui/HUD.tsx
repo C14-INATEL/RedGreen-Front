@@ -82,7 +82,7 @@ const HUD = ({
 
   const MenuItems: MenuItem[] = [
     {
-      Label: 'Edit profile',
+      Label: 'Editar perfil',
       Icon: UserRoundPen,
       OnSelect: () => {
         CloseMenu();
@@ -90,7 +90,7 @@ const HUD = ({
       },
     },
     {
-      Label: 'Delete account',
+      Label: 'Excluir conta',
       Icon: Trash2,
       OnSelect: () => {
         CloseMenu();
@@ -99,7 +99,7 @@ const HUD = ({
       Tone: 'destructive',
     },
     {
-      Label: 'Sign out',
+      Label: 'Sair',
       Icon: LogOut,
       OnSelect: HandleLogout,
     },

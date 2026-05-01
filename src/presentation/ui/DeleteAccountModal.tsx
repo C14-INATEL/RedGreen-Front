@@ -77,7 +77,7 @@ const DeleteAccountModal = ({
 
   const HandleDelete = async () => {
     if (!Password.trim()) {
-      SetToastMessage('REQUIRED FIELD\nENTER YOUR PASSWORD.');
+      SetToastMessage('CAMPO OBRIGATORIO\nINFORME SUA SENHA.');
       return;
     }
 
@@ -95,7 +95,7 @@ const DeleteAccountModal = ({
       OnDeleted();
     } catch (Err) {
       const ErrorMessage =
-        (Err as { message?: string })?.message ?? 'ERROR DELETING ACCOUNT.';
+        (Err as { message?: string })?.message ?? 'ERRO AO EXCLUIR CONTA.';
       SetToastMessage(ErrorMessage.toUpperCase());
     } finally {
       SetIsLoading(false);
@@ -126,7 +126,7 @@ const DeleteAccountModal = ({
                 <button
                   onClick={HandleClose}
                   className="absolute right-4 top-4 text-white/40 hover:text-white transition-colors"
-                  aria-label="Close"
+                  aria-label="Fechar"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -186,19 +186,19 @@ const DeleteAccountModal = ({
                 </div>
 
                 <h2 className="font-display text-lg font-semibold text-white text-center mb-1">
-                  Delete Account
+                  Excluir conta
                 </h2>
                 <p className="text-white/60 text-xs text-center mb-6 leading-5">
-                  This action is permanent and cannot be undone.
+                  Esta acao e permanente e nao pode ser desfeita.
                   <br />
-                  Enter your password to confirm.
+                  Informe sua senha para confirmar.
                 </p>
 
                 <div className="space-y-3">
                   <div className="relative">
                     <input
                       type={ShowPassword ? 'text' : 'password'}
-                      placeholder="Password"
+                      placeholder="Senha"
                       value={Password}
                       onChange={(e) => {
                         SetPassword(e.target.value);
@@ -212,7 +212,7 @@ const DeleteAccountModal = ({
                       onClick={() => SetShowPassword(!ShowPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={
-                        ShowPassword ? 'Hide password' : 'Show password'
+                        ShowPassword ? 'Ocultar senha' : 'Mostrar senha'
                       }
                     >
                       {ShowPassword ? EyeClosedIcon : EyeOpenIcon}
@@ -224,7 +224,7 @@ const DeleteAccountModal = ({
                     disabled={IsLoading}
                     className="w-full border-2 border-cassino-red/60 bg-cassino-red/20 py-4 font-display text-sm uppercase tracking-[0.2em] text-cassino-red transition-all shadow-[3px_3px_0px_rgba(0,0,0,0.4)] hover:bg-cassino-red/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {IsLoading ? 'Deleting...' : 'Delete account'}
+                    {IsLoading ? 'Excluindo...' : 'Excluir conta'}
                   </button>
 
                   <button
@@ -232,7 +232,7 @@ const DeleteAccountModal = ({
                     disabled={IsLoading}
                     className="w-full border-2 border-border/20 bg-secondary/40 py-3 font-display text-xs uppercase tracking-[0.2em] text-muted-foreground transition-all hover:bg-secondary/60 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Cancel
+                    Cancelar
                   </button>
                 </div>
               </div>
@@ -253,7 +253,7 @@ const DeleteAccountModal = ({
                   onClick={CloseToast}
                   className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center border-2 border-transparent text-[10px] text-white hover:border-white/40"
                   style={{ borderRadius: 0, imageRendering: 'pixelated' }}
-                  aria-label="Close"
+                  aria-label="Fechar"
                 >
                   X
                 </button>
