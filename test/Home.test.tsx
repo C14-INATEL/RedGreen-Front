@@ -1,7 +1,16 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Home from '../src/presentation/pages/Home';
+import DeleteAccountModal from '../src/presentation/ui/DeleteAccountModal';
+import EditProfileModal from '../src/presentation/ui/EditProfileModal';
+
+type ApiPatchMock = (
+  url: string,
+  payload: Record<string, string>
+) => Promise<{ data: Record<string, unknown> }>;
+
+type ApiDeleteMock = (url: string) => Promise<unknown>;
 
 type HudProps = {
   IsLoggedIn: boolean;
@@ -29,6 +38,16 @@ const MockHud = jest.fn();
 const MockRankingPanel = jest.fn();
 const MockDailyBonusPanel = jest.fn();
 const MockMutateChips = jest.fn();
+const MockApiPatch = jest.fn<ApiPatchMock>();
+const MockApiDelete = jest.fn<ApiDeleteMock>();
+
+jest.mock('@infrastructure/http/client', () => ({
+  apiClient: {
+    patch: (url: string, payload: Record<string, string>) =>
+      MockApiPatch(url, payload),
+    delete: (url: string) => MockApiDelete(url),
+  },
+}));
 
 jest.mock('@application/hooks/useUserProfile', () => ({
   useUserProfile: (enabled: boolean) => MockUseUserProfile(enabled),
@@ -106,6 +125,11 @@ describe('Home', () => {
     MockRankingPanel.mockClear();
     MockDailyBonusPanel.mockClear();
     MockMutateChips.mockReset();
+    MockApiPatch.mockReset();
+    MockApiDelete.mockReset();
+
+    MockApiPatch.mockResolvedValue({ data: {} });
+    MockApiDelete.mockResolvedValue({});
 
     MockUseUserProfile.mockReturnValue({
       nickname: undefined,
@@ -116,6 +140,11 @@ describe('Home', () => {
       chips: undefined,
       mutate: MockMutateChips,
     });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    localStorage.clear();
   });
 
   it('redirects the guest user to the login page after clicking the login action', () => {
@@ -193,5 +222,109 @@ describe('Home', () => {
     expect(localStorage.getItem('user')).toBeNull();
     expect(MockUseUserProfile).toHaveBeenLastCalledWith(false);
     expect(MockUseUserChips).toHaveBeenLastCalledWith(false);
+  });
+
+  it('sends the normalized profile payload and updates localStorage after saving profile data', async () => {
+    jest.useFakeTimers();
+    const OnClose = jest.fn();
+    const OnSuccess = jest.fn();
+
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        Nickname: 'PixelPlayer',
+        Name: 'Old Name',
+        BirthDate: '2000-01-02',
+        ChipBalance: 1200,
+      })
+    );
+
+    MockApiPatch.mockResolvedValue({
+      data: {
+        Name: 'New Name',
+        BirthDate: '1999-04-03',
+      },
+    });
+
+    render(
+      <EditProfileModal
+        IsOpen={true}
+        OnClose={OnClose}
+        OnSuccess={OnSuccess}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Name'), {
+      target: { value: 'New Name' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('DD/MM/YYYY'), {
+      target: { value: '03/04/1999' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('New password (optional)'), {
+      target: { value: 'strong123' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
+      target: { value: 'strong123' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => {
+      expect(MockApiPatch).toHaveBeenCalledWith('/user', {
+        Name: 'New Name',
+        BirthDate: '1999-04-03',
+        Password: 'strong123',
+      });
+    });
+
+    expect(OnSuccess).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(localStorage.getItem('user') ?? '{}')).toMatchObject({
+      Nickname: 'PixelPlayer',
+      Name: 'New Name',
+      BirthDate: '1999-04-03',
+      ChipBalance: 1200,
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    expect(OnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('deletes the account through the API and clears persisted session data', async () => {
+    const OnClose = jest.fn();
+    const OnDeleted = jest.fn();
+
+    localStorage.setItem('token', 'token-123');
+    localStorage.setItem('authToken', 'legacy-token-123');
+    localStorage.setItem('user', JSON.stringify({ Nickname: 'PixelPlayer' }));
+    localStorage.setItem('dailyLoginSnapshot', 'cached-daily-state');
+
+    MockApiDelete.mockResolvedValue({});
+
+    render(
+      <DeleteAccountModal
+        IsOpen={true}
+        OnClose={OnClose}
+        OnDeleted={OnDeleted}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Password'), {
+      target: { value: 'strong123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Delete account' }));
+
+    await waitFor(() => {
+      expect(MockApiDelete).toHaveBeenCalledWith('/user');
+    });
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('authToken')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(localStorage.getItem('dailyLoginSnapshot')).toBeNull();
+    expect(OnDeleted).toHaveBeenCalledTimes(1);
+    expect(OnClose).not.toHaveBeenCalled();
   });
 });
