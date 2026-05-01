@@ -1,5 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Home from '../src/presentation/pages/Home';
 import DeleteAccountModal from '../src/presentation/ui/DeleteAccountModal';
@@ -247,11 +260,7 @@ describe('Home', () => {
     });
 
     render(
-      <EditProfileModal
-        IsOpen={true}
-        OnClose={OnClose}
-        OnSuccess={OnSuccess}
-      />
+      <EditProfileModal IsOpen={true} OnClose={OnClose} OnSuccess={OnSuccess} />
     );
 
     fireEvent.change(screen.getByPlaceholderText('Name'), {
