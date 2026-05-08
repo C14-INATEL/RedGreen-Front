@@ -29,7 +29,7 @@ const RankingPanel = ({ IsOpen, OnClose }: RankingPanelProps) => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 40 }}
           transition={{ duration: 0.3 }}
-          className="fixed top-24 right-6 w-72 z-40"
+          className="fixed top-28 right-6 w-72 z-40"
         >
           <div
             className="bg-card/90 backdrop-blur-md pixel-border overflow-hidden"
@@ -49,32 +49,32 @@ const RankingPanel = ({ IsOpen, OnClose }: RankingPanelProps) => {
             </div>
 
             <div className="divide-y-2 divide-border max-h-96 overflow-y-auto">
-              {topPlayers.map((player, i) => (
+              {topPlayers.map((Player, I) => (
                 <motion.div
-                  key={player.Name}
+                  key={Player.Name}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  className={`flex items-center justify-between p-3 ${i === 0 ? 'bg-cassino-gold/10' : ''}`}
+                  transition={{ delay: I * 0.05 }}
+                  className={`flex items-center justify-between p-3 ${I === 0 ? 'bg-cassino-gold/10' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={`text-sm w-5 text-center font-display ${
-                        i === 0 ? 'text-cassino-gold' : 'text-muted-foreground'
+                        I === 0 ? 'text-cassino-gold' : 'text-muted-foreground'
                       }`}
                     >
-                      {i === 0 ? '♛' : i + 1}
+                      {I === 0 ? '♛' : I + 1}
                     </span>
                     <span className="text-foreground text-sm font-medium font-body truncate">
-                      {player.Name}
+                      {Player.Name}
                     </span>
                   </div>
                   <span
                     className={`text-sm font-mono shrink-0 ${
-                      i === 0 ? 'text-cassino-gold' : 'text-accent-green'
+                      I === 0 ? 'text-cassino-gold' : 'text-accent-green'
                     }`}
                   >
-                    {FormatChips(player.Chips)}
+                    {FormatChips(Player.Chips)}
                   </span>
                 </motion.div>
               ))}

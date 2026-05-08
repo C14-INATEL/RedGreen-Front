@@ -80,7 +80,7 @@ const Home = () => {
         OnLogout={HandleLogout}
       />
 
-      <main className="relative flex h-full items-center justify-center px-6 pb-10 pt-20 md:px-16">
+      <main className="relative flex h-full items-center justify-center px-6 pb-10 pt-24 md:px-16">
         <Table />
 
         {IsLoggedIn && (
@@ -89,7 +89,7 @@ const Home = () => {
             animate={{ opacity: 1, scale: 1 }}
             onClick={() => SetDailyBonusOpen(true)}
             className="fixed right-6 z-50 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)]"
-            style={{ top: RankingOpen ? 'calc(6rem + 320px)' : '10rem' }}
+            style={{ top: RankingOpen ? 'calc(7rem + 320px)' : '11rem' }}
           >
             <Gift className="h-4 w-4" />
           </motion.button>
@@ -107,7 +107,7 @@ const Home = () => {
           animate={{ opacity: 1, scale: 1 }}
           onClick={() => SetRankingOpen(true)}
           className="fixed right-6 z-50 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border"
-          style={{ top: '6rem' }}
+          style={{ top: '7rem' }}
         >
           <Trophy className="h-5 w-5" />
         </motion.button>
