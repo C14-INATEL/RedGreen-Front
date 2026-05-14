@@ -1,25 +1,27 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import {
-  MINEFIELD_CELL_COUNT,
   MINEFIELD_GRID_SIZE,
+  type MinefieldCard,
 } from './minefieldGameConfig';
 
 type MinefieldBoardProps = Pick<
   HTMLAttributes<HTMLDivElement>,
   'className' | 'style'
 > & {
-  onCellSelect: (cellIndex: number) => void;
-  selectedCells: ReadonlySet<number>;
+  cards: MinefieldCard[];
+  onCardReveal: (cardId: number) => void;
 };
 
 const BOARD_FRAME_COLOR = 0x2a1f12;
 const BOARD_SURFACE_COLOR = 0x0c2615;
-const CELL_DEFAULT_COLOR = 0x16482c;
-const CELL_DEFAULT_BORDER_COLOR = 0x32724a;
-const CELL_SELECTED_COLOR = 0xb52025;
-const CELL_SELECTED_BORDER_COLOR = 0xf0c350;
+const CARD_BACK_COLOR = 0x123d27;
+const CARD_BACK_BORDER_COLOR = 0x32724a;
+const CARD_REVEALED_COLOR = 0xf1d28a;
+const CARD_REVEALED_BORDER_COLOR = 0xf0c350;
+const CARD_REVEALED_TEXT_COLOR = 0x2a1f12;
+const CARD_BACK_TEXT_COLOR = 0xf0c350;
 
 const destroyChildren = (container: Container) => {
   container.removeChildren().forEach((child) => {
@@ -27,58 +29,82 @@ const destroyChildren = (container: Container) => {
   });
 };
 
-const drawCell = (
-  cell: Graphics,
+const drawCardFace = (
+  cardFace: Graphics,
   x: number,
   y: number,
   size: number,
-  isSelected: boolean
+  isRevealed: boolean
 ) => {
   const borderWidth = Math.max(2, Math.round(size * 0.055));
   const inset = Math.max(3, Math.round(size * 0.08));
 
-  cell.clear();
-  cell.lineStyle(
+  cardFace.clear();
+  cardFace.lineStyle(
     borderWidth,
-    isSelected ? CELL_SELECTED_BORDER_COLOR : CELL_DEFAULT_BORDER_COLOR,
-    isSelected ? 0.95 : 0.8
+    isRevealed ? CARD_REVEALED_BORDER_COLOR : CARD_BACK_BORDER_COLOR,
+    isRevealed ? 0.95 : 0.8
   );
-  cell.beginFill(isSelected ? CELL_SELECTED_COLOR : CELL_DEFAULT_COLOR);
-  cell.drawRect(x, y, size, size);
-  cell.endFill();
+  cardFace.beginFill(isRevealed ? CARD_REVEALED_COLOR : CARD_BACK_COLOR);
+  cardFace.drawRect(x, y, size, size);
+  cardFace.endFill();
 
-  cell.lineStyle(1, 0xffffff, isSelected ? 0.22 : 0.12);
-  cell.moveTo(x + inset, y + inset);
-  cell.lineTo(x + size - inset, y + inset);
-  cell.moveTo(x + inset, y + inset);
-  cell.lineTo(x + inset, y + size - inset);
+  cardFace.lineStyle(1, 0xffffff, isRevealed ? 0.35 : 0.12);
+  cardFace.moveTo(x + inset, y + inset);
+  cardFace.lineTo(x + size - inset, y + inset);
+  cardFace.moveTo(x + inset, y + inset);
+  cardFace.lineTo(x + inset, y + size - inset);
 
-  cell.lineStyle(1, 0x020617, isSelected ? 0.42 : 0.35);
-  cell.moveTo(x + inset, y + size - inset);
-  cell.lineTo(x + size - inset, y + size - inset);
-  cell.moveTo(x + size - inset, y + inset);
-  cell.lineTo(x + size - inset, y + size - inset);
+  cardFace.lineStyle(1, 0x020617, isRevealed ? 0.32 : 0.35);
+  cardFace.moveTo(x + inset, y + size - inset);
+  cardFace.lineTo(x + size - inset, y + size - inset);
+  cardFace.moveTo(x + size - inset, y + inset);
+  cardFace.lineTo(x + size - inset, y + size - inset);
+};
+
+const createCardLabel = (
+  card: MinefieldCard,
+  x: number,
+  y: number,
+  size: number
+) => {
+  const label = new Text(
+    card.revealed ? `+${card.points}` : 'R&G',
+    new TextStyle({
+      align: 'center',
+      fill: card.revealed ? CARD_REVEALED_TEXT_COLOR : CARD_BACK_TEXT_COLOR,
+      fontFamily: 'Press Start 2P',
+      fontSize: Math.max(10, Math.floor(size * (card.revealed ? 0.2 : 0.16))),
+      fontWeight: '700',
+    })
+  );
+
+  label.anchor.set(0.5);
+  label.position.set(Math.round(x + size / 2), Math.round(y + size / 2));
+  label.resolution = 2;
+
+  return label;
 };
 
 export const MinefieldBoard = ({
+  cards,
   className,
-  onCellSelect,
-  selectedCells,
+  onCardReveal,
   style,
 }: MinefieldBoardProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const onCellSelectRef = useRef(onCellSelect);
+  const cardsRef = useRef(cards);
+  const onCardRevealRef = useRef(onCardReveal);
   const renderBoardRef = useRef<(() => void) | null>(null);
-  const selectedCellsRef = useRef(selectedCells);
 
   useEffect(() => {
-    onCellSelectRef.current = onCellSelect;
-  }, [onCellSelect]);
+    onCardRevealRef.current = onCardReveal;
+  }, [onCardReveal]);
 
   useEffect(() => {
-    selectedCellsRef.current = selectedCells;
+    cardsRef.current = cards;
     renderBoardRef.current?.();
-  }, [selectedCells]);
+  }, [cards]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -93,7 +119,9 @@ export const MinefieldBoard = ({
     let isDisposed = false;
 
     const renderBoard = () => {
-      if (!app || !root || isDisposed) {
+      const currentRoot = root;
+
+      if (!app || !currentRoot || isDisposed) {
         return;
       }
 
@@ -105,7 +133,7 @@ export const MinefieldBoard = ({
       }
 
       app.renderer.resize(width, height);
-      destroyChildren(root);
+      destroyChildren(currentRoot);
 
       const boardSize = Math.min(width, height);
       const boardX = Math.round((width - boardSize) / 2);
@@ -141,24 +169,27 @@ export const MinefieldBoard = ({
         gridSize + Math.round(framePadding * 0.9)
       );
       frame.endFill();
-      root.addChild(frame);
+      currentRoot.addChild(frame);
 
-      for (let cellIndex = 0; cellIndex < MINEFIELD_CELL_COUNT; cellIndex += 1) {
-        const row = Math.floor(cellIndex / MINEFIELD_GRID_SIZE);
-        const column = cellIndex % MINEFIELD_GRID_SIZE;
+      cardsRef.current.forEach((card, cardIndex) => {
+        const row = Math.floor(cardIndex / MINEFIELD_GRID_SIZE);
+        const column = cardIndex % MINEFIELD_GRID_SIZE;
         const x = gridX + column * (cellSize + cellGap);
         const y = gridY + row * (cellSize + cellGap);
-        const cell = new Graphics();
+        const cardContainer = new Container();
+        const cardFace = new Graphics();
+        const cardLabel = createCardLabel(card, x, y, cellSize);
 
-        drawCell(cell, x, y, cellSize, selectedCellsRef.current.has(cellIndex));
-        cell.eventMode = 'static';
-        cell.cursor = 'pointer';
-        cell.on('pointertap', () => {
-          onCellSelectRef.current(cellIndex);
+        drawCardFace(cardFace, x, y, cellSize, card.revealed);
+        cardContainer.addChild(cardFace, cardLabel);
+        cardContainer.eventMode = 'static';
+        cardContainer.cursor = card.revealed ? 'default' : 'pointer';
+        cardContainer.on('pointertap', () => {
+          onCardRevealRef.current(card.id);
         });
 
-        root.addChild(cell);
-      }
+        currentRoot.addChild(cardContainer);
+      });
     };
 
     const nextApp = new Application({
