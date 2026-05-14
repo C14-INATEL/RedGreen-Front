@@ -2,18 +2,23 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import TableDecorations from '@ui/TableDecorations';
 import GameCard from '@ui/GameCard';
+import MinefieldIcon from '@ui/MinefieldIcon';
 import SlotMachineIcon from '@ui/SlotMachineIcon';
 import { paths } from '../../paths';
 
 const Table = () => {
   const Navigate = useNavigate();
 
-  const handleStartGame = () => {
+  const handleStartSlotMachine = () => {
     Navigate(paths.slotmachineroom, {
       state: {
         slotMachineIntroCompleted: false,
       },
     });
+  };
+
+  const handleStartMinefield = () => {
+    Navigate(paths.minefieldRoom);
   };
 
   return (
@@ -29,13 +34,21 @@ const Table = () => {
             <div className="relative bg-table-green p-8 md:p-12">
               <TableDecorations />
 
-              <div className="relative z-10 flex items-center justify-center min-h-[280px] py-4">
+              <div className="relative z-10 flex min-h-[280px] flex-wrap items-center justify-center gap-12 py-4">
                 <GameCard
                   title="Caça-Niquel"
                   subtitle="Girar"
                   icon={<SlotMachineIcon />}
                   delay={0.1}
-                  onClick={handleStartGame}
+                  onClick={handleStartSlotMachine}
+                />
+
+                <GameCard
+                  title="Campo Minado"
+                  subtitle="Abrir"
+                  icon={<MinefieldIcon />}
+                  delay={0.18}
+                  onClick={handleStartMinefield}
                 />
               </div>
 
