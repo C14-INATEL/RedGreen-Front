@@ -144,10 +144,7 @@ const Home = () => {
         )}
       </main>
 
-      <RankingPanel
-        IsOpen={RankingOpen}
-        OnClose={HandleCloseRanking}
-      />
+      <RankingPanel IsOpen={RankingOpen} OnClose={HandleCloseRanking} />
 
       <AnimatePresence>
         {!RankingOpen && (

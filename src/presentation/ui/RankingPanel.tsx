@@ -30,14 +30,14 @@ const RankingPanel = ({
     <AnimatePresence onExitComplete={OnExitComplete}>
       {IsOpen && (
         <motion.div
-          initial={{ opacity: 0, x: 16, scale: 0.98 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
+          initial={{ x: 16, scale: 0.98 }}
+          animate={{ x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 16, scale: 0.98 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
           className="fixed top-28 right-6 w-72 z-50 transform-gpu"
         >
           <div
-            className="bg-card/95 backdrop-blur-md pixel-border overflow-hidden"
+            className="relative overflow-hidden bg-card/95 backdrop-blur-md pixel-border"
             style={{ boxShadow: 'var(--shadow-active)' }}
           >
             <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-border">
