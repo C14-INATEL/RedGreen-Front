@@ -90,6 +90,16 @@ const Home = () => {
     Navigate('/');
   };
 
+  const HandleOpenRanking = () => {
+    SetRankingLayoutOpen(true);
+    SetRankingOpen(true);
+  };
+
+  const HandleCloseRanking = () => {
+    SetRankingOpen(false);
+    SetRankingLayoutOpen(false);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden suit-pattern">
       <div
@@ -120,7 +130,7 @@ const Home = () => {
               y: RankingLayoutOpen ? 256 : 0,
             }}
             transition={{
-              duration: 0.46,
+              duration: 0.22,
               ease: [0.22, 1, 0.36, 1],
             }}
             onClick={() => SetDailyBonusOpen(true)}
@@ -136,8 +146,7 @@ const Home = () => {
 
       <RankingPanel
         IsOpen={RankingOpen}
-        OnClose={() => SetRankingOpen(false)}
-        OnExitComplete={() => SetRankingLayoutOpen(false)}
+        OnClose={HandleCloseRanking}
       />
 
       <AnimatePresence>
@@ -147,10 +156,7 @@ const Home = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -4 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            onClick={() => {
-              SetRankingLayoutOpen(true);
-              SetRankingOpen(true);
-            }}
+            onClick={HandleOpenRanking}
             className="fixed right-6 z-50 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border"
             style={{ top: '7rem' }}
           >
