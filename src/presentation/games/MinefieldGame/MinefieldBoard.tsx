@@ -1,10 +1,7 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import {
-  MINEFIELD_GRID_SIZE,
-  type MinefieldCard,
-} from './minefieldGameConfig';
+import { MINEFIELD_GRID_SIZE, type MinefieldCard } from './minefieldGameConfig';
 
 type MinefieldBoardProps = Pick<
   HTMLAttributes<HTMLDivElement>,
@@ -146,8 +143,7 @@ export const MinefieldBoard = ({
           MINEFIELD_GRID_SIZE
       );
       const gridSize =
-        cellSize * MINEFIELD_GRID_SIZE +
-        cellGap * (MINEFIELD_GRID_SIZE - 1);
+        cellSize * MINEFIELD_GRID_SIZE + cellGap * (MINEFIELD_GRID_SIZE - 1);
       const gridX = Math.round(boardX + (boardSize - gridSize) / 2);
       const gridY = Math.round(boardY + (boardSize - gridSize) / 2);
       const framePadding = Math.max(8, Math.round(cellSize * 0.18));
