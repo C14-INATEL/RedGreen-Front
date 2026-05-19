@@ -8,7 +8,7 @@ import { paths } from '../../paths';
 const Table = () => {
   const Navigate = useNavigate();
 
-  const handleStartGame = () => {
+  const handleStartSlotMachine = () => {
     Navigate(paths.slotmachineroom, {
       state: {
         slotMachineIntroCompleted: false,
@@ -35,7 +35,7 @@ const Table = () => {
                   subtitle="Girar"
                   icon={<SlotMachineIcon />}
                   delay={0.1}
-                  onClick={handleStartGame}
+                  onClick={handleStartSlotMachine}
                 />
               </div>
 
