@@ -10,7 +10,8 @@ export const MINEFIELD_CLOSED_CARD_SPRITES = Array.from(
 
 export const MINEFIELD_REVEAL_ANIMATION_FRAMES = Array.from(
   { length: REVEAL_FRAME_TOTAL },
-  (_, index) => `/MineField/SpriteCardOff${String(index + 1).padStart(2, '0')}.png`
+  (_, index) =>
+    `/MineField/SpriteCardOff${String(index + 1).padStart(2, '0')}.png`
 );
 
 let preloadMinefieldCardTexturesPromise: Promise<void> | null = null;

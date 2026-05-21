@@ -10,7 +10,9 @@ type MinefieldBoardProps = Pick<
   'className' | 'style'
 > & {
   cards: MinefieldCard[];
+  interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;
+  onCardRevealAnimationComplete?: (cardId: number) => void;
 };
 
 const BOARD_FRAME_COLOR = 0x2a1f12;
@@ -89,17 +91,32 @@ const getBoardLayout = (width: number, height: number) => {
 export const MinefieldBoard = ({
   cards,
   className,
+  interactionLocked = false,
   onCardReveal,
+  onCardRevealAnimationComplete,
   style,
 }: MinefieldBoardProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef(cards);
+  const interactionLockedRef = useRef(interactionLocked);
+  const onCardRevealAnimationCompleteRef = useRef(
+    onCardRevealAnimationComplete
+  );
   const onCardRevealRef = useRef(onCardReveal);
   const renderBoardRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     onCardRevealRef.current = onCardReveal;
   }, [onCardReveal]);
+
+  useEffect(() => {
+    onCardRevealAnimationCompleteRef.current = onCardRevealAnimationComplete;
+  }, [onCardRevealAnimationComplete]);
+
+  useEffect(() => {
+    interactionLockedRef.current = interactionLocked;
+    renderBoardRef.current?.();
+  }, [interactionLocked]);
 
   useEffect(() => {
     cardsRef.current = cards;
@@ -181,8 +198,12 @@ export const MinefieldBoard = ({
         activeIds.add(card.id);
 
         const nextProps = {
+          disabled: interactionLockedRef.current,
           onClick: () => {
             onCardRevealRef.current(card.id);
+          },
+          onRevealComplete: () => {
+            onCardRevealAnimationCompleteRef.current?.(card.id);
           },
           revealed: card.revealed,
           size: layout.cellSize,

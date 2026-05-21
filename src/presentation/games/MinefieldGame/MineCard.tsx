@@ -5,7 +5,9 @@ import {
 } from './minefieldTextures';
 
 export type MineCardProps = {
+  disabled: boolean;
   onClick: () => void;
+  onRevealComplete?: () => void;
   revealed: boolean;
   size: number;
   value: number;
@@ -92,7 +94,9 @@ const createClosedCardAnimation = (size: number) => {
   return closedCardAnimation;
 };
 
-export const createMineCard = (initialProps: MineCardProps): MineCardInstance => {
+export const createMineCard = (
+  initialProps: MineCardProps
+): MineCardInstance => {
   const container = new Container();
   const revealedCardFace = new Graphics();
   const revealedCardLabel = new Text(
@@ -112,7 +116,9 @@ export const createMineCard = (initialProps: MineCardProps): MineCardInstance =>
 
   const syncInteractivity = () => {
     const isCardClickable =
-      !currentProps.revealed && overlayState === 'closed';
+      !currentProps.disabled &&
+      !currentProps.revealed &&
+      overlayState === 'closed';
 
     container.eventMode = isCardClickable ? 'static' : 'none';
     container.cursor = isCardClickable ? 'pointer' : 'default';
@@ -129,10 +135,7 @@ export const createMineCard = (initialProps: MineCardProps): MineCardInstance =>
     revealedCardLabel.style = createValueTextStyle(size);
     revealedCardLabel.anchor.set(0.5);
     revealedCardLabel.resolution = 2;
-    revealedCardLabel.position.set(
-      Math.round(size / 2),
-      Math.round(size / 2)
-    );
+    revealedCardLabel.position.set(Math.round(size / 2), Math.round(size / 2));
 
     closedCardAnimation.width = size;
     closedCardAnimation.height = size;
@@ -174,13 +177,18 @@ export const createMineCard = (initialProps: MineCardProps): MineCardInstance =>
     revealAnimation.onComplete = () => {
       revealAnimation.onComplete = undefined;
       hideOverlay();
+      currentProps.onRevealComplete?.();
     };
 
     revealAnimation.play();
   };
 
   const handlePointerTap = () => {
-    if (currentProps.revealed || overlayState !== 'closed') {
+    if (
+      currentProps.disabled ||
+      currentProps.revealed ||
+      overlayState !== 'closed'
+    ) {
       return;
     }
 
