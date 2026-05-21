@@ -1,13 +1,15 @@
+import { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
 import { getFloatingCardAnimation } from '../../animations/cardFloating';
 import {
   rewardCardEntranceVariants,
   rewardCardHoverAnimation,
   rewardCardTapAnimation,
-  rewardSelectionFocusVariants,
 } from '../../animations/cardRewardAnimations';
+import { rewardCardSelectionVariants } from '../../animations/cardSelectionAnimations';
 import type { RewardCardOption } from '../../types/cardReward';
+
+type RewardCardSelectionState = 'idle' | 'dimmed' | 'active' | 'hidden';
 
 type RewardCardProps = {
   card: RewardCardOption;
@@ -15,29 +17,50 @@ type RewardCardProps = {
   isDisabled: boolean;
   isResolved: boolean;
   isSelected: boolean;
+  selectionState: RewardCardSelectionState;
   onHover: (card: RewardCardOption) => void;
-  onSelect: (optionId: string) => void;
+  onSelect: (optionId: string, buttonElement: HTMLButtonElement | null) => void;
 };
 
-export const RewardCard = ({
+const DEFAULT_IMAGE_SHADOW =
+  'drop-shadow(0 8px 20px rgba(0,0,0,0.24))';
+const SELECTED_IMAGE_SHADOW =
+  'drop-shadow(0 0 14px rgba(255,255,255,0.16)) drop-shadow(0 10px 24px rgba(0,0,0,0.28))';
+const HIDDEN_BUTTON_STYLE = {
+  pointerEvents: 'none' as const,
+  visibility: 'hidden' as const,
+};
+const VISIBLE_BUTTON_STYLE = {
+  pointerEvents: undefined,
+  visibility: undefined,
+} as const;
+
+const RewardCardComponent = ({
   card,
   index,
   isDisabled,
   isResolved,
   isSelected,
+  selectionState,
   onHover,
   onSelect,
 }: RewardCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const selectionState = !isResolved
-    ? 'idle'
-    : isSelected
-      ? 'resolvingSelected'
-      : 'resolvingFaded';
-  const floatingAnimation = getFloatingCardAnimation(
-    index,
-    !isHovered && !isResolved
+  const floatingAnimation = useMemo(
+    () => getFloatingCardAnimation(index, !isHovered && !isResolved),
+    [index, isHovered, isResolved]
   );
+  const isHidden = selectionState === 'hidden';
+
+  const imgStyle = useMemo(
+    () => ({
+      filter: isSelected ? SELECTED_IMAGE_SHADOW : DEFAULT_IMAGE_SHADOW,
+      willChange: 'transform',
+    }),
+    [isSelected]
+  );
+
+  const buttonStyle = isHidden ? HIDDEN_BUTTON_STYLE : VISIBLE_BUTTON_STYLE;
 
   return (
     <motion.button
@@ -48,9 +71,9 @@ export const RewardCard = ({
       disabled={isDisabled}
       exit="exit"
       initial="initial"
-      onClick={() => onSelect(card.optionId)}
+      onClick={(event) => onSelect(card.optionId, event.currentTarget)}
       onHoverStart={() => {
-        if (!isDisabled) {
+        if (!isDisabled && !isHidden) {
           setIsHovered(true);
           onHover(card);
         }
@@ -58,16 +81,17 @@ export const RewardCard = ({
       onHoverEnd={() => {
         setIsHovered(false);
       }}
+      style={buttonStyle}
       type="button"
       variants={rewardCardEntranceVariants}
-      whileHover={isDisabled ? undefined : rewardCardHoverAnimation}
-      whileTap={isDisabled ? undefined : rewardCardTapAnimation}
+      whileHover={isDisabled || isHidden ? undefined : rewardCardHoverAnimation}
+      whileTap={isDisabled || isHidden ? undefined : rewardCardTapAnimation}
     >
       <motion.div
         animate={selectionState}
         className="relative transform-gpu"
         initial="idle"
-        variants={rewardSelectionFocusVariants}
+        variants={rewardCardSelectionVariants}
       >
         <motion.div
           animate={floatingAnimation}
@@ -79,23 +103,26 @@ export const RewardCard = ({
             className="block h-auto w-full select-none"
             draggable={false}
             src={card.spritePath}
-            style={{
-              filter: isSelected
-                ? 'drop-shadow(0 0 14px rgba(255,255,255,0.16)) drop-shadow(0 10px 24px rgba(0,0,0,0.28))'
-                : 'drop-shadow(0 8px 20px rgba(0,0,0,0.24))',
-            }}
+            style={imgStyle}
             transition={{ duration: 0.18, ease: 'easeOut' }}
           />
         </motion.div>
 
-        <motion.div
-          animate={isSelected ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-          className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/12 bg-[#0d1312]/84 px-4 py-2 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/78 shadow-[0_10px_28px_rgba(0,0,0,0.24)]"
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        >
-          Escolhida
-        </motion.div>
+        {/* Label removed: no visible "Escolhida" text when a card is selected */}
       </motion.div>
     </motion.button>
   );
 };
+
+export const RewardCard = memo(
+  RewardCardComponent,
+  (prev, next) =>
+    prev.card.optionId === next.card.optionId &&
+    prev.index === next.index &&
+    prev.isDisabled === next.isDisabled &&
+    prev.isResolved === next.isResolved &&
+    prev.isSelected === next.isSelected &&
+    prev.selectionState === next.selectionState &&
+    prev.onHover === next.onHover &&
+    prev.onSelect === next.onSelect
+);
