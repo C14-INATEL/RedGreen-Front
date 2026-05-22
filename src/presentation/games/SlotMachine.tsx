@@ -11,12 +11,14 @@ const MACHINE_ENTRY_TRANSITION = {
 
 type SlotMachineRouteState = {
   slotMachineIntroCompleted?: boolean;
+  slotMachineId?: number;
 };
 
 export const SlotMachine = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const routeState = location.state as SlotMachineRouteState | null;
+  const selectedSlotMachineId = routeState?.slotMachineId;
   const [hasEnteredMachineView, setHasEnteredMachineView] = useState(
     routeState?.slotMachineIntroCompleted === true
   );
@@ -33,7 +35,10 @@ export const SlotMachine = () => {
         className="origin-center"
         transition={MACHINE_ENTRY_TRANSITION}
       >
-        <SlotMachinePixi animateMachineSprite={hasEnteredMachineView} />
+        <SlotMachinePixi
+          animateMachineSprite={hasEnteredMachineView}
+          slotMachineId={selectedSlotMachineId}
+        />
       </motion.div>
 
       <div className="pointer-events-none absolute left-0 top-3 z-10 hidden -translate-x-[calc(100%+18px)] lg:block">
