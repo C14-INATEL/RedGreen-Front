@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TableDecorations from '@ui/TableDecorations';
 import GameCard from '@ui/GameCard';
 import SlotMachineIcon from '@ui/SlotMachineIcon';
+import CardGameIcon from '@ui/CardGameIcon';
 import { paths } from '../../paths';
 
 const Table = () => {
@@ -40,13 +41,19 @@ const Table = () => {
         >
           <TableDecorations />
 
-          <div className="relative z-10 flex items-center justify-center min-h-[280px] py-4">
+          <div className="relative z-10 mx-auto flex min-h-[280px] w-full max-w-2xl items-center justify-around gap-8 py-4 md:max-w-3xl md:gap-16">
             <GameCard
               title="Caça-Niquel"
               subtitle="Girar"
               icon={<SlotMachineIcon />}
               delay={0.1}
               onClick={HandleStartGame}
+            />
+            <GameCard
+              title="Cartas"
+              subtitle="Em breve"
+              icon={<CardGameIcon />}
+              delay={0.18}
             />
           </div>
 
