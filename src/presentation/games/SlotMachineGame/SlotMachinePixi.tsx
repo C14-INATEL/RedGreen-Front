@@ -444,7 +444,10 @@ export const SlotMachinePixi = ({
   const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
 
   return (
-    <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
+    <div
+      className="relative w-[100] max-w-none shrink-0 md:w-[55vw] lg:w-[100w]"
+      ref={machineRef}
+    >
       <img
         alt="Caca-niquel de teste"
         className="block w-full select-none"
