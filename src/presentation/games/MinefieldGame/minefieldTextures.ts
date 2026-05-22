@@ -1,6 +1,7 @@
 import { Assets, SCALE_MODES, Texture } from 'pixi.js';
 
 const CLOSED_CARD_SPRITE_TOTAL = 7;
+const PARTICLE_FRAME_TOTAL = 8;
 const REVEAL_FRAME_TOTAL = 24;
 
 export const MINEFIELD_CLOSED_CARD_SPRITES = Array.from(
@@ -14,7 +15,20 @@ export const MINEFIELD_REVEAL_ANIMATION_FRAMES = Array.from(
     `/MineField/SpriteCardOff${String(index + 1).padStart(2, '0')}.png`
 );
 
+export const MINEFIELD_PARTICLE_ANIMATION_FRAMES = Array.from(
+  { length: PARTICLE_FRAME_TOTAL },
+  (_, index) => `/MineField/SpriteParticle${index + 1}.png`
+);
+
 let preloadMinefieldCardTexturesPromise: Promise<void> | null = null;
+let preloadMinefieldParticleTexturesPromise: Promise<void> | null = null;
+
+const applyMinefieldTextureScaleMode = (texturePaths: string[]) => {
+  texturePaths.forEach((texturePath) => {
+    const texture = Texture.from(texturePath);
+    texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
+  });
+};
 
 export const preloadMinefieldCardTextures = () => {
   if (!preloadMinefieldCardTexturesPromise) {
@@ -24,14 +38,23 @@ export const preloadMinefieldCardTextures = () => {
     ];
 
     preloadMinefieldCardTexturesPromise = Assets.load(texturePaths).then(() => {
-      texturePaths.forEach((texturePath) => {
-        const texture = Texture.from(texturePath);
-        texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
-      });
+      applyMinefieldTextureScaleMode(texturePaths);
     });
   }
 
   return preloadMinefieldCardTexturesPromise;
+};
+
+export const preloadMinefieldParticleTextures = () => {
+  if (!preloadMinefieldParticleTexturesPromise) {
+    preloadMinefieldParticleTexturesPromise = Assets.load(
+      MINEFIELD_PARTICLE_ANIMATION_FRAMES
+    ).then(() => {
+      applyMinefieldTextureScaleMode(MINEFIELD_PARTICLE_ANIMATION_FRAMES);
+    });
+  }
+
+  return preloadMinefieldParticleTexturesPromise;
 };
 
 export const getRandomMinefieldClosedCardSprite = () =>

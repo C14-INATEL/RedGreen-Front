@@ -22,10 +22,10 @@ type RewardCardProps = {
   onSelect: (optionId: string, buttonElement: HTMLButtonElement | null) => void;
 };
 
-const DEFAULT_IMAGE_SHADOW =
-  'drop-shadow(0 8px 20px rgba(0,0,0,0.24))';
-const SELECTED_IMAGE_SHADOW =
-  'drop-shadow(0 0 14px rgba(255,255,255,0.16)) drop-shadow(0 10px 24px rgba(0,0,0,0.28))';
+const DEFAULT_IMAGE_FILTER =
+  'drop-shadow(3px 3px 0 rgba(20,12,4,0.42))';
+const SELECTED_IMAGE_FILTER =
+  'brightness(1.04) drop-shadow(4px 4px 0 rgba(20,12,4,0.5))';
 const HIDDEN_BUTTON_STYLE = {
   pointerEvents: 'none' as const,
   visibility: 'hidden' as const,
@@ -54,7 +54,8 @@ const RewardCardComponent = ({
 
   const imgStyle = useMemo(
     () => ({
-      filter: isSelected ? SELECTED_IMAGE_SHADOW : DEFAULT_IMAGE_SHADOW,
+      filter: isSelected ? SELECTED_IMAGE_FILTER : DEFAULT_IMAGE_FILTER,
+      imageRendering: 'pixelated' as const,
       willChange: 'transform',
     }),
     [isSelected]

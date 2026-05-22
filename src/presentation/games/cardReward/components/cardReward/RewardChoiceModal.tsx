@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BackgroundParticles } from '../../../MinefieldGame/BackgroundParticles';
+import { MinefieldEventTable } from '../../../MinefieldGame/MinefieldEventTable';
 import { rewardPresentationConfig } from '../../config/rewardPresentationConfig';
 import type {
   RewardCardOption,
@@ -126,23 +128,21 @@ export const RewardChoiceModal = ({
         }}
         transition={selectedCardOverlayTransition}
       >
-        <div className="relative h-full w-full overflow-hidden rounded-[24px] border border-white/15 bg-[#0b1410] shadow-[0_30px_90px_rgba(0,0,0,0.48)]">
-          <motion.img
-            alt={selectedCard.title}
-            className="block h-full w-full select-none rounded-[24px] object-cover"
-            draggable={false}
-            src={selectedCard.spritePath}
-            style={{
-              filter:
-                'drop-shadow(0 0 18px rgba(255,255,255,0.18)) drop-shadow(0 16px 32px rgba(0,0,0,0.28))',
-            }}
-            initial={{ scale: 1 }}
-            animate={{ scale: [1, 1.04, 1.02, 1.05, 1.01] }}
-            transition={{ duration: 0.68, ease: [0.22, 1, 0.36, 1] }}
-          />
-
-          {/* Removed floating "Escolhida" label for the selected card overlay */}
-        </div>
+        {/* O efeito de "carta dentro de container" vinha deste wrapper com rounded/bg/shadow.
+            A carta revelada agora e o proprio elemento visual, sem caixa ao redor. */}
+        <motion.img
+          alt={selectedCard.title}
+          className="block h-full w-full select-none object-cover"
+          draggable={false}
+          src={selectedCard.spritePath}
+          style={{
+            filter: 'brightness(1.05) drop-shadow(4px 4px 0 rgba(20,12,4,0.5))',
+            imageRendering: 'pixelated',
+          }}
+          initial={{ scale: 1 }}
+          animate={{ scale: [1, 1.04, 1.02, 1.05, 1.01] }}
+          transition={{ duration: 0.68, ease: [0.22, 1, 0.36, 1] }}
+        />
       </motion.div>
     );
   }, [selectionOverlay, selectedCard]);
@@ -152,84 +152,103 @@ export const RewardChoiceModal = ({
       {session ? (
         <motion.div
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6"
+          className="fixed inset-0 z-[80] flex items-center justify-center"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
           <div className="absolute inset-0 bg-[rgba(4,8,7,0.88)]" />
-          <div className="reward-soft-pulse pointer-events-none absolute left-1/2 top-1/2 h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(218,206,176,0.12)_0%,rgba(218,206,176,0.04)_42%,transparent_74%)] blur-3xl" />
 
           {selectionOverlayNode}
+
+          {session.status === 'selecting' ? (
+            <BackgroundParticles
+              alphaMultiplier={0.82}
+              className="absolute inset-0 z-[12] overflow-hidden opacity-95"
+              maxParticles={presentationConfig.particleCount}
+              spawnIntervalMs={90}
+              speedMultiplier={1.22}
+              tremorMultiplier={1.15}
+            />
+          ) : null}
 
           <motion.div
             ref={registerModalRef}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0f0e] px-4 py-6 shadow-[0_28px_90px_rgba(0,0,0,0.46)] sm:px-6 sm:py-7"
+            className="relative z-10 w-full max-w-5xl bg-transparent"
             exit={{ opacity: 0, scale: 0.985, y: 8 }}
             initial={{ opacity: 0, scale: 0.97, y: 16 }}
             role="dialog"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_18%,transparent_78%,rgba(255,255,255,0.03))]" />
-            <div className="pointer-events-none absolute inset-x-16 top-0 h-20 bg-[radial-gradient(circle,rgba(218,206,176,0.18)_0%,transparent_74%)] blur-2xl" />
+            {/* O efeito de "sprite dentro de caixa" vinha de rounded + overflow + shadow no wrapper HTML.
+                Aqui a mesa vira o proprio painel visual, sem clipping moderno ao redor do pixel-art. */}
+            <MinefieldEventTable className="pointer-events-none absolute inset-0 z-0" />
 
-            <div className="text-center">
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1 text-[10px] font-bold uppercase tracking-[0.32em] text-white/68"
-                initial={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.24, ease: 'easeOut' }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-                {presentationConfig.bannerEyebrow}
-              </motion.div>
+            {/* O conteudo sobe para uma camada acima da mesa, mas sem caixas/transparencias por tras dos textos. */}
+            <div className="relative z-10 px-5 py-7 sm:px-7 sm:py-8">
+              <div className="text-center">
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[11px] font-bold uppercase tracking-[0.32em] text-[#e9d79f]"
+                  initial={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.24, ease: 'easeOut' }}
+                  style={{ textShadow: '2px 2px 0 rgba(18,12,5,0.85)' }}
+                >
+                  {presentationConfig.bannerEyebrow}
+                </motion.div>
 
-              <motion.h2
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 font-display text-3xl font-bold tracking-[0.08em] text-white sm:text-4xl"
-                initial={{ opacity: 0, y: -10 }}
-                transition={{ delay: 0.04, duration: 0.28, ease: 'easeOut' }}
-              >
-                {presentationConfig.bannerTitle}
-              </motion.h2>
+                <motion.h2
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 font-display text-3xl font-bold tracking-[0.08em] text-[#fff6d8] sm:text-4xl"
+                  initial={{ opacity: 0, y: -10 }}
+                  transition={{ delay: 0.04, duration: 0.28, ease: 'easeOut' }}
+                  style={{ textShadow: '3px 3px 0 rgba(20,12,4,0.92)' }}
+                >
+                  {presentationConfig.bannerTitle}
+                </motion.h2>
 
-              <motion.p
-                animate={{ opacity: 1, y: 0 }}
-                className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/76 sm:text-base"
-                initial={{ opacity: 0, y: -8 }}
-                transition={{ delay: 0.08, duration: 0.26, ease: 'easeOut' }}
-              >
-                {presentationConfig.bannerDescription}
-              </motion.p>
+                <motion.p
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[#f0e4bd] sm:text-base"
+                  initial={{ opacity: 0, y: -8 }}
+                  transition={{ delay: 0.08, duration: 0.26, ease: 'easeOut' }}
+                  style={{ textShadow: '2px 2px 0 rgba(20,12,4,0.85)' }}
+                >
+                  {presentationConfig.bannerDescription}
+                </motion.p>
 
-              <motion.div
-                animate={{ opacity: 1 }}
-                className="mt-6 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.28em] text-white/62"
-                initial={{ opacity: 0 }}
-                transition={{ delay: 0.12, duration: 0.22, ease: 'easeOut' }}
-              >
-                Escolha {session.selectionLimit} de {session.options.length}
-              </motion.div>
-            </div>
+                <motion.div
+                  animate={{ opacity: 1 }}
+                  className="mt-6 text-[11px] font-bold uppercase tracking-[0.28em] text-[#f6ebc7]"
+                  initial={{ opacity: 0 }}
+                  transition={{ delay: 0.12, duration: 0.22, ease: 'easeOut' }}
+                  style={{ textShadow: '2px 2px 0 rgba(20,12,4,0.85)' }}
+                >
+                  Escolha {session.selectionLimit} de {session.options.length}
+                </motion.div>
+              </div>
 
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              {session.options.map((card, index) => {
-                const isSelected = session.selectedOptionIds.includes(card.optionId);
-                const selectionState = getSelectionState(card.optionId);
+              <div className="mt-8 grid gap-4 lg:grid-cols-3">
+                {session.options.map((card, index) => {
+                  const isSelected = session.selectedOptionIds.includes(
+                    card.optionId
+                  );
+                  const selectionState = getSelectionState(card.optionId);
 
-                return (
-                  <RewardCard
-                    card={card}
-                    index={index}
-                    isDisabled={session.status !== 'selecting'}
-                    isResolved={session.status === 'resolving'}
-                    isSelected={isSelected}
-                    selectionState={selectionState}
-                    key={card.optionId}
-                    onHover={onCardHover}
-                    onSelect={handleCardSelect}
-                  />
-                );
-              })}
+                  return (
+                    <RewardCard
+                      card={card}
+                      index={index}
+                      isDisabled={session.status !== 'selecting'}
+                      isResolved={session.status === 'resolving'}
+                      isSelected={isSelected}
+                      selectionState={selectionState}
+                      key={card.optionId}
+                      onHover={onCardHover}
+                      onSelect={handleCardSelect}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         </motion.div>

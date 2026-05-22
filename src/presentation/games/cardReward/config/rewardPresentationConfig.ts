@@ -10,5 +10,5 @@ export const rewardPresentationConfig: RewardPresentationConfig = {
     'Um evento secreto emergiu da mesa. Observe o momento e escolha a carta que deseja revelar.',
   bannerEyebrow: 'Evento Especial',
   bannerTitle: 'Escolha Uma Carta',
-  particleCount: 8,
+  particleCount: 18,
 };
