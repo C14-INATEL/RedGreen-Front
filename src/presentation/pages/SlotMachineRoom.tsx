@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy } from 'lucide-react';
@@ -18,12 +18,6 @@ type StoredUserSnapshot = {
 
 export const SlotMachineRoom = () => {
   const Navigate = useNavigate();
-
-  const Location = useLocation();
-
-  const Bet = Location.state?.bet ?? 0;
-
-  const SlotMachineId = Location.state?.slotMachineId ?? 1;
 
   const Token =
     localStorage.getItem('token') ?? localStorage.getItem('authToken');
@@ -268,7 +262,7 @@ export const SlotMachineRoom = () => {
       >
         {!IsActive && <div className="absolute inset-0 z-20 cursor-pointer" />}
 
-        <SlotMachine Bet={Bet} SlotMachineId={SlotMachineId} />
+        <SlotMachine />
       </div>
     </main>
   );
