@@ -18,39 +18,7 @@ type SlotMachineFromApi = {
   Active: boolean;
 };
 
-const GetTableStyle = (name: string) => {
-  if (name.includes('Bronze')) {
-    return {
-      border: 'border-amber-700',
-      text: 'text-amber-500',
-      hoverBg: 'hover:bg-amber-900/20',
-    };
-  }
-
-  if (name.includes('Prata')) {
-    return {
-      border: 'border-gray-400',
-      text: 'text-gray-300',
-      hoverBg: 'hover:bg-gray-500/10',
-    };
-  }
-
-  if (name.includes('Ouro')) {
-    return {
-      border: 'border-yellow-500',
-      text: 'text-yellow-400',
-      hoverBg: 'hover:bg-yellow-500/10',
-    };
-  }
-
-  if (name.includes('Diamante')) {
-    return {
-      border: 'border-cyan-400',
-      text: 'text-cyan-300',
-      hoverBg: 'hover:bg-cyan-500/10',
-    };
-  }
-
+const GetTableStyle = () => {
   return {
     border: 'border-border',
     text: 'text-foreground',
@@ -119,9 +87,9 @@ export const SlotMachineTablesRoom = () => {
         Escolha sua mesa
       </h1>
 
-      <div className="z-10 pb-16 grid w-full max-w-7x1 grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 px-4">
+      <div className="z-10 pb-16 grid w-full max-w-7xl grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 px-4">
         {Tables.map((TableItem) => {
-          const Style = GetTableStyle(TableItem.Name);
+          const Style = GetTableStyle();
 
           const Bet = TableItem.MinimumSpinValue;
 
