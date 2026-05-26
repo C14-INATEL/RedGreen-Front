@@ -1,4 +1,7 @@
+import type { MinefieldTableType } from '../../MinefieldGame/minefieldTableConfig';
+
 export type RewardSelectionPhase = 'selecting' | 'resolving';
+export type RewardTablePhase = 'normal' | 'transitioning' | 'bad';
 
 export type RewardTriggerReason = 'reveal-threshold';
 
@@ -19,6 +22,11 @@ export type RewardCardOption = RewardCardDefinition & {
   optionId: string;
   optionIndex: number;
   sessionId: string;
+};
+
+export type RewardSelectionEntry = {
+  optionId: string;
+  tableType: MinefieldTableType;
 };
 
 export type RewardTriggerConfig = {
@@ -47,21 +55,37 @@ export type RewardTimingsConfig = {
   modalFadeDuration: number;
   revealCompletionDelay: number;
   revealObservationDelay: number;
+  selectedCardCenteringDurationMs: number;
+  selectedCardFlyAwayDurationMs: number;
   selectionResolveDelayMs: number;
+  tableTransitionBreathingDelayMs: number;
+  tablePostTransitionHoldMs: number;
+  tableTransitionDramaticPauseMs: number;
+  tableTransitionDurationMs: number;
   transitionPreparationDelay: number;
 };
 
 export type RewardChoiceSession = {
+  badTableCards: RewardCardOption[];
   id: string;
+  normalTableCards: RewardCardOption[];
   openedAt: number;
-  options: RewardCardOption[];
   reason: RewardTriggerReason;
-  selectedOptionIds: string[];
+  selectionHistory: RewardSelectionEntry[];
   selectionLimit: number;
   status: RewardSelectionPhase;
+  tableState: RewardTableState;
 };
 
 export type RewardSelectionResult = {
   selectedCards: RewardCardOption[];
   session: RewardChoiceSession;
+};
+
+export type RewardTableState = {
+  currentTable: MinefieldTableType;
+  incomingTable: MinefieldTableType | null;
+  isTransitioning: boolean;
+  phase: RewardTablePhase;
+  transitionId: string | null;
 };

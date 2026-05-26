@@ -11,6 +11,8 @@ export type {
   RewardChoiceSession,
   RewardPresentationConfig,
   RewardSelectionResult,
+  RewardTablePhase,
+  RewardTableState,
   RewardTimingsConfig,
   RewardTriggerConfig,
 } from './types/cardReward';

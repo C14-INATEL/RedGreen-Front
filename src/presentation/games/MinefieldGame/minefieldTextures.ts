@@ -1,4 +1,8 @@
 import { Assets, SCALE_MODES, Texture } from 'pixi.js';
+import {
+  type MinefieldTableType,
+  minefieldTableThemes,
+} from './minefieldTableConfig';
 
 const CLOSED_CARD_SPRITE_TOTAL = 7;
 const PARTICLE_FRAME_TOTAL = 8;
@@ -22,6 +26,15 @@ export const MINEFIELD_PARTICLE_ANIMATION_FRAMES = Array.from(
 
 let preloadMinefieldCardTexturesPromise: Promise<void> | null = null;
 let preloadMinefieldParticleTexturesPromise: Promise<void> | null = null;
+let preloadMinefieldTableTexturesPromise: Promise<void> | null = null;
+let minefieldTableTextureCache: Partial<Record<MinefieldTableType, Texture>> = {};
+
+export const MINEFIELD_EVENT_TABLE_TEXTURES = Object.fromEntries(
+  Object.entries(minefieldTableThemes).map(([tableType, theme]) => [
+    tableType,
+    theme.spritePath,
+  ])
+) as Record<keyof typeof minefieldTableThemes, string>;
 
 const applyMinefieldTextureScaleMode = (texturePaths: string[]) => {
   texturePaths.forEach((texturePath) => {
@@ -55,6 +68,39 @@ export const preloadMinefieldParticleTextures = () => {
   }
 
   return preloadMinefieldParticleTexturesPromise;
+};
+
+export const preloadMinefieldTableTextures = () => {
+  if (!preloadMinefieldTableTexturesPromise) {
+    const texturePaths = Object.values(MINEFIELD_EVENT_TABLE_TEXTURES);
+
+    preloadMinefieldTableTexturesPromise = Assets.load(texturePaths).then(() => {
+      applyMinefieldTextureScaleMode(texturePaths);
+
+      minefieldTableTextureCache = Object.fromEntries(
+        (Object.keys(minefieldTableThemes) as MinefieldTableType[]).map(
+          (tableType) => [tableType, Texture.from(MINEFIELD_EVENT_TABLE_TEXTURES[tableType])]
+        )
+      ) as Record<MinefieldTableType, Texture>;
+    });
+  }
+
+  return preloadMinefieldTableTexturesPromise;
+};
+
+export const getMinefieldTableTexture = (tableType: MinefieldTableType) => {
+  const cachedTexture = minefieldTableTextureCache[tableType];
+
+  if (cachedTexture) {
+    cachedTexture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
+    return cachedTexture;
+  }
+
+  const texture = Texture.from(MINEFIELD_EVENT_TABLE_TEXTURES[tableType]);
+  texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
+  minefieldTableTextureCache[tableType] = texture;
+
+  return texture;
 };
 
 export const getRandomMinefieldClosedCardSprite = () =>

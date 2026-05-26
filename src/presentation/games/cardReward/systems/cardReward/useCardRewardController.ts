@@ -1,4 +1,9 @@
+import {
+  getNextMinefieldTableType,
+  type MinefieldTableType,
+} from '../../../MinefieldGame/minefieldTableConfig';
 import { useEffect, useReducer, useRef } from 'react';
+import { getRewardCardPoolByTableType } from '../../config/rewardCardPoolsByTableType';
 import { rewardCardPool } from '../../config/rewardCardPool';
 import { rewardPresentationConfig } from '../../config/rewardPresentationConfig';
 import { rewardTimings } from '../../config/rewardTimings';
@@ -8,14 +13,16 @@ import type {
   RewardCardDefinition,
   RewardCardOption,
   RewardChoiceSession,
+  RewardSelectionEntry,
   RewardSelectionResult,
+  RewardTableState,
   RewardTimingsConfig,
   RewardTriggerConfig,
 } from '../../types/cardReward';
 import { buildRewardCardOptions } from './rewardCardSelection';
 
 type UseCardRewardControllerParams = {
-  onRewardSelected?: (result: RewardSelectionResult) => void;
+  onRewardSelected?: (result: RewardSelectionResult) => Promise<void> | void;
   onSoundCue?: (cue: RewardAudioCue, card?: RewardCardOption) => void;
   optionsResolver?: (
     pool: RewardCardDefinition[],
@@ -24,6 +31,7 @@ type UseCardRewardControllerParams = {
   ) => RewardCardOption[];
   rewardPool?: RewardCardDefinition[];
   revealedCardCount: number;
+  tableType?: MinefieldTableType;
   timings?: RewardTimingsConfig;
   triggerConfig?: RewardTriggerConfig;
 };
@@ -42,6 +50,10 @@ type RewardControllerState = {
 type RewardControllerAction =
   | {
       type: 'close-session';
+    }
+  | {
+      sessionId: string;
+      type: 'complete-table-transition';
     }
   | {
       pendingTrigger: PendingRewardTrigger;
@@ -81,6 +93,33 @@ const rewardControllerReducer = (
         ...state,
         activeSession: null,
       };
+
+    case 'complete-table-transition': {
+      if (
+        !state.activeSession ||
+        state.activeSession.id !== action.sessionId ||
+        !state.activeSession.tableState.incomingTable
+      ) {
+        return state;
+      }
+
+      const settledTable = state.activeSession.tableState.incomingTable;
+      const nextPhase = settledTable === 'bad' ? 'bad' : 'normal';
+
+      return {
+        ...state,
+        activeSession: {
+          ...state.activeSession,
+          tableState: {
+            currentTable: settledTable,
+            incomingTable: null,
+            isTransitioning: false,
+            phase: nextPhase,
+            transitionId: null,
+          },
+        },
+      };
+    }
 
     case 'open-pending-session':
       return {
@@ -123,6 +162,7 @@ const rewardControllerReducer = (
 const createRewardSession = (
   pool: RewardCardDefinition[],
   config: RewardTriggerConfig,
+  tableType: MinefieldTableType,
   optionsResolver: (
     pool: RewardCardDefinition[],
     amount: number,
@@ -130,17 +170,59 @@ const createRewardSession = (
   ) => RewardCardOption[]
 ): RewardChoiceSession => {
   const sessionId = `reward-choice-${Date.now()}-${Math.round(Math.random() * 10_000)}`;
+  const initialTableState: RewardTableState = {
+    currentTable: tableType,
+    incomingTable: null,
+    isTransitioning: false,
+    phase: tableType === 'bad' ? 'bad' : 'normal',
+    transitionId: null,
+  };
 
   return {
+    badTableCards: [],
     id: sessionId,
+    normalTableCards: optionsResolver(
+      pool,
+      config.optionsPerChoice,
+      buildTableOptionSessionId(sessionId, tableType)
+    ),
     openedAt: Date.now(),
-    options: optionsResolver(pool, config.optionsPerChoice, sessionId),
     reason: 'reveal-threshold',
-    selectedOptionIds: [],
+    selectionHistory: [],
     selectionLimit: config.selectionLimit,
     status: 'selecting',
+    tableState: initialTableState,
   };
 };
+
+const buildTableOptionSessionId = (
+  sessionId: string,
+  tableType: MinefieldTableType
+) => `${sessionId}-${tableType}`;
+
+const getCardsForTable = (
+  session: RewardChoiceSession,
+  tableType: MinefieldTableType
+) => (tableType === 'bad' ? session.badTableCards : session.normalTableCards);
+
+const getSelectedOptionIdsForTable = (
+  selectionHistory: RewardSelectionEntry[],
+  tableType: MinefieldTableType
+) =>
+  selectionHistory
+    .filter((entry) => entry.tableType === tableType)
+    .map((entry) => entry.optionId);
+
+const getSelectedCardsFromSession = (session: RewardChoiceSession) =>
+  session.selectionHistory
+    .map((entry) => {
+      const tableCards = getCardsForTable(session, entry.tableType);
+
+      return (
+        tableCards.find((option) => option.optionId === entry.optionId) ?? null
+      );
+    })
+    .filter((option): option is RewardCardOption => option !== null);
 
 export const useCardRewardController = ({
   onRewardSelected,
@@ -148,11 +230,13 @@ export const useCardRewardController = ({
   optionsResolver = buildRewardCardOptions,
   rewardPool = rewardCardPool,
   revealedCardCount,
+  tableType = 'normal',
   timings = rewardTimings,
   triggerConfig = rewardTriggerConfig,
 }: UseCardRewardControllerParams) => {
   const [{ activeSession, pendingTrigger, revealProgress }, dispatch] =
     useReducer(rewardControllerReducer, initialRewardControllerState);
+  const activeSessionRef = useRef<RewardChoiceSession | null>(activeSession);
   const previousRevealedCountRef = useRef(revealedCardCount);
   const modalOpenTimeoutRef = useRef<number | null>(null);
   const revealProgressRef = useRef(0);
@@ -161,6 +245,10 @@ export const useCardRewardController = ({
     timings.revealCompletionDelay,
     timings.revealObservationDelay + timings.transitionPreparationDelay
   );
+
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
 
   useEffect(() => {
     return () => {
@@ -215,8 +303,9 @@ export const useCardRewardController = ({
     }
 
     const nextSession = createRewardSession(
-      rewardPool,
+      getRewardCardPoolByTableType(tableType) || rewardPool,
       triggerConfig,
+      tableType,
       optionsResolver
     );
     const nextProgressAfterTrigger = triggerConfig.carryOverRevealProgress
@@ -262,11 +351,21 @@ export const useCardRewardController = ({
   };
 
   const handleRewardCardSelect = (optionId: string) => {
-    if (!activeSession || activeSession.status !== 'selecting') {
+    if (
+      !activeSession ||
+      activeSession.status !== 'selecting' ||
+      activeSession.tableState.isTransitioning
+    ) {
       return;
     }
 
-    const selectedCard = activeSession.options.find(
+    const activeTableType = activeSession.tableState.currentTable;
+    const activeTableCards = getCardsForTable(activeSession, activeTableType);
+    const selectedOptionIdsForActiveTable = getSelectedOptionIdsForTable(
+      activeSession.selectionHistory,
+      activeTableType
+    );
+    const selectedCard = activeTableCards.find(
       (option) => option.optionId === optionId
     );
 
@@ -274,21 +373,51 @@ export const useCardRewardController = ({
       return;
     }
 
-    if (activeSession.selectedOptionIds.includes(selectedCard.optionId)) {
+    if (selectedOptionIdsForActiveTable.includes(selectedCard.optionId)) {
       return;
     }
 
-    const nextSelectedOptionIds = [
-      ...activeSession.selectedOptionIds,
-      selectedCard.optionId,
+    const nextSelectionHistory = [
+      ...activeSession.selectionHistory,
+      {
+        optionId: selectedCard.optionId,
+        tableType: activeTableType,
+      },
     ];
+    const nextSelectedCount = nextSelectionHistory.length;
+    const nextTableType = getNextMinefieldTableType(
+      activeSession.tableState.currentTable
+    );
+    const shouldTransitionToNextTable =
+      activeSession.tableState.phase === 'normal' &&
+      nextSelectedCount < activeSession.selectionLimit;
+    const badTableCards = shouldTransitionToNextTable
+      ? buildRewardCardOptions(
+          getRewardCardPoolByTableType(nextTableType) || rewardCardPool,
+          triggerConfig.optionsPerChoice,
+          buildTableOptionSessionId(activeSession.id, nextTableType)
+        )
+      : activeSession.badTableCards;
+
+    const nextTableState: RewardTableState = shouldTransitionToNextTable
+      ? {
+          currentTable: activeSession.tableState.currentTable,
+          incomingTable: nextTableType,
+          isTransitioning: true,
+          phase: 'transitioning',
+          transitionId: `${activeSession.id}-${nextSelectedCount}`,
+        }
+      : activeSession.tableState;
     const nextSession: RewardChoiceSession = {
       ...activeSession,
-      selectedOptionIds: nextSelectedOptionIds,
+      badTableCards,
+      selectionHistory: nextSelectionHistory,
       status:
-        nextSelectedOptionIds.length >= triggerConfig.selectionLimit
-          ? 'resolving'
-          : 'selecting',
+        shouldTransitionToNextTable ||
+        nextSelectedCount < triggerConfig.selectionLimit
+          ? 'selecting'
+          : 'resolving',
+      tableState: nextTableState,
     };
 
     dispatch({
@@ -296,26 +425,46 @@ export const useCardRewardController = ({
       type: 'update-session',
     });
 
+    if (shouldTransitionToNextTable) {
+      onSoundCue?.(rewardPresentationConfig.audioCues.confirm, selectedCard);
+      return;
+    }
+
     if (nextSession.status !== 'resolving') {
       return;
     }
 
     onSoundCue?.(rewardPresentationConfig.audioCues.confirm, selectedCard);
+  };
+
+  const handleSelectedCardCinematicComplete = (sessionId: string) => {
+    const currentSession = activeSessionRef.current;
+
+    if (
+      !currentSession ||
+      currentSession.id !== sessionId ||
+      currentSession.status !== 'resolving'
+    ) {
+      return;
+    }
 
     if (resolveTimeoutRef.current) {
       window.clearTimeout(resolveTimeoutRef.current);
+      resolveTimeoutRef.current = null;
     }
 
-    resolveTimeoutRef.current = window.setTimeout(() => {
-      onRewardSelected?.({
-        selectedCards: nextSession.options.filter((option) =>
-          nextSession.selectedOptionIds.includes(option.optionId)
-        ),
-        session: nextSession,
-      });
-      resolveTimeoutRef.current = null;
-      dispatch({ type: 'close-session' });
-    }, timings.selectionResolveDelayMs);
+    const finishResolution = async () => {
+      try {
+        await onRewardSelected?.({
+          selectedCards: getSelectedCardsFromSession(currentSession),
+          session: currentSession,
+        });
+      } finally {
+        dispatch({ type: 'close-session' });
+      }
+    };
+
+    void finishResolution();
   };
 
   return {
@@ -323,6 +472,10 @@ export const useCardRewardController = ({
     handleRevealAnimationComplete,
     handleRewardCardHover,
     handleRewardCardSelect,
+    handleSelectedCardCinematicComplete,
+    handleTableTransitionComplete: (sessionId: string) => {
+      dispatch({ sessionId, type: 'complete-table-transition' });
+    },
     isChoiceOpen: Boolean(activeSession),
     isInteractionLocked: Boolean(activeSession || pendingTrigger),
     registerCardReveal,

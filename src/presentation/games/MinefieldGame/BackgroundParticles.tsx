@@ -17,11 +17,13 @@ type BackgroundParticlesProps = {
 type ParticleState = {
   alphaBase: number;
   baseX: number;
+  destroyY: number;
   driftAmplitude: number;
   driftOffset: number;
   driftSpeed: number;
   fadeStartProgress: number;
   scale: number;
+  startY: number;
   sprite: AnimatedSprite;
   tremorAmplitudeX: number;
   tremorAmplitudeY: number;
@@ -46,8 +48,8 @@ const MIN_DRIFT_AMPLITUDE = 10;
 const MAX_DRIFT_AMPLITUDE = 28;
 const MIN_DRIFT_SPEED = 1.4;
 const MAX_DRIFT_SPEED = 3.2;
-const MIN_FADE_START_PROGRESS = 0.52;
-const MAX_FADE_START_PROGRESS = 0.76;
+const MIN_FADE_START_PROGRESS = 0.82;
+const MAX_FADE_START_PROGRESS = 0.92;
 const MIN_PARTICLE_ANIMATION_SPEED = 0.08;
 const MAX_PARTICLE_ANIMATION_SPEED = 0.18;
 const MIN_TREMOR_AMPLITUDE_X = 1.2;
@@ -56,6 +58,7 @@ const MIN_TREMOR_AMPLITUDE_Y = 0.4;
 const MAX_TREMOR_AMPLITUDE_Y = 1.8;
 const MIN_TREMOR_SPEED = 14;
 const MAX_TREMOR_SPEED = 28;
+const TOP_EXIT_MULTIPLIER = 0.18;
 
 const randomBetween = (min: number, max: number) =>
   min + Math.random() * (max - min);
@@ -77,11 +80,13 @@ const createParticleSprite = () => {
 const createParticleState = (): ParticleState => ({
   alphaBase: 0,
   baseX: 0,
+  destroyY: 0,
   driftAmplitude: 0,
   driftOffset: 0,
   driftSpeed: 0,
   fadeStartProgress: 0,
   scale: 1,
+  startY: 0,
   sprite: createParticleSprite(),
   tremorAmplitudeX: 0,
   tremorAmplitudeY: 0,
@@ -153,7 +158,7 @@ export const BackgroundParticles = ({
       inactiveParticles.push(particle);
     };
 
-    const spawnParticle = () => {
+    const spawnParticle = (initialTravelProgress = 0) => {
       if (!root || !texturesReady || !width || !height) {
         return;
       }
@@ -166,9 +171,19 @@ export const BackgroundParticles = ({
 
       const scale = randomBetween(MIN_PARTICLE_SCALE, MAX_PARTICLE_SCALE);
       const startX = randomBetween(0, width);
-      const startY = height + randomBetween(8, Math.max(18, height * 0.08));
+      const clampedTravelProgress = Math.min(
+        0.94,
+        Math.max(0, initialTravelProgress)
+      );
+      const bottomSpawnOffset = randomBetween(8, Math.max(18, height * 0.08));
+      const destroyY = -Math.max(32, height * TOP_EXIT_MULTIPLIER);
+      const totalTravelDistance = height + bottomSpawnOffset - destroyY;
+      const startY =
+        height + bottomSpawnOffset - clampedTravelProgress * totalTravelDistance;
 
       nextParticle.baseX = startX;
+      nextParticle.destroyY = destroyY;
+      nextParticle.startY = startY;
       nextParticle.y = startY;
       nextParticle.scale = scale;
       nextParticle.alphaBase = randomBetween(
@@ -228,13 +243,19 @@ export const BackgroundParticles = ({
 
       const deltaSeconds = deltaTime / 60;
 
-      // Spawn progressivo: gera particulas aos poucos para o fundo parecer vivo sem picos.
+      // Spawn continuo por tempo: o timer roda independente de particulas morrerem.
+      // Isso evita "ondas" e mantem a tela sempre viva.
       spawnAccumulator += deltaSeconds * 1000;
 
-      while (
-        spawnAccumulator >= spawnIntervalMs &&
-        activeParticles.length < maxParticles
-      ) {
+      while (spawnAccumulator >= spawnIntervalMs) {
+        if (activeParticles.length >= maxParticles) {
+          // O ajuste anterior reciclava particulas ainda em voo e por isso elas
+          // morriam antes do topo. Quando o pool enche, seguramos o timer perto
+          // do proximo spawn sem acumular um "estouro" futuro.
+          spawnAccumulator = Math.min(spawnAccumulator, spawnIntervalMs - 1);
+          break;
+        }
+
         spawnAccumulator -= spawnIntervalMs;
         spawnParticle();
       }
@@ -245,8 +266,15 @@ export const BackgroundParticles = ({
         // Movimento vertical lento e variado para criar profundidade.
         particle.y -= particle.verticalSpeed * deltaSeconds;
 
-        const traveledDistance = height - particle.y;
-        const travelProgress = height > 0 ? traveledDistance / height : 0;
+        const totalTravelDistance = Math.max(
+          1,
+          particle.startY - particle.destroyY
+        );
+        const traveledDistance = particle.startY - particle.y;
+        const travelProgress = Math.min(
+          1,
+          Math.max(0, traveledDistance / totalTravelDistance)
+        );
 
         // Zigue-zague suave com seno: cada particula recebe fase/amplitude proprias.
         const driftX =
@@ -261,7 +289,7 @@ export const BackgroundParticles = ({
         particle.sprite.x = particle.baseX + driftX + tremorX;
         particle.sprite.y = particle.y + tremorY;
 
-        // Fade out progressivo perto do topo, sem sumir de forma abrupta.
+        // Fade out apenas no trecho final da subida, perto do topo real da cena.
         const fadeProgress =
           travelProgress <= particle.fadeStartProgress
             ? 1
@@ -275,8 +303,8 @@ export const BackgroundParticles = ({
         particle.sprite.alpha = particle.alphaBase * fadeProgress;
 
         if (
-          particle.sprite.alpha <= 0.02 ||
-          particle.y < -particle.sprite.height ||
+          (particle.sprite.alpha <= 0.02 && particle.y <= height * 0.08) ||
+          particle.y < particle.destroyY ||
           particle.sprite.x < -particle.sprite.width * 2 ||
           particle.sprite.x > width + particle.sprite.width * 2
         ) {
@@ -333,10 +361,14 @@ export const BackgroundParticles = ({
 
         for (
           let index = 0;
-          index < Math.min(Math.ceil(maxParticles * 0.4), maxParticles);
+          index < Math.min(Math.ceil(maxParticles * 0.7), maxParticles);
           index += 1
         ) {
-          spawnParticle();
+          // Preenchimento inicial espalhado em alturas diferentes para a abertura
+          // nao comecar com um unico bloco de particulas saindo do rodape.
+          const seededProgress =
+            index / Math.max(1, Math.min(Math.ceil(maxParticles * 0.7), maxParticles));
+          spawnParticle(seededProgress * 0.82);
         }
       });
 

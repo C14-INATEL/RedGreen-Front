@@ -91,6 +91,10 @@ export const Minefield = () => {
       <RewardChoiceModal
         onCardHover={rewardController.handleRewardCardHover}
         onCardSelect={rewardController.handleRewardCardSelect}
+        onSelectedCardCinematicComplete={
+          rewardController.handleSelectedCardCinematicComplete
+        }
+        onTableTransitionComplete={rewardController.handleTableTransitionComplete}
         session={rewardController.activeSession}
       />
     </motion.div>

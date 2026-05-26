@@ -11,17 +11,32 @@ type UseCardSelectionAnimationProps = {
   session: RewardChoiceSession | null;
 };
 
+const getCardsForTable = (
+  session: RewardChoiceSession,
+  tableType: RewardChoiceSession['tableState']['currentTable']
+) => (tableType === 'bad' ? session.badTableCards : session.normalTableCards);
+
 export const useCardSelectionAnimation = ({ session }: UseCardSelectionAnimationProps) => {
   const modalRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [overlayState, setOverlayState] = useState<RewardSelectionOverlay | null>(null);
 
-  const selectedOptionId = session?.selectedOptionIds[0] ?? null;
+  const latestSelection =
+    session?.selectionHistory[session.selectionHistory.length - 1] ?? null;
+  const selectedOptionId = latestSelection?.optionId ?? null;
   const selectedCard = useMemo(
-    () =>
-      session?.options.find((card: RewardCardOption) => card.optionId === selectedOptionId) ??
-      null,
-    [session?.options, selectedOptionId]
+    () => {
+      if (!session || !latestSelection) {
+        return null;
+      }
+
+      return (
+        getCardsForTable(session, latestSelection.tableType).find(
+          (card: RewardCardOption) => card.optionId === selectedOptionId
+        ) ?? null
+      );
+    },
+    [latestSelection, selectedOptionId, session]
   );
 
   const registerCardRef = useCallback(
