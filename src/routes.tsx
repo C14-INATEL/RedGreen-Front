@@ -4,7 +4,7 @@ import Login from './presentation/pages/Login';
 import { SlotMachineRoom } from './presentation/pages/SlotMachineRoom';
 import GuestRoute from './presentation/ui/GuestRoute';
 import Home from './presentation/pages/Home';
-import { SlotMachineTablesRoom } from './presentation/pages/Tables';
+import { SlotMachineTablesRoom } from './presentation/pages/TableSystem';
 
 const Dashboard = () => <div>Dashboard</div>;
 const Register = () => <div>Register</div>;
