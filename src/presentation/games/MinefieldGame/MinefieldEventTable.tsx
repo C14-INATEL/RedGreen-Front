@@ -37,6 +37,8 @@ type TableSceneAnimationState = {
 };
 
 const DEFAULT_TRANSITION_DURATION_MS = 720;
+const TABLE_RENDER_SCALE_X = 1.18;
+const TABLE_RENDER_SCALE_Y = 1.15;
 const TABLE_ENTRY_START_OFFSET = 84;
 const TABLE_EXIT_END_OFFSET = 120;
 const SCENE_SHAKE_X = 7;
@@ -142,8 +144,10 @@ export const MinefieldEventTable = ({
       tableViewport: MinefieldEventTableViewport
     ) => {
       tableSprite.anchor.set(0.5);
-      tableSprite.width = tableViewport.width;
-      tableSprite.height = tableViewport.height;
+      // A mesa pode crescer visualmente sem mexer no grid/cartas do modal,
+      // porque o layout interativo continua no DOM e o Pixi desenha so o fundo.
+      tableSprite.width = tableViewport.width * TABLE_RENDER_SCALE_X;
+      tableSprite.height = tableViewport.height * TABLE_RENDER_SCALE_Y;
       tableSprite.roundPixels = true;
     };
 
@@ -335,13 +339,14 @@ export const MinefieldEventTable = ({
       );
       const centerX = tableViewport.centerX;
       const centerY = tableViewport.centerY;
+      const renderedTableWidth = tableViewport.width * TABLE_RENDER_SCALE_X;
       const enteringStartX =
-        screenWidth + tableViewport.width / 2 + TABLE_ENTRY_START_OFFSET;
+        screenWidth + renderedTableWidth / 2 + TABLE_ENTRY_START_OFFSET;
       const enteringImpactX =
-        centerX - tableViewport.width * 0.05 - enteringTheme.impactPushOffset;
+        centerX - renderedTableWidth * 0.05 - enteringTheme.impactPushOffset;
       const exitingStartX = centerX;
       const exitingTargetX =
-        -tableViewport.width / 2 - TABLE_EXIT_END_OFFSET - screenWidth * 0.04;
+        -renderedTableWidth / 2 - TABLE_EXIT_END_OFFSET - screenWidth * 0.04;
 
       const incomingX =
         progress < 0.54
