@@ -19,17 +19,17 @@ const SLOT_SYMBOL_SOURCES = {
 export const SLOT_PAYTABLE_ENTRIES: readonly SlotPaytableEntry[] = [
   {
     id: 'orange-3',
-    prize: '3',
+    prize: '5',
     symbols: Array.from({ length: 3 }, () => SLOT_SYMBOL_SOURCES.orange),
   },
   {
     id: 'orange-4',
-    prize: '5',
+    prize: '8',
     symbols: Array.from({ length: 4 }, () => SLOT_SYMBOL_SOURCES.orange),
   },
   {
     id: 'oranges-3',
-    prize: '9',
+    prize: '10',
     symbols: Array.from({ length: 3 }, () => SLOT_SYMBOL_SOURCES.oranges),
   },
   {
@@ -39,22 +39,22 @@ export const SLOT_PAYTABLE_ENTRIES: readonly SlotPaytableEntry[] = [
   },
   {
     id: 'pig',
-    prize: '10 each',
+    prize: '20 (para cada slot que aparece)',
     symbols: [SLOT_SYMBOL_SOURCES.pig],
   },
   {
     id: 'multiplier',
-    prize: '2x Amount',
+    prize: '2x (multiplica o montante)',
     symbols: [SLOT_SYMBOL_SOURCES.multiplier],
   },
   {
     id: 'rat',
-    prize: 'Sets to 0',
+    prize: '0 (zera o valor do montante)',
     symbols: [SLOT_SYMBOL_SOURCES.rat],
   },
   {
     id: 'cheese',
-    prize: '3 for each Rat',
+    prize: '10 (para cada rato nos slots)',
     symbols: [SLOT_SYMBOL_SOURCES.cheese, SLOT_SYMBOL_SOURCES.rat],
   },
   {
