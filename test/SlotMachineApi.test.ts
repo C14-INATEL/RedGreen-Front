@@ -59,4 +59,23 @@ describe('SlotMachineApi', () => {
       stopDelayMs: 220,
     });
   });
+
+  it('maps the backend egg symbol into the frontend visual symbol id', () => {
+    const session = createSlotMachineSession({
+      CurrentSpinResult: {
+        Reels: [
+          { ReelIndex: 0, SymbolId: 'Egg' },
+          { ReelIndex: 1, SymbolId: 'Pig' },
+          { ReelIndex: 2, SymbolId: 'Orange' },
+          { ReelIndex: 3, SymbolId: 'Cheese' },
+        ],
+      },
+    });
+
+    expect(buildSpinAnimationFromSession(session).reels[0]).toEqual({
+      extraSpinSteps: 1,
+      reelIndex: 0,
+      symbolId: 'egg',
+    });
+  });
 });
