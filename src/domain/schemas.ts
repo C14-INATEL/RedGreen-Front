@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Schemas de validação
 export const userSchema = z.object({
   id: z.string(),
   username: z.string().min(3),
