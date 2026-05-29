@@ -18,7 +18,7 @@ const getSymbolGroup = (symbols: readonly string[]) => {
 export const SlotPaytableHUD = () => (
   <aside
     aria-label="Tabela visual de combinacoes da Slot Machine"
-    className="w-[372px] shrink-0"
+    className="w-[280px] shrink-0 xl:w-[310px] 2xl:w-[330px]"
   >
     <div className="overflow-hidden rounded-[10px] border border-[#d9b453]/45 bg-[linear-gradient(180deg,rgba(24,43,19,0.98)_0%,rgba(8,20,10,0.98)_100%)] p-5 shadow-[0_0_0_1px_rgba(40,64,25,0.6),8px_8px_0_rgba(0,0,0,0.25)]">
       <div className="mb-5 flex items-center gap-2.5">

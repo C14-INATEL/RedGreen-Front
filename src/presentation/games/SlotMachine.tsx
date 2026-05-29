@@ -21,8 +21,40 @@ export const SlotMachine = () => {
     routeState?.slotMachineIntroCompleted === true
   );
 
+  const handleEnterMachineView = () => {
+    setHasEnteredMachineView(true);
+    navigate(
+      {
+        hash: location.hash,
+        pathname: location.pathname,
+        search: location.search,
+      },
+      {
+        replace: true,
+        state: {
+          ...routeState,
+          slotMachineIntroCompleted: true,
+        },
+      }
+    );
+  };
+
   return (
-    <div className="relative">
+    <div className="relative flex w-full min-w-[100vw] items-start justify-center gap-6 xl:gap-8">
+      <motion.div
+        initial={false}
+        animate={
+          hasEnteredMachineView ? { opacity: 1, x: 0 } : { opacity: 0, x: -120 }
+        }
+        className="mt-3 hidden shrink-0 lg:block"
+        transition={{
+          ...MACHINE_ENTRY_TRANSITION,
+          delay: hasEnteredMachineView ? 0.08 : 0,
+        }}
+      >
+        <SlotPaytableHUD />
+      </motion.div>
+
       <motion.div
         initial={false}
         animate={
@@ -30,53 +62,20 @@ export const SlotMachine = () => {
             ? { opacity: 1, scale: 1, y: 0 }
             : { opacity: 0.88, scale: 0.66, y: 46 }
         }
-        className="origin-center"
+        className="relative origin-center shrink-0"
         transition={MACHINE_ENTRY_TRANSITION}
       >
         <SlotMachinePixi animateMachineSprite={hasEnteredMachineView} />
+
+        {!hasEnteredMachineView ? (
+          <button
+            aria-label="Aproximar da Slot Machine"
+            className="absolute inset-0 z-20 cursor-zoom-in bg-transparent"
+            onClick={handleEnterMachineView}
+            type="button"
+          />
+        ) : null}
       </motion.div>
-
-      <div className="pointer-events-none absolute left-0 top-3 z-10 hidden -translate-x-[calc(100%+18px)] lg:block">
-        <motion.div
-          initial={false}
-          animate={
-            hasEnteredMachineView
-              ? { opacity: 1, x: 0 }
-              : { opacity: 0, x: -120 }
-          }
-          transition={{
-            ...MACHINE_ENTRY_TRANSITION,
-            delay: hasEnteredMachineView ? 0.08 : 0,
-          }}
-        >
-          <SlotPaytableHUD />
-        </motion.div>
-      </div>
-
-      {!hasEnteredMachineView ? (
-        <button
-          aria-label="Aproximar da Slot Machine"
-          className="absolute inset-0 z-20 cursor-zoom-in bg-transparent"
-          onClick={() => {
-            setHasEnteredMachineView(true);
-            navigate(
-              {
-                hash: location.hash,
-                pathname: location.pathname,
-                search: location.search,
-              },
-              {
-                replace: true,
-                state: {
-                  ...routeState,
-                  slotMachineIntroCompleted: true,
-                },
-              }
-            );
-          }}
-          type="button"
-        />
-      ) : null}
     </div>
   );
 };
