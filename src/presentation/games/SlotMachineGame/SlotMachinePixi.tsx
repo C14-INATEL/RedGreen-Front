@@ -445,7 +445,7 @@ export const SlotMachinePixi = ({
 
   return (
     <div
-      className="relative w-[min(90vw,760px)] max-w-[960px] shrink-0 md:w-[min(72vw,860px)] lg:w-[min(62vw,960px)]"
+      className="relative w-[min(72vw,1120px)] max-w-[1120px] shrink-0"
       ref={machineRef}
     >
       <img

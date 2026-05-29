@@ -21,26 +21,8 @@ export const SlotMachine = () => {
     routeState?.slotMachineIntroCompleted === true
   );
 
-  const handleEnterMachineView = () => {
-    setHasEnteredMachineView(true);
-    navigate(
-      {
-        hash: location.hash,
-        pathname: location.pathname,
-        search: location.search,
-      },
-      {
-        replace: true,
-        state: {
-          ...routeState,
-          slotMachineIntroCompleted: true,
-        },
-      }
-    );
-  };
-
   return (
-    <div className="relative flex w-full min-w-[100vw] items-start justify-center gap-6 xl:gap-8">
+    <div className="relative flex w-full items-start justify-center gap-4 xl:gap-6">
       <motion.div
         initial={false}
         animate={
@@ -71,7 +53,23 @@ export const SlotMachine = () => {
           <button
             aria-label="Aproximar da Slot Machine"
             className="absolute inset-0 z-20 cursor-zoom-in bg-transparent"
-            onClick={handleEnterMachineView}
+            onClick={() => {
+              setHasEnteredMachineView(true);
+              navigate(
+                {
+                  hash: location.hash,
+                  pathname: location.pathname,
+                  search: location.search,
+                },
+                {
+                  replace: true,
+                  state: {
+                    ...routeState,
+                    slotMachineIntroCompleted: true,
+                  },
+                }
+              );
+            }}
             type="button"
           />
         ) : null}
