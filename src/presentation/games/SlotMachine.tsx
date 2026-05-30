@@ -9,6 +9,16 @@ const MACHINE_ENTRY_TRANSITION = {
   ease: [0.22, 1, 0.36, 1],
 } as const;
 
+export type SlotMachineFromApi = {
+  SlotMachineId: number;
+  Name: string;
+  Description: string;
+  MinimumSpinValue: number;
+  MinimumChipsRequired: number;
+  MinimumRerollValue: number;
+  Active: boolean;
+};
+
 type SlotMachineRouteState = {
   slotMachineIntroCompleted?: boolean;
   slotMachineId?: number;
