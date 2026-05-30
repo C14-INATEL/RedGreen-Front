@@ -19,9 +19,9 @@ describe('SessionWarningModal', () => {
     expect(screen.getByText(/sessão ativa/i)).toBeTruthy();
   });
 
-  it('calls OnClose when clicking Entendi', () => {
+  it('calls OnClose when clicking OK', () => {
     render(<SessionWarningModal MachineName="VIP Table" OnClose={OnClose} />);
-    fireEvent.click(screen.getByText('Entendi'));
+    fireEvent.click(screen.getByText('OK'));
     expect(OnClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -22,7 +22,7 @@ describe('ResultModal', () => {
     expect(screen.getByText('Table created!')).toBeTruthy();
   });
 
-  it('calls OnClose when clicking Entendi', () => {
+  it('calls OnClose when clicking OK', () => {
     render(
       <ResultModal
         Title="Error"
@@ -31,7 +31,7 @@ describe('ResultModal', () => {
         OnClose={OnClose}
       />
     );
-    fireEvent.click(screen.getByText('Entendi'));
+    fireEvent.click(screen.getByText('OK'));
     expect(OnClose).toHaveBeenCalledTimes(1);
   });
 
