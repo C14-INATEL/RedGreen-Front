@@ -1,30 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { fetchActiveSlotSession } from '../games/SlotMachineGame/slotMachineApi';
 import { paths } from '@/paths';
 import { useUserChips } from '@/application/hooks/useUserChips';
+import { CreateTableModal } from '../ui/CreateTabelModal';
+import { DeleteTableModal } from '../ui/DeleteTabelModal';
+import { ResultModal } from '../ui/ResultModal';
+import { SessionWarningModal } from '../ui/SessionWarningModal';
+import { SlotMachineCard } from '../ui/SlotMachineCard';
+import type { SlotMachineFromApi } from '../games/SlotMachine';
 
 import CassinoLogo from '../ui/CassinoLogo';
-
-type SlotMachineFromApi = {
-  SlotMachineId: number;
-  Name: string;
-  Description: string;
-  MinimumSpinValue: number;
-  MinimumChipsRequired: number;
-  MinimumRerollValue: number;
-  MaxRerolls: number;
-  Active: boolean;
-};
-
-const GetTableStyle = () => {
-  return {
-    border: 'border-border',
-    text: 'text-foreground',
-    hoverBg: '',
-  };
-};
 
 export const SlotMachineTablesRoom = () => {
   const [ShowSessionWarning, SetShowSessionWarning] = useState(false);
@@ -33,15 +19,35 @@ export const SlotMachineTablesRoom = () => {
 
   const Navigate = useNavigate();
 
-  const Token = localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
 
   const IsLoggedIn = !!Token;
+
+  const User = JSON.parse(localStorage.getItem('user') ?? '{}');
+
+  const IsAdmin = User.UserType === 'Admin';
 
   const { chips: UserChips, isLoading } = useUserChips(IsLoggedIn);
 
   const [ApiTables, SetApiTables] = useState<SlotMachineFromApi[]>([]);
 
   const [IsLoadingTables, SetIsLoadingTables] = useState(true);
+
+  const [ShowCreateTableModal, SetShowCreateTableModal] = useState(false);
+
+  const [ShowDeleteModal, SetShowDeleteModal] = useState(false);
+
+  const [SelectedTableId, SetSelectedTableId] = useState<number | null>(null);
+
+  const [SelectedTableName, SetSelectedTableName] = useState('');
+
+  const [ShowResultModal, SetShowResultModal] = useState(false);
+
+  const [ModalTitle, SetModalTitle] = useState('');
+
+  const [ModalMessage, SetModalMessage] = useState('');
+
+  const [ModalType, SetModalType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     const FetchTables = async () => {
@@ -87,37 +93,38 @@ export const SlotMachineTablesRoom = () => {
         Escolha sua mesa
       </h1>
 
-      <div className="z-10 pb-16 grid w-full max-w-7xl grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 px-4">
+      {IsAdmin && (
+        <button
+          onClick={() => SetShowCreateTableModal(true)}
+          className="absolute top-6 right-6 z-30 border-[3px] border-[hsl(120,50%,35%)] bg-card/60 backdrop-blur-sm px-4 py-2 text-[10px] uppercase text-[hsl(120,50%,45%)] shadow-[4px_4px_0px_#000] transition-all hover:bg-[hsl(120,50%,35%)]/10 hover:shadow-[6px_6px_0px_#000]"
+          style={{
+            fontFamily: '"Press Start 2P", monospace',
+            imageRendering: 'pixelated',
+          }}
+        >
+          + Criar Mesa
+        </button>
+      )}
+
+      <div className="z-10 pb-16 flex flex-wrap justify-center gap-6 px-4 w-full max-w-7xl">
         {Tables.map((TableItem) => {
-          const Style = GetTableStyle();
-
-          const Bet = TableItem.MinimumSpinValue;
-
-          const MinChips = TableItem.MinimumChipsRequired;
-
-          const SlotMachineId = TableItem.SlotMachineId;
-
           const IsLocked =
             !IsLoggedIn ||
             isLoading ||
             IsLoadingTables ||
             UserChips === undefined ||
-            UserChips < MinChips;
+            UserChips < TableItem.MinimumChipsRequired;
 
           return (
-            <motion.div
-              key={SlotMachineId}
-              whileHover={{
-                scale: IsLocked ? 1 : 1.05,
-              }}
-              className={`relative w-52 pixel-border p-4 text-center transition-all
-                ${
-                  IsLocked
-                    ? 'cursor-not-allowed opacity-40'
-                    : `cursor-pointer bg-card/60 backdrop-blur-sm ${Style.border} ${Style.hoverBg}`
-                }
-              `}
-              onClick={async () => {
+            <SlotMachineCard
+              key={TableItem.SlotMachineId}
+              SlotMachineId={TableItem.SlotMachineId}
+              Name={TableItem.Name}
+              MinimumSpinValue={TableItem.MinimumSpinValue}
+              MinimumChipsRequired={TableItem.MinimumChipsRequired}
+              IsLocked={IsLocked}
+              IsAdmin={IsAdmin}
+              OnClick={async () => {
                 if (IsLocked) return;
 
                 try {
@@ -125,7 +132,7 @@ export const SlotMachineTablesRoom = () => {
 
                   if (
                     ActiveSession &&
-                    ActiveSession.SlotMachineId !== SlotMachineId
+                    ActiveSession.SlotMachineId !== TableItem.SlotMachineId
                   ) {
                     const CurrentMachine = Tables.find(
                       (Table) =>
@@ -135,88 +142,91 @@ export const SlotMachineTablesRoom = () => {
                     SetPendingMachineName(
                       CurrentMachine?.Name ?? 'Mesa desconhecida'
                     );
-
                     SetShowSessionWarning(true);
-
                     return;
                   }
 
                   Navigate(paths.slotmachineroom, {
                     state: {
-                      bet: Bet,
-                      slotMachineId: SlotMachineId,
+                      bet: TableItem.MinimumSpinValue,
+                      slotMachineId: TableItem.SlotMachineId,
                     },
                   });
-                } catch (Error) {
-                  console.error(Error);
+                } catch (err) {
+                  console.error(err);
                 }
               }}
-            >
-              <h2
-                className={`mb-2 min-h-[56px] font-bold leading-tight ${Style.text} break-words line-clamp-2`}
-              >
-                {TableItem.Name}
-              </h2>
-
-              <p className={`text-sm ${Style.text}`}>
-                Aposta: {Bet.toLocaleString('pt-BR')}
-              </p>
-
-              <p className={`mt-2 text-xs ${Style.text}`}>
-                Fichas necessárias: {MinChips.toLocaleString('pt-BR')}
-              </p>
-
-              {IsLocked && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                  <span className="text-xs font-bold text-red-400">
-                    BLOQUEADO
-                  </span>
-                </div>
-              )}
-            </motion.div>
+              OnDelete={() => {
+                SetSelectedTableId(TableItem.SlotMachineId);
+                SetSelectedTableName(TableItem.Name);
+                SetShowDeleteModal(true);
+              }}
+            />
           );
         })}
       </div>
       {ShowSessionWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="w-full max-w-md border-[4px] border-yellow-400 bg-[#1a1a1a] p-6 text-white shadow-[8px_8px_0px_#000]"
-            style={{
-              imageRendering: 'pixelated',
-            }}
-          >
-            <h2
-              className="mb-6 text-center text-[12px] uppercase text-yellow-300"
-              style={{
-                fontFamily: '"Press Start 2P", monospace',
-              }}
-            >
-              Jogo em andamento!
-            </h2>
+        <SessionWarningModal
+          MachineName={PendingMachineName}
+          OnClose={() => SetShowSessionWarning(false)}
+        />
+      )}
 
-            <p
-              className="whitespace-pre-line text-center text-[9px] leading-6 uppercase text-white/90"
-              style={{
-                fontFamily: '"Press Start 2P", monospace',
-              }}
-            >
-              {`VOCÊ AINDA POSSUI FICHAS NA MESA:\n\n${PendingMachineName}\n\nREALIZE O CASH OUT ANTES DE ENTRAR EM OUTRA MESA.`}
-            </p>
+      {ShowCreateTableModal && (
+        <CreateTableModal
+          Token={Token}
+          OnClose={() => SetShowCreateTableModal(false)}
+          OnTableCreated={(newTable) =>
+            SetApiTables((current) => [...current, newTable])
+          }
+          OnError={(message) => {
+            SetModalTitle('Erro');
+            SetModalMessage(message);
+            SetModalType('error');
+            SetShowResultModal(true);
+          }}
+          OnSuccess={(message) => {
+            SetModalTitle('Sucesso');
+            SetModalMessage(message);
+            SetModalType('success');
+            SetShowResultModal(true);
+          }}
+        />
+      )}
 
-            <button
-              onClick={() => SetShowSessionWarning(false)}
-              className="mt-6 w-full border-2 border-yellow-400 bg-yellow-500/20 py-3 text-[10px] uppercase text-yellow-200 transition-all hover:bg-yellow-500/30"
-              style={{
-                fontFamily: '"Press Start 2P", monospace',
-              }}
-            >
-              Entendi
-            </button>
-          </motion.div>
-        </div>
+      {ShowDeleteModal && (
+        <DeleteTableModal
+          TableName={SelectedTableName}
+          TableId={SelectedTableId}
+          Token={Token}
+          OnClose={() => SetShowDeleteModal(false)}
+          OnTableDeleted={(tableId) =>
+            SetApiTables((current) =>
+              current.filter((Table) => Table.SlotMachineId !== tableId)
+            )
+          }
+          OnSuccess={(message) => {
+            SetModalTitle('Sucesso');
+            SetModalMessage(message);
+            SetModalType('success');
+            SetShowResultModal(true);
+          }}
+          OnError={(message) => {
+            SetModalTitle('Erro');
+            SetModalMessage(message);
+            SetModalType('error');
+            SetShowResultModal(true);
+          }}
+        />
+      )}
+
+      {ShowResultModal && (
+        <ResultModal
+          Title={ModalTitle}
+          Message={ModalMessage}
+          Type={ModalType}
+          OnClose={() => SetShowResultModal(false)}
+        />
       )}
     </main>
   );
