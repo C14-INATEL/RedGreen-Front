@@ -53,7 +53,7 @@ export const ResultModal = ({
           className={`mt-6 w-full border-2 py-3 text-[10px] uppercase transition-colors ${ButtonBorder}`}
           style={{ fontFamily: '"Press Start 2P", monospace' }}
         >
-          Entendi
+          OK
         </button>
       </motion.div>
     </div>

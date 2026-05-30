@@ -52,7 +52,7 @@ export const SessionWarningModal = ({
           className="mt-6 w-full border-2 border-yellow-400 bg-yellow-500/20 py-3 text-[10px] uppercase text-yellow-200 transition-colors hover:bg-yellow-500/30"
           style={{ fontFamily: '"Press Start 2P", monospace' }}
         >
-          Entendi
+          OK
         </button>
       </motion.div>
     </div>
