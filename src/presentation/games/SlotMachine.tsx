@@ -28,7 +28,7 @@ export const SlotMachine = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const routeState = location.state as SlotMachineRouteState | null;
-  const selectedSlotMachineId = routeState?.slotMachineId;
+  const SelectedSlotMachineId = routeState?.slotMachineId;
   const [hasEnteredMachineView, setHasEnteredMachineView] = useState(
     routeState?.slotMachineIntroCompleted === true
   );
@@ -47,7 +47,7 @@ export const SlotMachine = () => {
       >
         <SlotMachinePixi
           animateMachineSprite={hasEnteredMachineView}
-          slotMachineId={selectedSlotMachineId}
+          slotMachineId={SelectedSlotMachineId}
         />
       </motion.div>
 
