@@ -106,64 +106,77 @@ export const SlotMachineTablesRoom = () => {
         </button>
       )}
 
-      <div className="z-10 pb-16 flex flex-wrap justify-center gap-6 px-4 w-full max-w-7xl">
-        {Tables.map((TableItem) => {
-          const IsLocked =
-            !IsLoggedIn ||
-            isLoading ||
-            IsLoadingTables ||
-            UserChips === undefined ||
-            UserChips < TableItem.MinimumChipsRequired;
+      <div className="z-10 pb-16 flex flex-wrap justify-center gap-6 px-4 w-full max-w-7xl min-h-[400px] items-center">
+        {!IsLoadingTables && Tables.length === 0 ? (
+          <div className="flex flex-col items-center gap-4 mt-16">
+            <p
+              className="text-[12px] uppercase text-white/20 text-center"
+              style={{ fontFamily: '"Press Start 2P", monospace' }}
+            >
+              Nenhuma mesa disponível
+            </p>
+            <p
+              className="text-[9px] uppercase text-white/10 text-center"
+              style={{ fontFamily: '"Press Start 2P", monospace' }}
+            >
+              {IsAdmin ? 'Crie uma mesa para começar.' : 'Volte mais tarde.'}
+            </p>
+          </div>
+        ) : (
+          Tables.map((TableItem) => {
+            const IsLocked =
+              !IsLoggedIn ||
+              isLoading ||
+              IsLoadingTables ||
+              UserChips === undefined ||
+              UserChips < TableItem.MinimumChipsRequired;
 
-          return (
-            <SlotMachineCard
-              key={TableItem.SlotMachineId}
-              SlotMachineId={TableItem.SlotMachineId}
-              Name={TableItem.Name}
-              MinimumSpinValue={TableItem.MinimumSpinValue}
-              MinimumChipsRequired={TableItem.MinimumChipsRequired}
-              IsLocked={IsLocked}
-              IsAdmin={IsAdmin}
-              OnClick={async () => {
-                if (IsLocked) return;
-
-                try {
-                  const ActiveSession = await fetchActiveSlotSession();
-
-                  if (
-                    ActiveSession &&
-                    ActiveSession.SlotMachineId !== TableItem.SlotMachineId
-                  ) {
-                    const CurrentMachine = Tables.find(
-                      (Table) =>
-                        Table.SlotMachineId === ActiveSession.SlotMachineId
-                    );
-
-                    SetPendingMachineName(
-                      CurrentMachine?.Name ?? 'Mesa desconhecida'
-                    );
-                    SetShowSessionWarning(true);
-                    return;
+            return (
+              <SlotMachineCard
+                key={TableItem.SlotMachineId}
+                SlotMachineId={TableItem.SlotMachineId}
+                Name={TableItem.Name}
+                MinimumSpinValue={TableItem.MinimumSpinValue}
+                MinimumChipsRequired={TableItem.MinimumChipsRequired}
+                IsLocked={IsLocked}
+                IsAdmin={IsAdmin}
+                OnClick={async () => {
+                  if (IsLocked) return;
+                  try {
+                    const ActiveSession = await fetchActiveSlotSession();
+                    if (
+                      ActiveSession &&
+                      ActiveSession.SlotMachineId !== TableItem.SlotMachineId
+                    ) {
+                      const CurrentMachine = Tables.find(
+                        (Table) =>
+                          Table.SlotMachineId === ActiveSession.SlotMachineId
+                      );
+                      SetPendingMachineName(
+                        CurrentMachine?.Name ?? 'Mesa desconhecida'
+                      );
+                      SetShowSessionWarning(true);
+                      return;
+                    }
+                    Navigate(paths.slotmachineroom, {
+                      state: {
+                        bet: TableItem.MinimumSpinValue,
+                        slotMachineId: TableItem.SlotMachineId,
+                      },
+                    });
+                  } catch (err) {
+                    console.error(err);
                   }
-
-                  Navigate(paths.slotmachineroom, {
-                    state: {
-                      bet: TableItem.MinimumSpinValue,
-                      slotMachineId: TableItem.SlotMachineId,
-                    },
-                  });
-                } catch (err) {
-                  console.error(err);
-                }
-              }}
-              OnDelete={() => {
-                SetSelectedTableId(TableItem.SlotMachineId);
-                SetSelectedTableName(TableItem.Name);
-                SetShowDeleteModal(true);
-              }}
-            />
-          );
-        })}
+                }}
+                OnDelete={() => {
+                  SetSelectedTableId(TableItem.SlotMachineId);
+                  SetSelectedTableName(TableItem.Name);
+                  SetShowDeleteModal(true);
+                }}
+              />
+            );
+          })
+        )}
       </div>
       {ShowSessionWarning && (
         <SessionWarningModal
