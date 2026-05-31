@@ -94,9 +94,7 @@ export const Minefield = () => {
         onSelectedCardCinematicComplete={
           rewardController.handleSelectedCardCinematicComplete
         }
-        onTableTransitionComplete={
-          rewardController.handleTableTransitionComplete
-        }
+        onTableTransitionComplete={rewardController.handleTableTransitionComplete}
         session={rewardController.activeSession}
       />
     </motion.div>
