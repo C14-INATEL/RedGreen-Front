@@ -1,11 +1,5 @@
 import { useEffect, useRef } from 'react';
-import {
-  Application,
-  Container,
-  Graphics,
-  Sprite,
-  Texture,
-} from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import {
   type MinefieldTableType,
   getMinefieldTableTheme,
@@ -352,7 +346,8 @@ export const MinefieldEventTable = ({
         progress < 0.54
           ? enteringStartX +
             (enteringImpactX - enteringStartX) * easeOutCubic(incomingPhase)
-          : enteringImpactX + (centerX - enteringImpactX) * easeOutBack(settlePhase);
+          : enteringImpactX +
+            (centerX - enteringImpactX) * easeOutBack(settlePhase);
 
       const outgoingX =
         progress < 0.52

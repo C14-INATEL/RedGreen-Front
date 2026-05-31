@@ -10,6 +10,5 @@ export const rewardCardPoolsByTableType: Record<
   normal: rewardCardPool,
 };
 
-export const getRewardCardPoolByTableType = (
-  tableType: MinefieldTableType
-) => rewardCardPoolsByTableType[tableType];
+export const getRewardCardPoolByTableType = (tableType: MinefieldTableType) =>
+  rewardCardPoolsByTableType[tableType];
