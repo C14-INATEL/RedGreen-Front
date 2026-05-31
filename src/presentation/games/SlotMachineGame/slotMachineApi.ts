@@ -12,6 +12,7 @@ type BackendSlotSymbol =
   | 'Watermelon'
   | 'Rat'
   | 'Cheese'
+  | 'Egg'
   | 'TwoX'
   | 'Pig';
 
@@ -87,6 +88,7 @@ const BACKEND_TO_FRONTEND_SYMBOL_ID: Record<
   SlotMachineSymbolId
 > = {
   Cheese: 'cheese',
+  Egg: 'egg',
   Orange: 'orange',
   Oranges: 'oranges',
   Pig: 'pig',

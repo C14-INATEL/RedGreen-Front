@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlotMachine } from '../games/SlotMachine';
 import { useUserProfile } from '@application/hooks/useUserProfile';
@@ -19,29 +18,6 @@ export const SlotMachineRoom = () => {
     localStorage.getItem('token') ?? localStorage.getItem('authToken');
 
   const IsLoggedIn = !!Token;
-
-  const [IsActive, SetIsActive] = useState(() => {
-    if (!IsLoggedIn) return false;
-    return sessionStorage.getItem('hudActive') === 'true';
-  });
-
-  useEffect(() => {
-    if (IsLoggedIn) {
-      sessionStorage.setItem('hudActive', String(IsActive));
-    }
-  }, [IsActive, IsLoggedIn]);
-
-  useEffect(() => {
-    return () => {
-      sessionStorage.removeItem('hudActive');
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!IsLoggedIn) {
-      sessionStorage.removeItem('hudActive');
-    }
-  }, [IsLoggedIn]);
 
   const StoredUserValue = localStorage.getItem('user');
   let StoredUser: StoredUserSnapshot | null = null;
@@ -81,7 +57,7 @@ export const SlotMachineRoom = () => {
       />
 
       <AnimatePresence>
-        {IsLoggedIn && IsActive && (
+        {IsLoggedIn && (
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
@@ -213,16 +189,7 @@ export const SlotMachineRoom = () => {
         )}
       </AnimatePresence>
 
-      <div
-        className="relative z-10 flex items-center justify-center"
-        onClick={() => {
-          if (!IsActive && IsLoggedIn) {
-            SetIsActive(true);
-          }
-        }}
-      >
-        {!IsActive && <div className="absolute inset-0 z-20 cursor-pointer" />}
-
+      <div className="relative z-10 flex items-center justify-center">
         <SlotMachine />
       </div>
     </main>
