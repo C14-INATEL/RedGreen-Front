@@ -1,7 +1,7 @@
 import {
-  getNextMinefieldTableType,
-  type MinefieldTableType,
-} from '../../../MinefieldGame/minefieldTableConfig';
+  getNextGambitTableType,
+  type GambitTableType,
+} from '../../../GambitGame/gambitTableConfig';
 import { useEffect, useReducer, useRef } from 'react';
 import { getRewardCardPoolByTableType } from '../../config/rewardCardPoolsByTableType';
 import { rewardCardPool } from '../../config/rewardCardPool';
@@ -31,7 +31,7 @@ type UseCardRewardControllerParams = {
   ) => RewardCardOption[];
   rewardPool?: RewardCardDefinition[];
   revealedCardCount: number;
-  tableType?: MinefieldTableType;
+  tableType?: GambitTableType;
   timings?: RewardTimingsConfig;
   triggerConfig?: RewardTriggerConfig;
 };
@@ -162,7 +162,7 @@ const rewardControllerReducer = (
 const createRewardSession = (
   pool: RewardCardDefinition[],
   config: RewardTriggerConfig,
-  tableType: MinefieldTableType,
+  tableType: GambitTableType,
   optionsResolver: (
     pool: RewardCardDefinition[],
     amount: number,
@@ -197,17 +197,17 @@ const createRewardSession = (
 
 const buildTableOptionSessionId = (
   sessionId: string,
-  tableType: MinefieldTableType
+  tableType: GambitTableType
 ) => `${sessionId}-${tableType}`;
 
 const getCardsForTable = (
   session: RewardChoiceSession,
-  tableType: MinefieldTableType
+  tableType: GambitTableType
 ) => (tableType === 'bad' ? session.badTableCards : session.normalTableCards);
 
 const getSelectedOptionIdsForTable = (
   selectionHistory: RewardSelectionEntry[],
-  tableType: MinefieldTableType
+  tableType: GambitTableType
 ) =>
   selectionHistory
     .filter((entry) => entry.tableType === tableType)
@@ -385,7 +385,7 @@ export const useCardRewardController = ({
       },
     ];
     const nextSelectedCount = nextSelectionHistory.length;
-    const nextTableType = getNextMinefieldTableType(
+    const nextTableType = getNextGambitTableType(
       activeSession.tableState.currentTable
     );
     const shouldTransitionToNextTable =

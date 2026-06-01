@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackgroundParticles } from '../../../MinefieldGame/BackgroundParticles';
-import { MinefieldEventTable } from '../../../MinefieldGame/MinefieldEventTable';
+import { BackgroundParticles } from '../../../GambitGame/BackgroundParticles';
+import { GambitEventTable } from '../../../GambitGame/GambitEventTable';
 import { rewardPresentationConfig } from '../../config/rewardPresentationConfig';
 import { rewardTimings } from '../../config/rewardTimings';
 import type {
@@ -85,9 +85,12 @@ export const RewardChoiceModal = ({
     useState<FirstChoiceAnimationPhase>('idle');
   const [selectedCenterCardOverlay, setSelectedCenterCardOverlay] =
     useState<CenteredCardOverlay | null>(null);
-  const [tableSceneState, setTableSceneState] =
-    useState<RewardTableState>(createDefaultTableState);
-  const [tableViewport, setTableViewport] = useState<TableViewport | null>(null);
+  const [tableSceneState, setTableSceneState] = useState<RewardTableState>(
+    createDefaultTableState
+  );
+  const [tableViewport, setTableViewport] = useState<TableViewport | null>(
+    null
+  );
   const handledTransitionIdRef = useRef<string | null>(null);
   const cinematicRunIdRef = useRef(0);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -120,10 +123,13 @@ export const RewardChoiceModal = ({
     [session, tableSceneState.currentTable]
   );
 
-  const registerDialogSurfaceRef = useCallback((node: HTMLDivElement | null) => {
-    modalRef.current = node;
-    dialogRef.current = node;
-  }, []);
+  const registerDialogSurfaceRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      modalRef.current = node;
+      dialogRef.current = node;
+    },
+    []
+  );
 
   const clearOverlay = useCallback(() => {
     setSelectedCenterCardOverlay(null);
@@ -260,10 +266,7 @@ export const RewardChoiceModal = ({
         firstChoiceAnimationPhase === 'holding' ||
         firstChoiceAnimationPhase === 'flying');
 
-    if (
-      !session ||
-      !shouldPreserveCenteredCard
-    ) {
+    if (!session || !shouldPreserveCenteredCard) {
       cleanupTimer = window.setTimeout(clearOverlay, 0);
     }
 
@@ -325,7 +328,8 @@ export const RewardChoiceModal = ({
       const cinematicRunId = cinematicRunIdRef.current;
       const isTransitionOutcome =
         activeSession.tableState.phase === 'normal' &&
-        activeSession.selectionHistory.length + 1 < activeSession.selectionLimit;
+        activeSession.selectionHistory.length + 1 <
+          activeSession.selectionLimit;
 
       setFirstChoiceAnimationPhase('centering');
 
@@ -406,7 +410,8 @@ export const RewardChoiceModal = ({
       return;
     }
 
-    const settledTable = tableSceneState.incomingTable ?? tableSceneState.currentTable;
+    const settledTable =
+      tableSceneState.incomingTable ?? tableSceneState.currentTable;
 
     setTableSceneState({
       currentTable: settledTable,
@@ -423,7 +428,12 @@ export const RewardChoiceModal = ({
       onTableTransitionComplete(session.id);
       postTransitionTimeoutRef.current = null;
     }, timings.tablePostTransitionHoldMs);
-  }, [onTableTransitionComplete, session, tableSceneState, timings.tablePostTransitionHoldMs]);
+  }, [
+    onTableTransitionComplete,
+    session,
+    tableSceneState,
+    timings.tablePostTransitionHoldMs,
+  ]);
 
   const getSelectionState = useCallback(
     (optionId: string) => {
@@ -526,9 +536,9 @@ export const RewardChoiceModal = ({
       ? [1.04, 1.02, 0.98, 0.92]
       : isCenteringFirstTableSelection
         ? [1, 1.12, 1.09, 1.05, 1.02]
-      : firstChoiceAnimationPhase === 'holding'
-        ? [1.02, 1.06, 1.04, 1.07, 1.04]
-        : [1, 1.04, 1.02, 1.05, 1.02];
+        : firstChoiceAnimationPhase === 'holding'
+          ? [1.02, 1.06, 1.04, 1.07, 1.04]
+          : [1, 1.04, 1.02, 1.05, 1.02];
     const rotate = isFlyingAway ? [0, -3, 4, -2] : [0, 2, -1.5, 1, 0];
     const opacity = isFlyingAway ? [1, 0.82, 0.45, 0] : 1;
     const selectedCardScaleTransition = isFlyingAway
@@ -632,7 +642,7 @@ export const RewardChoiceModal = ({
             />
           ) : null}
 
-          <MinefieldEventTable
+          <GambitEventTable
             className="pointer-events-none fixed inset-0 z-[6]"
             onTransitionSettled={handleTableTransitionSettled}
             tableState={tableSceneState}
@@ -702,10 +712,13 @@ export const RewardChoiceModal = ({
                       card={card}
                       index={index}
                       isDisabled={
-                        session.status !== 'selecting' || tableSceneState.isTransitioning
+                        session.status !== 'selecting' ||
+                        tableSceneState.isTransitioning
                       }
                       isResolved={session.status === 'resolving'}
-                      isSelected={displayedSelectedOptionIds.includes(card.optionId)}
+                      isSelected={displayedSelectedOptionIds.includes(
+                        card.optionId
+                      )}
                       selectionState={getSelectionState(card.optionId)}
                       key={card.optionId}
                       onHover={onCardHover}

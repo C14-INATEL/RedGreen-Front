@@ -1,34 +1,25 @@
 import { useEffect, useRef } from 'react';
+import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { type GambitTableType, getGambitTableTheme } from './gambitTableConfig';
 import {
-  Application,
-  Container,
-  Graphics,
-  Sprite,
-  Texture,
-} from 'pixi.js';
-import {
-  type MinefieldTableType,
-  getMinefieldTableTheme,
-} from './minefieldTableConfig';
-import {
-  getMinefieldTableTexture,
-  preloadMinefieldTableTextures,
-} from './minefieldTextures';
+  getGambitTableTexture,
+  preloadGambitTableTextures,
+} from './gambitTextures';
 import type { RewardTableState } from '../cardReward/types/cardReward';
 
-type MinefieldEventTableViewport = {
+type GambitEventTableViewport = {
   centerX: number;
   centerY: number;
   height: number;
   width: number;
 };
 
-type MinefieldEventTableProps = {
+type GambitEventTableProps = {
   className?: string;
   onTransitionSettled?: () => void;
   tableState: RewardTableState;
   transitionDurationMs?: number;
-  viewport: MinefieldEventTableViewport | null;
+  viewport: GambitEventTableViewport | null;
 };
 
 type TableSceneAnimationState = {
@@ -74,13 +65,13 @@ const drawImpactFlash = (
   graphics.endFill();
 };
 
-export const MinefieldEventTable = ({
+export const GambitEventTable = ({
   className,
   onTransitionSettled,
   tableState,
   transitionDurationMs = DEFAULT_TRANSITION_DURATION_MS,
   viewport,
-}: MinefieldEventTableProps) => {
+}: GambitEventTableProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const onTransitionSettledRef = useRef(onTransitionSettled);
   const renderSceneRef = useRef<(() => void) | null>(null);
@@ -141,7 +132,7 @@ export const MinefieldEventTable = ({
 
     const applyTableLayout = (
       tableSprite: Sprite,
-      tableViewport: MinefieldEventTableViewport
+      tableViewport: GambitEventTableViewport
     ) => {
       tableSprite.anchor.set(0.5);
       // A mesa pode crescer visualmente sem mexer no grid/cartas do modal,
@@ -159,9 +150,9 @@ export const MinefieldEventTable = ({
 
     const applyTableTexture = (
       tableSprite: Sprite,
-      tableType: MinefieldTableType
+      tableType: GambitTableType
     ) => {
-      tableSprite.texture = getMinefieldTableTexture(tableType);
+      tableSprite.texture = getGambitTableTexture(tableType);
       tableSprite.roundPixels = true;
       tableSprite.tint = 0xffffff;
       tableSprite.alpha = 1;
@@ -333,7 +324,7 @@ export const MinefieldEventTable = ({
       const impactPhase = clamp((progress - 0.46) / 0.16, 0, 1);
       const outgoingPhase = clamp((progress - 0.52) / 0.48, 0, 1);
 
-      const enteringTheme = getMinefieldTableTheme(
+      const enteringTheme = getGambitTableTheme(
         animationState.tableState.incomingTable ??
           animationState.tableState.currentTable
       );
@@ -352,7 +343,8 @@ export const MinefieldEventTable = ({
         progress < 0.54
           ? enteringStartX +
             (enteringImpactX - enteringStartX) * easeOutCubic(incomingPhase)
-          : enteringImpactX + (centerX - enteringImpactX) * easeOutBack(settlePhase);
+          : enteringImpactX +
+            (centerX - enteringImpactX) * easeOutBack(settlePhase);
 
       const outgoingX =
         progress < 0.52
@@ -459,7 +451,7 @@ export const MinefieldEventTable = ({
 
     renderScene();
 
-    preloadMinefieldTableTextures()
+    preloadGambitTableTextures()
       .catch(() => undefined)
       .finally(() => {
         if (isDisposed) {

@@ -5,11 +5,12 @@ import {
   rewardTriggerConfig,
   useCardRewardController,
 } from './cardReward';
-import { MinefieldBoard } from './MinefieldGame/MinefieldBoard';
-import { createMockMinefieldCards } from './MinefieldGame/minefieldGameConfig';
+import { createMockGambitViewModel } from './GambitGame/gambitApi';
+import { GambitBoard } from './GambitGame/GambitBoard';
 
-export const Minefield = () => {
-  const [cards, setCards] = useState(createMockMinefieldCards);
+export const Gambit = () => {
+  const [viewModel, setViewModel] = useState(createMockGambitViewModel);
+  const cards = viewModel.grid.cards;
   const revealedCardCount = cards.filter((card) => card.revealed).length;
   const rewardController = useCardRewardController({
     revealedCardCount,
@@ -31,11 +32,23 @@ export const Minefield = () => {
       return;
     }
 
-    setCards((currentCards) =>
-      currentCards.map((card) =>
+    setViewModel((currentViewModel) => {
+      const nextCards = currentViewModel.grid.cards.map((card) =>
         card.id === cardId ? { ...card, revealed: true } : card
-      )
-    );
+      );
+
+      return {
+        ...currentViewModel,
+        accumulatedPoints: nextCards.reduce(
+          (score, card) => (card.revealed ? score + card.points : score),
+          0
+        ),
+        grid: {
+          ...currentViewModel.grid,
+          cards: nextCards,
+        },
+      };
+    });
     rewardController.registerCardReveal(cardId);
   };
 
@@ -79,7 +92,7 @@ export const Minefield = () => {
       </div>
 
       <div className="bg-card p-4 pixel-border-gold">
-        <MinefieldBoard
+        <GambitBoard
           cards={cards}
           className="aspect-square w-full overflow-hidden"
           interactionLocked={rewardController.isInteractionLocked}
@@ -94,7 +107,9 @@ export const Minefield = () => {
         onSelectedCardCinematicComplete={
           rewardController.handleSelectedCardCinematicComplete
         }
-        onTableTransitionComplete={rewardController.handleTableTransitionComplete}
+        onTableTransitionComplete={
+          rewardController.handleTableTransitionComplete
+        }
         session={rewardController.activeSession}
       />
     </motion.div>

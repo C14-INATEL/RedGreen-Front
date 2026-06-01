@@ -5,6 +5,7 @@ export const paths = {
   register: '/register',
   dashboard: '/dashboard',
   slotmachineroom: '/slot-machine-room',
-  minefieldRoom: '/minefield-room',
+  gambitRoom: '/gambit-room',
+  legacyGambitRoom: '/minefield-room',
   rouletteRoom: '/roulette-room',
 } as const;

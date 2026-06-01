@@ -1,15 +1,15 @@
 import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { createMineCard, type MineCardInstance } from './MineCard';
-import { MINEFIELD_GRID_SIZE, type MinefieldCard } from './minefieldGameConfig';
-import { preloadMinefieldCardTextures } from './minefieldTextures';
+import { createGambitCard, type GambitCardInstance } from './GambitCard';
+import { GAMBIT_GRID_SIZE, type GambitCard } from './gambitGameConfig';
+import { preloadGambitCardTextures } from './gambitTextures';
 
-type MinefieldBoardProps = Pick<
+type GambitBoardProps = Pick<
   HTMLAttributes<HTMLDivElement>,
   'className' | 'style'
 > & {
-  cards: MinefieldCard[];
+  cards: GambitCard[];
   interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;
   onCardRevealAnimationComplete?: (cardId: number) => void;
@@ -70,10 +70,10 @@ const getBoardLayout = (width: number, height: number) => {
   const cellGap = Math.max(5, Math.round(boardSize * 0.018));
   const availableSize = boardSize - outerPadding * 2;
   const cellSize = Math.floor(
-    (availableSize - cellGap * (MINEFIELD_GRID_SIZE - 1)) / MINEFIELD_GRID_SIZE
+    (availableSize - cellGap * (GAMBIT_GRID_SIZE - 1)) / GAMBIT_GRID_SIZE
   );
   const gridSize =
-    cellSize * MINEFIELD_GRID_SIZE + cellGap * (MINEFIELD_GRID_SIZE - 1);
+    cellSize * GAMBIT_GRID_SIZE + cellGap * (GAMBIT_GRID_SIZE - 1);
   const gridX = Math.round(boardX + (boardSize - gridSize) / 2);
   const gridY = Math.round(boardY + (boardSize - gridSize) / 2);
   const framePadding = Math.max(8, Math.round(cellSize * 0.18));
@@ -88,14 +88,14 @@ const getBoardLayout = (width: number, height: number) => {
   };
 };
 
-export const MinefieldBoard = ({
+export const GambitBoard = ({
   cards,
   className,
   interactionLocked = false,
   onCardReveal,
   onCardRevealAnimationComplete,
   style,
-}: MinefieldBoardProps) => {
+}: GambitBoardProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef(cards);
   const interactionLockedRef = useRef(interactionLocked);
@@ -138,7 +138,7 @@ export const MinefieldBoard = ({
     let isDisposed = false;
     let texturesReady = false;
 
-    const cardInstances = new Map<number, MineCardInstance>();
+    const cardInstances = new Map<number, GambitCardInstance>();
 
     const syncCards = () => {
       if (!root || !frame || !app || isDisposed) {
@@ -190,8 +190,8 @@ export const MinefieldBoard = ({
       const activeIds = new Set<number>();
 
       cardsRef.current.forEach((card, cardIndex) => {
-        const row = Math.floor(cardIndex / MINEFIELD_GRID_SIZE);
-        const column = cardIndex % MINEFIELD_GRID_SIZE;
+        const row = Math.floor(cardIndex / GAMBIT_GRID_SIZE);
+        const column = cardIndex % GAMBIT_GRID_SIZE;
         const x = layout.gridX + column * (layout.cellSize + layout.cellGap);
         const y = layout.gridY + row * (layout.cellSize + layout.cellGap);
 
@@ -219,7 +219,7 @@ export const MinefieldBoard = ({
           return;
         }
 
-        const nextCard = createMineCard(nextProps);
+        const nextCard = createGambitCard(nextProps);
         cardInstances.set(card.id, nextCard);
         currentRoot.addChild(nextCard.container);
       });
@@ -279,7 +279,7 @@ export const MinefieldBoard = ({
 
     syncCards();
 
-    preloadMinefieldCardTextures()
+    preloadGambitCardTextures()
       .catch(() => undefined)
       .finally(() => {
         if (isDisposed) {

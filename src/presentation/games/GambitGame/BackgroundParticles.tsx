@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { AnimatedSprite, Application, Container } from 'pixi.js';
 import {
-  MINEFIELD_PARTICLE_ANIMATION_FRAMES,
-  preloadMinefieldParticleTextures,
-} from './minefieldTextures';
+  GAMBIT_PARTICLE_ANIMATION_FRAMES,
+  preloadGambitParticleTextures,
+} from './gambitTextures';
 
 type BackgroundParticlesProps = {
   alphaMultiplier?: number;
@@ -65,7 +65,7 @@ const randomBetween = (min: number, max: number) =>
 
 const createParticleSprite = () => {
   const particleSprite = AnimatedSprite.fromFrames(
-    MINEFIELD_PARTICLE_ANIMATION_FRAMES
+    GAMBIT_PARTICLE_ANIMATION_FRAMES
   );
 
   particleSprite.anchor.set(0.5);
@@ -179,29 +179,24 @@ export const BackgroundParticles = ({
       const destroyY = -Math.max(32, height * TOP_EXIT_MULTIPLIER);
       const totalTravelDistance = height + bottomSpawnOffset - destroyY;
       const startY =
-        height + bottomSpawnOffset - clampedTravelProgress * totalTravelDistance;
+        height +
+        bottomSpawnOffset -
+        clampedTravelProgress * totalTravelDistance;
 
       nextParticle.baseX = startX;
       nextParticle.destroyY = destroyY;
       nextParticle.startY = startY;
       nextParticle.y = startY;
       nextParticle.scale = scale;
-      nextParticle.alphaBase = randomBetween(
-        MIN_PARTICLE_ALPHA,
-        MAX_PARTICLE_ALPHA
-      ) * alphaMultiplier;
-      nextParticle.verticalSpeed = randomBetween(
-        MIN_VERTICAL_SPEED,
-        MAX_VERTICAL_SPEED
-      ) * speedMultiplier;
+      nextParticle.alphaBase =
+        randomBetween(MIN_PARTICLE_ALPHA, MAX_PARTICLE_ALPHA) * alphaMultiplier;
+      nextParticle.verticalSpeed =
+        randomBetween(MIN_VERTICAL_SPEED, MAX_VERTICAL_SPEED) * speedMultiplier;
       nextParticle.driftAmplitude = randomBetween(
         MIN_DRIFT_AMPLITUDE,
         MAX_DRIFT_AMPLITUDE
       );
-      nextParticle.driftSpeed = randomBetween(
-        MIN_DRIFT_SPEED,
-        MAX_DRIFT_SPEED
-      );
+      nextParticle.driftSpeed = randomBetween(MIN_DRIFT_SPEED, MAX_DRIFT_SPEED);
       nextParticle.driftOffset = randomBetween(0, Math.PI * 2);
       nextParticle.tremorAmplitudeX =
         randomBetween(MIN_TREMOR_AMPLITUDE_X, MAX_TREMOR_AMPLITUDE_X) *
@@ -229,7 +224,7 @@ export const BackgroundParticles = ({
       nextParticle.sprite.visible = true;
       nextParticle.sprite.play();
       nextParticle.sprite.gotoAndPlay(
-        Math.floor(Math.random() * MINEFIELD_PARTICLE_ANIMATION_FRAMES.length)
+        Math.floor(Math.random() * GAMBIT_PARTICLE_ANIMATION_FRAMES.length)
       );
 
       root.addChild(nextParticle.sprite);
@@ -279,7 +274,8 @@ export const BackgroundParticles = ({
         // Zigue-zague suave com seno: cada particula recebe fase/amplitude proprias.
         const driftX =
           Math.sin(
-            particle.driftOffset + travelProgress * Math.PI * particle.driftSpeed
+            particle.driftOffset +
+              travelProgress * Math.PI * particle.driftSpeed
           ) * particle.driftAmplitude;
         const tremorPhase =
           particle.tremorOffset + travelProgress * particle.tremorSpeed;
@@ -350,7 +346,7 @@ export const BackgroundParticles = ({
           });
     observer?.observe(host);
 
-    preloadMinefieldParticleTextures()
+    preloadGambitParticleTextures()
       .catch(() => undefined)
       .finally(() => {
         if (isDisposed) {
@@ -367,7 +363,8 @@ export const BackgroundParticles = ({
           // Preenchimento inicial espalhado em alturas diferentes para a abertura
           // nao comecar com um unico bloco de particulas saindo do rodape.
           const seededProgress =
-            index / Math.max(1, Math.min(Math.ceil(maxParticles * 0.7), maxParticles));
+            index /
+            Math.max(1, Math.min(Math.ceil(maxParticles * 0.7), maxParticles));
           spawnParticle(seededProgress * 0.82);
         }
       });

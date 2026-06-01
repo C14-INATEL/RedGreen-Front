@@ -1,10 +1,10 @@
 import { AnimatedSprite, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import {
-  MINEFIELD_CLOSED_CARD_SPRITES,
-  MINEFIELD_REVEAL_ANIMATION_FRAMES,
-} from './minefieldTextures';
+  GAMBIT_CLOSED_CARD_SPRITES,
+  GAMBIT_REVEAL_ANIMATION_FRAMES,
+} from './gambitTextures';
 
-export type MineCardProps = {
+export type GambitCardProps = {
   disabled: boolean;
   onClick: () => void;
   onRevealComplete?: () => void;
@@ -15,12 +15,12 @@ export type MineCardProps = {
   y: number;
 };
 
-type MineCardOverlayState = 'closed' | 'animating' | 'hidden';
+type GambitCardOverlayState = 'closed' | 'animating' | 'hidden';
 
-export type MineCardInstance = {
+export type GambitCardInstance = {
   container: Container;
   destroy: () => void;
-  update: (nextProps: MineCardProps) => void;
+  update: (nextProps: GambitCardProps) => void;
 };
 
 const CARD_REVEALED_COLOR = 0xf1d28a;
@@ -67,7 +67,7 @@ const createValueTextStyle = (size: number) =>
 
 const createRevealAnimation = (size: number) => {
   const revealAnimation = AnimatedSprite.fromFrames(
-    MINEFIELD_REVEAL_ANIMATION_FRAMES
+    GAMBIT_REVEAL_ANIMATION_FRAMES
   );
 
   revealAnimation.width = size;
@@ -82,7 +82,7 @@ const createRevealAnimation = (size: number) => {
 
 const createClosedCardAnimation = (size: number) => {
   const closedCardAnimation = AnimatedSprite.fromFrames(
-    MINEFIELD_CLOSED_CARD_SPRITES
+    GAMBIT_CLOSED_CARD_SPRITES
   );
 
   closedCardAnimation.width = size;
@@ -94,9 +94,9 @@ const createClosedCardAnimation = (size: number) => {
   return closedCardAnimation;
 };
 
-export const createMineCard = (
-  initialProps: MineCardProps
-): MineCardInstance => {
+export const createGambitCard = (
+  initialProps: GambitCardProps
+): GambitCardInstance => {
   const container = new Container();
   const revealedCardFace = new Graphics();
   const revealedCardLabel = new Text(
@@ -106,11 +106,11 @@ export const createMineCard = (
   const closedCardAnimation = createClosedCardAnimation(initialProps.size);
   const revealAnimation = createRevealAnimation(initialProps.size);
   const closedCardAnimationInitialFrame = Math.floor(
-    Math.random() * MINEFIELD_CLOSED_CARD_SPRITES.length
+    Math.random() * GAMBIT_CLOSED_CARD_SPRITES.length
   );
 
   let currentProps = initialProps;
-  let overlayState: MineCardOverlayState = initialProps.revealed
+  let overlayState: GambitCardOverlayState = initialProps.revealed
     ? 'hidden'
     : 'closed';
 
@@ -212,7 +212,7 @@ export const createMineCard = (
     showClosedOverlay();
   }
 
-  const update = (nextProps: MineCardProps) => {
+  const update = (nextProps: GambitCardProps) => {
     const wasRevealed = currentProps.revealed;
 
     currentProps = nextProps;

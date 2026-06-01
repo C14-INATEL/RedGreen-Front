@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Minefield } from '../games/Minefield';
+import { Gambit } from '../games/Gambit';
 
-export const MinefieldRoom = () => {
+export const GambitRoom = () => {
   const Navigate = useNavigate();
 
   return (
@@ -19,7 +19,7 @@ export const MinefieldRoom = () => {
       />
 
       <div className="relative z-10 flex items-center justify-center">
-        <Minefield />
+        <Gambit />
       </div>
     </main>
   );
