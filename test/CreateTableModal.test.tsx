@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { CreateTableModal } from '../src/presentation/ui/CreateTabelModal';
+import { CreateTableModal } from '../src/presentation/ui/CreateTableModal';
 
 type SlotMachineFromApi = {
   SlotMachineId: number;

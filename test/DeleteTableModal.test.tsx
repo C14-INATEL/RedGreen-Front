@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { DeleteTableModal } from '../src/presentation/ui/DeleteTabelModal';
+import { DeleteTableModal } from '../src/presentation/ui/DeleteTableModal';
 
 const MockFetch = jest.fn<() => Promise<Partial<Response>>>();
 
