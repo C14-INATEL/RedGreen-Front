@@ -20,17 +20,17 @@ export type SlotMachineFromApi = {
 };
 
 type SlotMachineRouteState = {
-  slotMachineIntroCompleted?: boolean;
-  slotMachineId?: number;
+  SlotMachineIntroCompleted?: boolean;
+  SlotMachineId?: number;
 };
 
 export const SlotMachine = () => {
   const Location = useLocation();
   const Navigate = useNavigate();
   const RouteState = Location.state as SlotMachineRouteState | null;
-  const SelectedSlotMachineId = RouteState?.slotMachineId;
+  const SelectedSlotMachineId = RouteState?.SlotMachineId;
   const [HasEnteredMachineView, SetHasEnteredMachineView] = useState(
-    RouteState?.slotMachineIntroCompleted === true
+    RouteState?.SlotMachineIntroCompleted === true
   );
 
   return (
@@ -84,7 +84,7 @@ export const SlotMachine = () => {
                 replace: true,
                 state: {
                   ...RouteState,
-                  slotMachineIntroCompleted: true,
+                  SlotMachineIntroCompleted: true,
                 },
               }
             );
