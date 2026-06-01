@@ -25,11 +25,13 @@ export const SlotMachineCard = ({
       whileHover={{ scale: IsLocked ? 1 : 1.03 }}
       transition={{ duration: 0.15 }}
       className={`relative w-52 border-[3px] p-4 text-center shadow-[4px_4px_0px_#000] transition-all
-        ${
-          IsLocked
-            ? 'cursor-not-allowed border-white/10 bg-card/30 opacity-40'
-            : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
-        }`}
+  ${
+    IsLocked && !IsAdmin
+      ? 'cursor-not-allowed border-white/10 bg-card/30 opacity-40'
+      : IsLocked && IsAdmin
+      ? 'cursor-not-allowed border-white/10 bg-card/30'
+      : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
+  }`}
       style={{ imageRendering: 'pixelated' }}
       onClick={OnClick}
     >
@@ -66,19 +68,6 @@ export const SlotMachineCard = ({
         {MinimumChipsRequired.toLocaleString('pt-BR')}
       </p>
 
-      {IsAdmin && (
-        <button
-          className="mt-4 w-full border border-[#ff4444] px-2 py-2 text-[8px] uppercase text-[#ff6b6b] hover:bg-[#ff4444]/20 transition-colors"
-          style={{ fontFamily: '"Press Start 2P", monospace' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            OnDelete();
-          }}
-        >
-          Excluir
-        </button>
-      )}
-
       {IsLocked && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60">
           <span
@@ -88,6 +77,19 @@ export const SlotMachineCard = ({
             Bloqueado
           </span>
         </div>
+      )}
+
+      {IsAdmin && (
+        <button
+          className="relative z-10 mt-4 w-full border border-[#ff4444] px-2 py-2 text-[8px] uppercase text-[#ff6b6b] hover:bg-[#ff4444]/20 transition-colors opacity-90"
+          style={{ fontFamily: '"Press Start 2P", monospace' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            OnDelete();
+          }}
+        >
+          Excluir
+        </button>
       )}
     </motion.div>
   );
