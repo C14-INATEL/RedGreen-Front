@@ -117,35 +117,52 @@ export const CreateTableModal = ({
         </p>
 
         <div className="space-y-3">
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label
+                className="text-[8px] uppercase text-white/50"
+                style={{ fontFamily: '"Press Start 2P", monospace' }}
+              >
+                Nome da mesa
+              </label>
+              <span
+                className={`text-[8px] ${TableName.length >= 30 ? 'text-red-400' : 'text-white/40'}`}
+                style={{ fontFamily: '"Press Start 2P", monospace' }}
+              >
+                {TableName.length}/30
+              </span>
+            </div>
+            <input
+              placeholder="Nome da mesa"
+              value={TableName}
+              onChange={(e) => SetTableName(e.target.value)}
+              maxLength={30}
+              className="auth-input w-full"
+            />
+          </div>
+
           {[
             {
-              placeholder: 'Nome da mesa',
-              value: TableName,
-              setter: SetTableName,
-              type: 'text',
+              Placeholder: 'Aposta mínima',
+              Value: MinimumBet,
+              Setter: SetMinimumBet,
             },
             {
-              placeholder: 'Aposta mínima',
-              value: MinimumBet,
-              setter: SetMinimumBet,
+              Placeholder: 'Fichas mínimas',
+              Value: MinimumChips,
+              Setter: SetMinimumChips,
             },
             {
-              placeholder: 'Fichas mínimas',
-              value: MinimumChips,
-              setter: SetMinimumChips,
+              Placeholder: 'Valor do reroll',
+              Value: MinimumRerollValue,
+              Setter: SetMinimumRerollValue,
             },
-            {
-              placeholder: 'Valor do reroll',
-              value: MinimumRerollValue,
-              setter: SetMinimumRerollValue,
-            },
-          ].map(({ placeholder, value, setter, type }) => (
+          ].map(({ Placeholder, Value, Setter }) => (
             <input
-              key={placeholder}
-              type={type}
-              placeholder={placeholder}
-              value={value}
-              onChange={(e) => setter(e.target.value)}
+              key={Placeholder}
+              placeholder={Placeholder}
+              value={Value}
+              onChange={(e) => Setter(e.target.value)}
               className="auth-input"
             />
           ))}
