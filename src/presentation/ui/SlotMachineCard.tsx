@@ -29,8 +29,8 @@ export const SlotMachineCard = ({
     IsLocked && !IsAdmin
       ? 'cursor-not-allowed border-white/10 bg-card/30 opacity-40'
       : IsLocked && IsAdmin
-      ? 'cursor-not-allowed border-white/10 bg-card/30'
-      : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
+        ? 'cursor-not-allowed border-white/10 bg-card/30'
+        : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
   }`}
       style={{ imageRendering: 'pixelated' }}
       onClick={OnClick}
