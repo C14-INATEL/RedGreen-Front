@@ -36,7 +36,7 @@ describe('ResultModal', () => {
   });
 
   it('applies green border on success type', () => {
-    const { container } = render(
+    const { container: Container } = render(
       <ResultModal
         Title="OK"
         Message="Done."
@@ -44,12 +44,12 @@ describe('ResultModal', () => {
         OnClose={OnClose}
       />
     );
-    const el = container.firstChild?.firstChild as HTMLElement;
-    expect(el.className).toContain('border-[hsl(120,50%,35%)]');
+    const El = Container.firstChild?.firstChild as HTMLElement;
+    expect(El.className).toContain('border-[hsl(120,50%,35%)]');
   });
 
   it('applies red border on error type', () => {
-    const { container } = render(
+    const { container: Container } = render(
       <ResultModal
         Title="Error"
         Message="Failed."
@@ -57,7 +57,7 @@ describe('ResultModal', () => {
         OnClose={OnClose}
       />
     );
-    const el = container.firstChild?.firstChild as HTMLElement;
-    expect(el.className).toContain('border-[#ff4444]');
+    const El = Container.firstChild?.firstChild as HTMLElement;
+    expect(El.className).toContain('border-[#ff4444]');
   });
 });
