@@ -28,12 +28,12 @@ export const MOCK_GAMBIT_SESSION_IN_PROGRESS = buildBackendGambitSession({
 });
 
 export const MOCK_GAMBIT_SESSION_FINISHED = buildBackendGambitSession({
-  Result: 'Lost',
+  Result: 120,
   Status: 'Finished',
 });
 
 export const MOCK_GAMBIT_SESSION_CASHED_OUT = buildBackendGambitSession({
-  Result: 'CashedOut',
+  Result: 120,
   Status: 'CashedOut',
 });
 

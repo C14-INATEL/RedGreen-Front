@@ -2,6 +2,7 @@ import { GAMBIT_CELL_COUNT } from './gambitGameConfig';
 import type {
   BackendGambitCard,
   BackendGambitCurrentGridSnapshot,
+  BackendGambitEventType,
   BackendGambitGridPosition,
   BackendGambitPendingEvent,
   BackendGambitSession,
@@ -9,6 +10,7 @@ import type {
   BackendGambitTable,
   GambitCardEffectViewModel,
   GambitCurrentGridSnapshotViewModel,
+  GambitEventTypeViewModel,
   GambitGridCardViewModel,
   GambitId,
   GambitPendingEventViewModel,
@@ -31,6 +33,15 @@ const GAMBIT_STATUS_MAP: Record<BackendGambitStatus, GambitStatusViewModel> = {
   CashedOut: 'cashed-out',
   Finished: 'finished',
   InProgress: 'in-progress',
+};
+
+const GAMBIT_EVENT_TYPE_MAP: Record<
+  BackendGambitEventType,
+  GambitEventTypeViewModel
+> = {
+  Bad: 'bad',
+  Good: 'good',
+  Neutral: 'neutral',
 };
 
 const createHiddenGambitGridCards = (): GambitGridCardViewModel[] =>
@@ -100,6 +111,18 @@ export const mapBackendGambitStatusToViewModel = (
   return mappedStatus;
 };
 
+export const mapBackendGambitEventTypeToViewModel = (
+  eventType: BackendGambitEventType
+): GambitEventTypeViewModel => {
+  const mappedEventType = GAMBIT_EVENT_TYPE_MAP[eventType];
+
+  if (!mappedEventType) {
+    throw new Error(`Unknown Gambit event type "${String(eventType)}".`);
+  }
+
+  return mappedEventType;
+};
+
 export const mapBackendGambitTableToViewModel = (
   table: BackendGambitTable
 ): GambitTableViewModel => {
@@ -119,10 +142,13 @@ export const mapBackendGambitTableToViewModel = (
       table.MinimumCardsPurchased,
       'MinimumCardsPurchased'
     ),
-    minimumChipsRequired: requireFiniteNumber(
-      table.MinimumChipsRequired,
-      'MinimumChipsRequired'
-    ),
+    minimumChipsRequired:
+      table.MinimumChipsRequired == null
+        ? null
+        : requireFiniteNumber(
+            table.MinimumChipsRequired,
+            'MinimumChipsRequired'
+          ),
     name: table.Name,
     purchaseMultiplierScale: requireFiniteNumber(
       table.PurchaseMultiplierScale,
@@ -147,17 +173,23 @@ export const mapBackendGambitPendingEventToViewModel = (
     throw new Error('Invalid Gambit PendingEvent.CardsOffered.');
   }
 
+  if (pendingEvent.CardsOffered.length !== 3) {
+    throw new Error('Invalid Gambit PendingEvent.CardsOffered length.');
+  }
+
+  const cardsOffered = pendingEvent.CardsOffered.map((card) => {
+    const mappedCard = mapBackendGambitCardToViewModel(card);
+
+    if (!mappedCard) {
+      throw new Error('Invalid Gambit PendingEvent card.');
+    }
+
+    return mappedCard;
+  }) as GambitPendingEventViewModel['cardsOffered'];
+
   return {
-    cardsOffered: pendingEvent.CardsOffered.map((card) => {
-      const mappedCard = mapBackendGambitCardToViewModel(card);
-
-      if (!mappedCard) {
-        throw new Error('Invalid Gambit PendingEvent card.');
-      }
-
-      return mappedCard;
-    }),
-    eventType: pendingEvent.EventType,
+    cardsOffered,
+    eventType: mapBackendGambitEventTypeToViewModel(pendingEvent.EventType),
   };
 };
 
@@ -241,7 +273,10 @@ export const mapBackendGambitSessionToViewModel = (
       'ManualFlipsCount'
     ),
     nextEffect: mapBackendGambitCardToViewModel(session.NextEffect),
-    result: session.Result ?? null,
+    result:
+      session.Result == null
+        ? null
+        : requireFiniteNumber(session.Result, 'Result'),
     sessionId,
     status: mapBackendGambitStatusToViewModel(session.Status),
     table: session.GambitTable

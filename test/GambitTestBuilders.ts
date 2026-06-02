@@ -35,8 +35,12 @@ export const buildBackendGambitGridPosition = (
 export const buildBackendGambitPendingEvent = (
   overrides: Partial<BackendGambitPendingEvent> = {}
 ): BackendGambitPendingEvent => ({
-  CardsOffered: ['DOBRO_DE_POTASSIO', 'MELANCIDIO'],
-  EventType: 'CardChoice',
+  CardsOffered: [
+    'CLARIVIDENCIA',
+    'INVERSAO_GRAVITACIONAL',
+    'DOBRO_DE_POTASSIO',
+  ],
+  EventType: 'Good',
   ...overrides,
 });
 

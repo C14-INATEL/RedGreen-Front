@@ -38,6 +38,15 @@ describe('Gambit mapper', () => {
     });
   });
 
+  it('keeps MinimumChipsRequired null when the backend table sends null', () => {
+    expect(
+      mapBackendGambitTableToViewModel({
+        ...MOCK_GAMBIT_TABLE_ACTIVE,
+        MinimumChipsRequired: null,
+      }).minimumChipsRequired
+    ).toBeNull();
+  });
+
   it('maps an InProgress BackendGambitSession into a stable visual session', () => {
     const viewModel = mapBackendGambitSessionToViewModel(
       MOCK_GAMBIT_SESSION_IN_PROGRESS
@@ -59,11 +68,17 @@ describe('Gambit mapper', () => {
 
   it('maps Finished and CashedOut statuses explicitly', () => {
     expect(
-      mapBackendGambitSessionToViewModel(MOCK_GAMBIT_SESSION_FINISHED).status
-    ).toBe('finished');
+      mapBackendGambitSessionToViewModel(MOCK_GAMBIT_SESSION_FINISHED)
+    ).toMatchObject({
+      result: 120,
+      status: 'finished',
+    });
     expect(
-      mapBackendGambitSessionToViewModel(MOCK_GAMBIT_SESSION_CASHED_OUT).status
-    ).toBe('cashed-out');
+      mapBackendGambitSessionToViewModel(MOCK_GAMBIT_SESSION_CASHED_OUT)
+    ).toMatchObject({
+      result: 120,
+      status: 'cashed-out',
+    });
   });
 
   it('maps Revealed positions with Position, Points and Effect', () => {
@@ -117,15 +132,23 @@ describe('Gambit mapper', () => {
     const grid = mapBackendGambitGridToViewModel(
       buildBackendGambitCurrentGridSnapshot({
         PendingEvent: buildBackendGambitPendingEvent({
-          CardsOffered: ['CLARIVIDENCIA', 'INVERSAO_GRAVITACIONAL'],
-          EventType: 'ChooseEffect',
+          CardsOffered: [
+            'CLARIVIDENCIA',
+            'INVERSAO_GRAVITACIONAL',
+            'DOBRO_DE_POTASSIO',
+          ],
+          EventType: 'Good',
         }),
       })
     );
 
     expect(grid.pendingEvent).toEqual({
-      cardsOffered: ['clarividencia', 'inversao-gravitacional'],
-      eventType: 'ChooseEffect',
+      cardsOffered: [
+        'clarividencia',
+        'inversao-gravitacional',
+        'dobro-de-potassio',
+      ],
+      eventType: 'good',
     });
   });
 

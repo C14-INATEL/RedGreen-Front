@@ -6,6 +6,8 @@ export type BackendGambitCard =
   | 'CLARIVIDENCIA'
   | 'INVERSAO_GRAVITACIONAL';
 
+export type BackendGambitEventType = 'Good' | 'Bad' | 'Neutral';
+
 export type BackendGambitTable = {
   Active: boolean;
   CardPrice: number;
@@ -14,7 +16,7 @@ export type BackendGambitTable = {
   GambitTableId: number | string;
   MaxCardsPurchased: number;
   MinimumCardsPurchased: number;
-  MinimumChipsRequired: number;
+  MinimumChipsRequired: number | null;
   Name: string;
   PurchaseMultiplierScale: number;
   TableMultiplier: number;
@@ -27,8 +29,8 @@ export type BackendGambitGridPosition = {
 };
 
 export type BackendGambitPendingEvent = {
-  CardsOffered: BackendGambitCard[];
-  EventType: string;
+  CardsOffered: [BackendGambitCard, BackendGambitCard, BackendGambitCard];
+  EventType: BackendGambitEventType;
 };
 
 export type BackendGambitCurrentGridSnapshot = {
@@ -47,7 +49,7 @@ export type BackendGambitSession = {
   GambitTableId: number | string;
   ManualFlipsCount: number;
   NextEffect: BackendGambitCard | null;
-  Result: string | null;
+  Result: number | null;
   Status: BackendGambitStatus;
   UpdatedAt: string;
   UserId: number | string;
@@ -63,6 +65,8 @@ export type GambitCardEffectViewModel =
   | 'clarividencia'
   | 'inversao-gravitacional';
 
+export type GambitEventTypeViewModel = 'good' | 'bad' | 'neutral';
+
 export type GambitTableViewModel = {
   active: boolean;
   cardPrice: number;
@@ -71,7 +75,7 @@ export type GambitTableViewModel = {
   gambitTableId: GambitId;
   maxCardsPurchased: number;
   minimumCardsPurchased: number;
-  minimumChipsRequired: number;
+  minimumChipsRequired: number | null;
   name: string;
   purchaseMultiplierScale: number;
   tableId: GambitId;
@@ -87,8 +91,12 @@ export type GambitGridCardViewModel = {
 };
 
 export type GambitPendingEventViewModel = {
-  cardsOffered: GambitCardEffectViewModel[];
-  eventType: string;
+  cardsOffered: [
+    GambitCardEffectViewModel,
+    GambitCardEffectViewModel,
+    GambitCardEffectViewModel,
+  ];
+  eventType: GambitEventTypeViewModel;
 };
 
 export type GambitCurrentGridSnapshotViewModel = {
@@ -105,7 +113,7 @@ export type GambitSessionViewModel = {
   grid: GambitCurrentGridSnapshotViewModel;
   manualFlipsCount: number;
   nextEffect: GambitCardEffectViewModel | null;
-  result: string | null;
+  result: number | null;
   sessionId: GambitId;
   status: GambitStatusViewModel;
   table: GambitTableViewModel | null;
