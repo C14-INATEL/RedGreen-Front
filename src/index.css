@@ -212,3 +212,51 @@ body {
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
 }
+
+.reward-soft-pulse {
+  animation: reward-soft-pulse 3.2s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.reward-particle {
+  position: absolute;
+  display: block;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 244, 199, 0.95) 0%,
+    rgba(255, 244, 199, 0.4) 45%,
+    transparent 100%
+  );
+  transform: translate3d(0, 0, 0);
+  will-change: opacity, transform;
+  animation-name: reward-particle-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes reward-soft-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.985);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(1.015);
+  }
+}
+
+@keyframes reward-particle-float {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate3d(0, 0, 0) scale(0.92);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: translate3d(0, -14px, 0) scale(1.05);
+  }
+}

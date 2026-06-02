@@ -10,6 +10,14 @@ const Table = () => {
   const Navigate = useNavigate();
 
   const HandleStartGame = () => {
+    const Token = localStorage.getItem('authToken');
+    const IsLoggedIn = !!Token;
+
+    if (IsLoggedIn) {
+      Navigate('/tables');
+      return;
+    }
+
     Navigate(paths.slotmachineroom, {
       state: {
         slotMachineIntroCompleted: false,
@@ -43,7 +51,7 @@ const Table = () => {
 
           <div className="relative z-10 mx-auto flex min-h-[280px] w-full max-w-2xl items-center justify-around gap-8 py-4 md:max-w-3xl md:gap-16">
             <GameCard
-              title="Caça-Niquel"
+              title="Caça-Níquel"
               subtitle="Girar"
               icon={<SlotMachineIcon />}
               delay={0.1}

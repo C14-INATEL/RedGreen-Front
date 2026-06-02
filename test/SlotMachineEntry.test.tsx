@@ -97,7 +97,7 @@ describe('SlotMachine entry flow', () => {
         replace: true,
         state: {
           fromLobby: true,
-          slotMachineIntroCompleted: true,
+          SlotMachineIntroCompleted: true,
         },
       }
     );
