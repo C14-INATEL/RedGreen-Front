@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   RewardChoiceModal,
   rewardTriggerConfig,
@@ -10,6 +10,8 @@ import { GambitBoard } from './GambitGame/GambitBoard';
 
 export const Gambit = () => {
   const [viewModel, setViewModel] = useState(createMockGambitViewModel);
+  const [isRevealAnimationLocked, setIsRevealAnimationLocked] = useState(false);
+  const revealAnimationLockedRef = useRef(false);
   const cards = viewModel.grid.cards;
   const revealedCardCount = cards.filter((card) => card.revealed).length;
   const rewardController = useCardRewardController({
@@ -21,8 +23,21 @@ export const Gambit = () => {
     0
   );
 
+  const lockRevealAnimation = () => {
+    revealAnimationLockedRef.current = true;
+    setIsRevealAnimationLocked(true);
+  };
+
+  const unlockRevealAnimation = () => {
+    revealAnimationLockedRef.current = false;
+    setIsRevealAnimationLocked(false);
+  };
+
   const handleCardReveal = (cardId: number) => {
-    if (rewardController.isInteractionLocked) {
+    if (
+      revealAnimationLockedRef.current ||
+      rewardController.isInteractionLocked
+    ) {
       return;
     }
 
@@ -32,6 +47,7 @@ export const Gambit = () => {
       return;
     }
 
+    lockRevealAnimation();
     setViewModel((currentViewModel) => {
       const nextCards = currentViewModel.grid.cards.map((card) =>
         card.id === cardId ? { ...card, revealed: true } : card
@@ -54,6 +70,7 @@ export const Gambit = () => {
 
   const handleCardRevealAnimationComplete = (cardId: number) => {
     rewardController.handleRevealAnimationComplete(cardId);
+    unlockRevealAnimation();
   };
 
   return (
@@ -95,13 +112,16 @@ export const Gambit = () => {
         <GambitBoard
           cards={cards}
           className="aspect-square w-full overflow-hidden"
-          interactionLocked={rewardController.isInteractionLocked}
+          interactionLocked={
+            rewardController.isInteractionLocked || isRevealAnimationLocked
+          }
           onCardReveal={handleCardReveal}
           onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
         />
       </div>
 
       <RewardChoiceModal
+        isSelectionLocked={rewardController.isRewardSelectionLocked}
         onCardHover={rewardController.handleRewardCardHover}
         onCardSelect={rewardController.handleRewardCardSelect}
         onSelectedCardCinematicComplete={

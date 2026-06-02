@@ -32,6 +32,5 @@ export const getNextGambitTableType = (
     return 'bad';
   }
 
-  // Futuras mesas especiais podem entrar aqui sem mexer na timeline.
   return 'bad';
 };

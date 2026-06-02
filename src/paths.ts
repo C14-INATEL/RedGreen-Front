@@ -1,4 +1,3 @@
-// Centraliza os paths usados nas rotas para evitar strings soltas
 export const paths = {
   home: '/',
   login: '/login',
@@ -6,6 +5,5 @@ export const paths = {
   dashboard: '/dashboard',
   slotmachineroom: '/slot-machine-room',
   gambitRoom: '/gambit-room',
-  legacyGambitRoom: '/minefield-room',
   rouletteRoom: '/roulette-room',
 } as const;

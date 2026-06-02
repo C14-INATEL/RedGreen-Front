@@ -15,8 +15,9 @@ import { selectedCardOverlayTransition } from '../../animations/cardSelectionAni
 import { RewardCard } from './RewardCard';
 
 type RewardChoiceModalProps = {
+  isSelectionLocked?: boolean;
   onCardHover: (card: RewardCardOption) => void;
-  onCardSelect: (optionId: string) => void;
+  onCardSelect: (optionId: string) => boolean;
   onSelectedCardCinematicComplete: (sessionId: string) => void;
   onTableTransitionComplete: (sessionId: string) => void;
   presentationConfig?: RewardPresentationConfig;
@@ -71,6 +72,7 @@ const getSelectedOptionIdsForTable = (
     .map((entry) => entry.optionId);
 
 export const RewardChoiceModal = ({
+  isSelectionLocked = false,
   onCardHover,
   onCardSelect,
   onSelectedCardCinematicComplete,
@@ -303,6 +305,16 @@ export const RewardChoiceModal = ({
         displayedCards.find((card) => card.optionId === optionId) ?? null;
       const activeSession = sessionRef.current;
 
+      if (!selectedCard || isSelectionLocked) {
+        return;
+      }
+
+      const wasSelectionAccepted = onCardSelect(optionId);
+
+      if (!wasSelectionAccepted) {
+        return;
+      }
+
       if (!modalRef.current || !buttonElement || !selectedCard) {
         setSelectedCenterCardOverlay(null);
       } else {
@@ -320,7 +332,6 @@ export const RewardChoiceModal = ({
       }
 
       if (!activeSession) {
-        onCardSelect(optionId);
         return;
       }
 
@@ -391,11 +402,10 @@ export const RewardChoiceModal = ({
 
         transitionPrepTimeoutRef.current = null;
       }, timings.selectedCardCenteringDurationMs);
-
-      onCardSelect(optionId);
     },
     [
       displayedCards,
+      isSelectionLocked,
       onCardSelect,
       onSelectedCardCinematicComplete,
       timings.selectedCardCenteringDurationMs,
@@ -713,6 +723,7 @@ export const RewardChoiceModal = ({
                       index={index}
                       isDisabled={
                         session.status !== 'selecting' ||
+                        isSelectionLocked ||
                         tableSceneState.isTransitioning
                       }
                       isResolved={session.status === 'resolving'}

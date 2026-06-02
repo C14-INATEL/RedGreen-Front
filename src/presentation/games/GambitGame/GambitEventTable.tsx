@@ -135,8 +135,6 @@ export const GambitEventTable = ({
       tableViewport: GambitEventTableViewport
     ) => {
       tableSprite.anchor.set(0.5);
-      // A mesa pode crescer visualmente sem mexer no grid/cartas do modal,
-      // porque o layout interativo continua no DOM e o Pixi desenha so o fundo.
       tableSprite.width = tableViewport.width * TABLE_RENDER_SCALE_X;
       tableSprite.height = tableViewport.height * TABLE_RENDER_SCALE_Y;
       tableSprite.roundPixels = true;
@@ -163,9 +161,6 @@ export const GambitEventTable = ({
         return;
       }
 
-      // O flash verde acontecia porque a mesa incoming ainda podia aparecer
-      // no primeiro frame usando estado/textura provisoria do sprite.
-      // Aqui deixamos as duas texturas resolvidas e aplicadas antes da animacao.
       applyTableTexture(baseTable, tableStateRef.current.currentTable);
       applyTableTexture(incomingTable, 'bad');
       incomingTable.visible = false;
@@ -194,8 +189,6 @@ export const GambitEventTable = ({
       );
       resetTableSpriteVisualState(baseTable);
       incomingTable.visible = false;
-      // O flash branco vinha daqui: o layer de impacto podia existir por 1 frame
-      // antes de o estado idle zerar sua opacidade. Mantemos invisivel por padrao.
       impactFlash.alpha = 0;
       impactFlash.visible = false;
       activeTransitionId = null;
@@ -227,8 +220,6 @@ export const GambitEventTable = ({
       };
       activeTransitionId = nextTableState.transitionId;
 
-      // Antes a mesa nova era desenhada no mesmo retangulo do modal.
-      // Aqui cada mesa ganha seu proprio sprite e posicao na cena inteira.
       applyTableLayout(baseTable, tableViewport);
       applyTableLayout(incomingTable, tableViewport);
 
@@ -352,8 +343,6 @@ export const GambitEventTable = ({
           : exitingStartX +
             (exitingTargetX - exitingStartX) * easeInCubic(outgoingPhase);
 
-      // A colisao acontece na cena inteira. A mesa nova vem de fora da viewport
-      // e empurra a antiga para alem da borda esquerda, sem clipping do modal.
       baseTable.position.set(Math.round(outgoingX), Math.round(centerY));
       incomingTable.position.set(Math.round(incomingX), Math.round(centerY));
 

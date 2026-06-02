@@ -244,9 +244,6 @@ export const BackgroundParticles = ({
 
       while (spawnAccumulator >= spawnIntervalMs) {
         if (activeParticles.length >= maxParticles) {
-          // O ajuste anterior reciclava particulas ainda em voo e por isso elas
-          // morriam antes do topo. Quando o pool enche, seguramos o timer perto
-          // do proximo spawn sem acumular um "estouro" futuro.
           spawnAccumulator = Math.min(spawnAccumulator, spawnIntervalMs - 1);
           break;
         }

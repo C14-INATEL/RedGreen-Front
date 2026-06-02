@@ -35,7 +35,6 @@ export const AppRoutes = () => (
     <Route path={paths.dashboard} element={<Dashboard />} />
     <Route path={paths.slotmachineroom} element={<SlotMachineRoom />} />
     <Route path={paths.gambitRoom} element={<GambitRoom />} />
-    <Route path={paths.legacyGambitRoom} element={<GambitRoom />} />
     <Route path={paths.rouletteRoom} element={<RouletteRoom />} />
   </Routes>
 );
