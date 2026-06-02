@@ -43,7 +43,7 @@ const Table = () => {
                   subtitle="Girar"
                   icon={<SlotMachineIcon />}
                   delay={0.1}
-                  onClick={handleStartGame}
+                  onClick={handleStartSlotMachine}
                 />
               </div>
 

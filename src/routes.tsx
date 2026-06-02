@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { paths } from './paths';
 import Login from './presentation/pages/Login';
+import { MinefieldRoom } from './presentation/pages/MinefieldRoom';
 import { SlotMachineRoom } from './presentation/pages/SlotMachineRoom';
 import GuestRoute from './presentation/ui/GuestRoute';
 import Home from './presentation/pages/Home';
@@ -34,6 +35,7 @@ export const AppRoutes = () => (
 
     <Route path={paths.dashboard} element={<Dashboard />} />
     <Route path={paths.slotmachineroom} element={<SlotMachineRoom />} />
+    <Route path={paths.minefieldRoom} element={<MinefieldRoom />} />
     <Route path={paths.rouletteRoom} element={<RouletteRoom />} />
     <Route path="/tables" element={<SlotMachineTablesRoom />} />
   </Routes>
