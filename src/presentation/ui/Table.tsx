@@ -3,13 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import TableDecorations from '@ui/TableDecorations';
 import GameCard from '@ui/GameCard';
 import SlotMachineIcon from '@ui/SlotMachineIcon';
-import { paths } from '../../paths';
 
 const Table = () => {
   const Navigate = useNavigate();
 
-  const handleStartSlotMachine = () => {
-    Navigate(paths.slotmachineroom, {
+  const handleStartGame = () => {
+    const Token = localStorage.getItem('authToken');
+
+    const IsLoggedIn = !!Token;
+
+    if (IsLoggedIn) {
+      Navigate('/tables');
+      return;
+    }
+
+    Navigate('/slot-machine-room', {
       state: {
         slotMachineIntroCompleted: false,
       },

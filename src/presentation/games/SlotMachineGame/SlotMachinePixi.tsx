@@ -48,6 +48,7 @@ const EMPTY_MACHINE_SIZE = {
 
 type SlotMachinePixiProps = {
   animateMachineSprite?: boolean;
+  slotMachineId?: number;
 };
 
 type ApplySessionStateOptions = {
@@ -89,6 +90,7 @@ const getRerollCounterStates = (
 
 export const SlotMachinePixi = ({
   animateMachineSprite = false,
+  slotMachineId,
 }: SlotMachinePixiProps) => {
   const { mutate: mutateUserChips } = useUserChips();
   const machineRef = useRef<HTMLDivElement | null>(null);
@@ -245,10 +247,10 @@ export const SlotMachinePixi = ({
           return;
         }
 
-        const preferredMachine = getPreferredSlotMachine(
-          slotMachines,
-          activeSession
-        );
+        const preferredMachine =
+          slotMachines.find(
+            (machine) => machine.SlotMachineId === slotMachineId
+          ) ?? getPreferredSlotMachine(slotMachines, activeSession);
 
         setSelectedMachineId(
           preferredMachine?.SlotMachineId ??
@@ -295,7 +297,7 @@ export const SlotMachinePixi = ({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [slotMachineId]);
 
   const handleLeverAnimationStateChange = useCallback(
     (nextIsAnimating: boolean) => {
