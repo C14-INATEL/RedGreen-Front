@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchActiveSlotSession } from '../games/SlotMachineGame/slotMachineApi';
 import { paths } from '@/paths';
 import { useUserChips } from '@/application/hooks/useUserChips';
+import { apiClient } from '@/infrastructure/http/client';
 import { CreateTableModal } from '../ui/CreateTableModal';
 import { DeleteTableModal } from '../ui/DeleteTableModal';
 import { ResultModal } from '../ui/ResultModal';
@@ -52,9 +53,8 @@ export const SlotMachineTablesRoom = () => {
   useEffect(() => {
     const FetchTables = async () => {
       try {
-        const Response = await fetch('http://localhost:3000/slot/machine');
-
-        const Data = await Response.json();
+        const Response = await apiClient.get('/slot/machine');
+        const Data = Response.data;
 
         SetApiTables(Data);
       } catch (Error) {
@@ -187,7 +187,6 @@ export const SlotMachineTablesRoom = () => {
 
       {ShowCreateTableModal && (
         <CreateTableModal
-          Token={Token}
           OnClose={() => SetShowCreateTableModal(false)}
           OnTableCreated={(newTable) =>
             SetApiTables((current) => [...current, newTable])
@@ -211,7 +210,6 @@ export const SlotMachineTablesRoom = () => {
         <DeleteTableModal
           TableName={SelectedTableName}
           TableId={SelectedTableId}
-          Token={Token}
           OnClose={() => SetShowDeleteModal(false)}
           OnTableDeleted={(tableId) =>
             SetApiTables((current) =>

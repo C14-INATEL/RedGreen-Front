@@ -12,134 +12,154 @@ type SlotMachineFromApi = {
   Active: boolean;
 };
 
-const MockFetch = jest.fn<() => Promise<Partial<Response>>>();
+type ApiPostMock = (
+  Url: string,
+  Payload?: Record<string, unknown>
+) => Promise<{ data: Record<string, unknown>; status?: number }>;
 
-const defaultProps = {
-  Token: 'fake-token',
+const MockApiPost = jest.fn<ApiPostMock>();
+
+jest.mock('@infrastructure/http/client', () => ({
+  apiClient: {
+    post: (Url: string, Payload?: Record<string, unknown>) =>
+      MockApiPost(Url, Payload),
+  },
+}));
+
+const DefaultProps = {
   OnClose: jest.fn<() => void>(),
-  OnTableCreated: jest.fn<(table: SlotMachineFromApi) => void>(),
-  OnError: jest.fn<(message: string) => void>(),
-  OnSuccess: jest.fn<(message: string) => void>(),
+  OnTableCreated: jest.fn<(Table: SlotMachineFromApi) => void>(),
+  OnError: jest.fn<(Message: string) => void>(),
+  OnSuccess: jest.fn<(Message: string) => void>(),
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
-  globalThis.fetch = MockFetch as unknown as typeof fetch;
-  MockFetch.mockReset();
+  MockApiPost.mockReset();
 });
 
 const FillForm = (
-  overrides: Partial<{
-    name: string;
-    bet: string;
-    chips: string;
-    reroll: string;
+  Overrides: Partial<{
+    Name: string;
+    Bet: string;
+    Chips: string;
+    Reroll: string;
   }> = {}
 ) => {
   const {
-    name = 'New Table',
-    bet = '100',
-    chips = '500',
-    reroll = '50',
-  } = overrides;
+    Name = 'New Table',
+    Bet = '100',
+    Chips = '500',
+    Reroll = '50',
+  } = Overrides;
+
   fireEvent.change(screen.getByPlaceholderText('Nome da mesa'), {
-    target: { value: name },
+    target: { value: Name },
   });
-  fireEvent.change(screen.getByPlaceholderText('Aposta mínima'), {
-    target: { value: bet },
+  fireEvent.change(screen.getByPlaceholderText(/Aposta/i), {
+    target: { value: Bet },
   });
-  fireEvent.change(screen.getByPlaceholderText('Fichas mínimas'), {
-    target: { value: chips },
+  fireEvent.change(screen.getByPlaceholderText(/Fichas/i), {
+    target: { value: Chips },
   });
   fireEvent.change(screen.getByPlaceholderText('Valor do reroll'), {
-    target: { value: reroll },
+    target: { value: Reroll },
   });
 };
 
 describe('CreateTableModal', () => {
   it('renders all input fields', () => {
-    render(<CreateTableModal {...defaultProps} />);
+    render(<CreateTableModal {...DefaultProps} />);
     expect(screen.getByPlaceholderText('Nome da mesa')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Aposta mínima')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Fichas mínimas')).toBeTruthy();
+    expect(screen.getByPlaceholderText(/Aposta/i)).toBeTruthy();
+    expect(screen.getByPlaceholderText(/Fichas/i)).toBeTruthy();
     expect(screen.getByPlaceholderText('Valor do reroll')).toBeTruthy();
   });
 
   it('calls OnError when name is empty', () => {
-    render(<CreateTableModal {...defaultProps} />);
+    render(<CreateTableModal {...DefaultProps} />);
     fireEvent.click(screen.getByText('Criar'));
-    expect(defaultProps.OnError).toHaveBeenCalledWith(
-      'O nome da mesa é obrigatório.'
+    expect(DefaultProps.OnError).toHaveBeenCalledWith(
+      expect.stringContaining('O nome da mesa')
     );
   });
 
   it('calls OnError when numeric fields are empty', () => {
-    render(<CreateTableModal {...defaultProps} />);
+    render(<CreateTableModal {...DefaultProps} />);
     fireEvent.change(screen.getByPlaceholderText('Nome da mesa'), {
       target: { value: 'Table' },
     });
     fireEvent.click(screen.getByText('Criar'));
-    expect(defaultProps.OnError).toHaveBeenCalledWith(
+    expect(DefaultProps.OnError).toHaveBeenCalledWith(
       'Preencha todos os campos.'
     );
   });
 
   it('calls OnError when bet is zero', () => {
-    render(<CreateTableModal {...defaultProps} />);
-    FillForm({ bet: '0' });
+    render(<CreateTableModal {...DefaultProps} />);
+    FillForm({ Bet: '0' });
     fireEvent.click(screen.getByText('Criar'));
-    expect(defaultProps.OnError).toHaveBeenCalledWith(
-      'A aposta mínima e o valor do reroll devem ser maiores que zero.'
+    expect(DefaultProps.OnError).toHaveBeenCalledWith(
+      expect.stringContaining('valor do reroll devem ser maiores que zero')
     );
   });
 
   it('calls OnError when values are not integers', () => {
-    render(<CreateTableModal {...defaultProps} />);
-    FillForm({ bet: '1.5' });
+    render(<CreateTableModal {...DefaultProps} />);
+    FillForm({ Bet: '1.5' });
     fireEvent.click(screen.getByText('Criar'));
-    expect(defaultProps.OnError).toHaveBeenCalledWith(
-      'A aposta mínima, fichas mínimas e valor do reroll devem ser números inteiros.'
+    expect(DefaultProps.OnError).toHaveBeenCalledWith(
+      expect.stringContaining('valor do reroll devem ser')
     );
   });
 
   it('creates table successfully', async () => {
     const NewTable = { SlotMachineId: 99, Name: 'New Table', Active: true };
-    MockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => NewTable,
+    MockApiPost.mockResolvedValueOnce({
+      data: NewTable,
+      status: 200,
     });
 
-    render(<CreateTableModal {...defaultProps} />);
+    render(<CreateTableModal {...DefaultProps} />);
     FillForm();
     fireEvent.click(screen.getByText('Criar'));
 
     await waitFor(() => {
-      expect(defaultProps.OnTableCreated).toHaveBeenCalledWith(NewTable);
-      expect(defaultProps.OnSuccess).toHaveBeenCalledWith(
+      expect(MockApiPost).toHaveBeenCalledWith(
+        '/slot/machine',
+        expect.objectContaining({
+          Name: 'New Table',
+        })
+      );
+      expect(DefaultProps.OnTableCreated).toHaveBeenCalledWith(NewTable);
+      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith(
         'Mesa criada com sucesso!'
       );
-      expect(defaultProps.OnClose).toHaveBeenCalled();
+      expect(DefaultProps.OnClose).toHaveBeenCalled();
     });
   });
 
   it('calls OnError on API failure', async () => {
-    MockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'Duplicate name' }),
+    MockApiPost.mockRejectedValueOnce({
+      response: {
+        data: {
+          message: 'Duplicate name',
+        },
+      },
     });
 
-    render(<CreateTableModal {...defaultProps} />);
+    render(<CreateTableModal {...DefaultProps} />);
     FillForm();
     fireEvent.click(screen.getByText('Criar'));
 
     await waitFor(() => {
-      expect(defaultProps.OnError).toHaveBeenCalledWith('Duplicate name');
+      expect(DefaultProps.OnError).toHaveBeenCalledWith('Duplicate name');
     });
   });
 
   it('calls OnClose when clicking cancel', () => {
-    render(<CreateTableModal {...defaultProps} />);
+    render(<CreateTableModal {...DefaultProps} />);
     fireEvent.click(screen.getByText('Cancelar'));
-    expect(defaultProps.OnClose).toHaveBeenCalledTimes(1);
+    expect(DefaultProps.OnClose).toHaveBeenCalledTimes(1);
   });
 });

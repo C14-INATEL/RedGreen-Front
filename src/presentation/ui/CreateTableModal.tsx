@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { apiClient } from '@infrastructure/http/client';
 
 type SlotMachineFromApi = {
   SlotMachineId: number;
@@ -12,15 +13,13 @@ type SlotMachineFromApi = {
 };
 
 type CreateTableModalProps = {
-  Token: string | null;
   OnClose: () => void;
-  OnTableCreated: (newTable: SlotMachineFromApi) => void;
-  OnError: (message: string) => void;
-  OnSuccess: (message: string) => void;
+  OnTableCreated: (NewTable: SlotMachineFromApi) => void;
+  OnError: (Message: string) => void;
+  OnSuccess: (Message: string) => void;
 };
 
 export const CreateTableModal = ({
-  Token,
   OnClose,
   OnTableCreated,
   OnError,
@@ -62,34 +61,25 @@ export const CreateTableModal = ({
     }
 
     try {
-      const Response = await fetch('http://localhost:3000/slot/machine', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${Token}`,
-        },
-        body: JSON.stringify({
-          Name: TableName,
-          Description: 'Mesa criada pelo sistema',
-          MinimumSpinValue: Number(MinimumBet),
-          MinimumChipsRequired: Number(MinimumChips),
-          MinimumRerollValue: Number(MinimumRerollValue),
-          MaxRerolls: 5,
-          Active: true,
-        }),
+      const Response = await apiClient.post('/slot/machine', {
+        Name: TableName,
+        Description: 'Mesa criada pelo sistema',
+        MinimumSpinValue: Number(MinimumBet),
+        MinimumChipsRequired: Number(MinimumChips),
+        MinimumRerollValue: Number(MinimumRerollValue),
+        MaxRerolls: 5,
+        Active: true,
       });
 
-      if (!Response.ok) {
-        const ErrorData = await Response.json();
-        throw new Error(ErrorData.message ?? 'Erro ao criar mesa');
-      }
-
-      const NewTable = await Response.json();
+      const NewTable = Response.data;
       OnTableCreated(NewTable);
       OnSuccess('Mesa criada com sucesso!');
       OnClose();
-    } catch (err) {
-      OnError(err instanceof Error ? err.message : 'Erro ao criar mesa');
+    } catch (Err) {
+      const ErrorMessage =
+        (Err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? (Err instanceof Error ? Err.message : null);
+      OnError(ErrorMessage ?? 'Erro ao criar mesa');
     }
   };
 

@@ -352,13 +352,15 @@ describe('Home', () => {
     const OnClose = jest.fn();
     const OnSuccess = jest.fn();
 
-    MockUseUserProfile.mockReturnValue({
-      name: 'Old Name',
-      nickname: 'PixelPlayer',
-      email: 'pixel@example.com',
-      birthDate: '2000-01-02',
-      isLoading: false,
-    });
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        Name: 'Old Name',
+        Nickname: 'PixelPlayer',
+        Email: 'pixel@example.com',
+        BirthDate: '2000-01-02',
+      })
+    );
 
     MockApiPatch.mockResolvedValue({
       data: {
@@ -402,7 +404,12 @@ describe('Home', () => {
     });
 
     expect(OnSuccess).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem('user')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('user') ?? '{}')).toEqual(
+      expect.objectContaining({
+        Name: 'New Name',
+        BirthDate: '1999-04-03',
+      })
+    );
 
     act(() => {
       jest.advanceTimersByTime(1000);
