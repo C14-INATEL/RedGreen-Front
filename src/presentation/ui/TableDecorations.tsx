@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 const TableDecorations = () => {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* Ficha vermelha grande - canto superior esquerdo */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -31,7 +30,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Ficha azul pequena - canto superior esquerdo */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -64,7 +62,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Ficha vermelha média - canto superior direito */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -97,7 +94,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Ficha azul pequena - canto superior direito */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -130,7 +126,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Carta A de copas - canto inferior esquerdo */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -174,7 +169,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Carta K de espadas - canto inferior esquerdo */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -218,7 +212,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Dado 5 - canto inferior direito */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -249,7 +242,6 @@ const TableDecorations = () => {
         </svg>
       </motion.div>
 
-      {/* Dado 2 - canto inferior direito */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
