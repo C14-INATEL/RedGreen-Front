@@ -11,11 +11,6 @@ const CassinoLogo = () => (
     <p className="text-cassino-red text-[8px] tracking-[0.3em] uppercase font-body mt-1">
       Cassino
     </p>
-    <div className="flex items-center justify-center gap-1 mt-1">
-      <div className="w-2 h-2 bg-cassino-gold" />
-      <div className="w-2 h-2 bg-cassino-red" />
-      <div className="w-2 h-2 bg-accent-green" />
-    </div>
   </div>
 );
 

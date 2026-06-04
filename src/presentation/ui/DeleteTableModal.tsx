@@ -1,44 +1,45 @@
 import { motion } from 'framer-motion';
+import { apiClient } from '@infrastructure/http/client';
 
 type DeleteTableModalProps = {
   TableName: string;
   TableId: number | null;
-  Token: string | null;
   OnClose: () => void;
-  OnSuccess: (message: string) => void;
-  OnError: (message: string) => void;
-  OnTableDeleted: (tableId: number) => void;
+  OnSuccess: (Message: string) => void;
+  OnError: (Message: string) => void;
+  OnTableDeleted: (TableId: number) => void;
 };
 
 export const DeleteTableModal = ({
   TableName,
   TableId,
-  Token,
   OnClose,
   OnSuccess,
   OnError,
   OnTableDeleted,
 }: DeleteTableModalProps) => {
   const HandleDelete = async () => {
+    if (TableId === null) {
+      OnError('Mesa invalida.');
+      return;
+    }
+
     try {
-      const Response = await fetch(
-        `http://localhost:3000/slot/machine/${TableId}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${Token}` },
-        }
-      );
+      await apiClient.delete(`/slot/machine/${TableId}`);
 
-      if (!Response.ok)
-        throw new Error(
-          'Não é possível excluir a mesa pois há sessões ativas.'
-        );
-
-      OnTableDeleted(TableId!);
+      OnTableDeleted(TableId);
       OnSuccess('Mesa removida com sucesso.');
       OnClose();
-    } catch (err) {
-      OnError(err instanceof Error ? err.message : 'Erro ao remover mesa.');
+    } catch (Err) {
+      const HasApiResponse = Boolean((Err as { response?: unknown })?.response);
+      const ErrorMessage =
+        Err instanceof Error ? Err.message : 'Erro ao remover mesa.';
+
+      OnError(
+        HasApiResponse
+          ? 'Nao e possivel excluir a mesa pois ha sessoes ativas.'
+          : ErrorMessage
+      );
     }
   };
 

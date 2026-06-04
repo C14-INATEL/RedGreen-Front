@@ -1,7 +1,9 @@
+import slotMachineImage from '../../assets/slot-machine.png';
+
 const SlotMachineIcon = () => (
   <img
-    src="/caca-niquel.png"
-    alt="Caça-Níquel"
+    src={slotMachineImage}
+    alt="Caca-niquel"
     className="h-20 w-20 object-contain"
   />
 );

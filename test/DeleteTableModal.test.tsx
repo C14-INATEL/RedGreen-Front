@@ -2,72 +2,83 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { DeleteTableModal } from '../src/presentation/ui/DeleteTableModal';
 
-const MockFetch = jest.fn<() => Promise<Partial<Response>>>();
+type ApiDeleteMock = (Url: string) => Promise<unknown>;
 
-const defaultProps = {
+const MockApiDelete = jest.fn<ApiDeleteMock>();
+
+jest.mock('@infrastructure/http/client', () => ({
+  apiClient: {
+    delete: (Url: string) => MockApiDelete(Url),
+  },
+}));
+
+const DefaultProps = {
   TableName: 'Test Table',
   TableId: 1,
-  Token: 'fake-token',
   OnClose: jest.fn<() => void>(),
-  OnSuccess: jest.fn<(message: string) => void>(),
-  OnError: jest.fn<(message: string) => void>(),
-  OnTableDeleted: jest.fn<(id: number) => void>(),
+  OnSuccess: jest.fn<(Message: string) => void>(),
+  OnError: jest.fn<(Message: string) => void>(),
+  OnTableDeleted: jest.fn<(Id: number) => void>(),
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
-  globalThis.fetch = MockFetch as unknown as typeof fetch;
-  MockFetch.mockReset();
+  MockApiDelete.mockReset();
 });
 
 describe('DeleteTableModal', () => {
   it('displays the table name', () => {
-    render(<DeleteTableModal {...defaultProps} />);
+    render(<DeleteTableModal {...DefaultProps} />);
     expect(screen.getByText('Test Table')).toBeTruthy();
   });
 
   it('calls OnClose when clicking cancel', () => {
-    render(<DeleteTableModal {...defaultProps} />);
+    render(<DeleteTableModal {...DefaultProps} />);
     fireEvent.click(screen.getByText('Cancelar'));
-    expect(defaultProps.OnClose).toHaveBeenCalledTimes(1);
+    expect(DefaultProps.OnClose).toHaveBeenCalledTimes(1);
   });
 
   it('calls OnTableDeleted and OnSuccess on successful delete', async () => {
-    MockFetch.mockResolvedValueOnce({ ok: true });
+    MockApiDelete.mockResolvedValueOnce({});
 
-    render(<DeleteTableModal {...defaultProps} />);
+    render(<DeleteTableModal {...DefaultProps} />);
     fireEvent.click(screen.getByText('Excluir'));
 
     await waitFor(() => {
-      expect(defaultProps.OnTableDeleted).toHaveBeenCalledWith(1);
-      expect(defaultProps.OnSuccess).toHaveBeenCalledWith(
+      expect(MockApiDelete).toHaveBeenCalledWith('/slot/machine/1');
+      expect(DefaultProps.OnTableDeleted).toHaveBeenCalledWith(1);
+      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith(
         'Mesa removida com sucesso.'
       );
-      expect(defaultProps.OnClose).toHaveBeenCalled();
+      expect(DefaultProps.OnClose).toHaveBeenCalled();
     });
   });
 
-  it('calls OnError when response is not ok', async () => {
-    MockFetch.mockResolvedValueOnce({ ok: false });
+  it('calls OnError when API rejects with a response', async () => {
+    MockApiDelete.mockRejectedValueOnce({
+      response: {
+        status: 409,
+      },
+    });
 
-    render(<DeleteTableModal {...defaultProps} />);
+    render(<DeleteTableModal {...DefaultProps} />);
     fireEvent.click(screen.getByText('Excluir'));
 
     await waitFor(() => {
-      expect(defaultProps.OnError).toHaveBeenCalledWith(
-        'Não é possível excluir a mesa pois há sessões ativas.'
+      expect(DefaultProps.OnError).toHaveBeenCalledWith(
+        'Nao e possivel excluir a mesa pois ha sessoes ativas.'
       );
     });
   });
 
   it('calls OnError on network failure', async () => {
-    MockFetch.mockRejectedValueOnce(new Error('Network error'));
+    MockApiDelete.mockRejectedValueOnce(new Error('Network error'));
 
-    render(<DeleteTableModal {...defaultProps} />);
+    render(<DeleteTableModal {...DefaultProps} />);
     fireEvent.click(screen.getByText('Excluir'));
 
     await waitFor(() => {
-      expect(defaultProps.OnError).toHaveBeenCalledWith('Network error');
+      expect(DefaultProps.OnError).toHaveBeenCalledWith('Network error');
     });
   });
 });

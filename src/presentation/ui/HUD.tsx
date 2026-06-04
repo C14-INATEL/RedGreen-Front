@@ -111,7 +111,7 @@ const HUD = ({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="fixed left-0 right-0 top-0 z-50 grid h-20 grid-cols-[1fr_auto_1fr] items-center gap-4 bg-card/80 px-4 backdrop-blur-sm md:px-6 pixel-border"
+        className="fixed left-0 right-0 top-0 z-50 grid h-24 grid-cols-[1fr_auto_1fr] items-center gap-4 bg-card/80 px-4 backdrop-blur-sm md:px-6 pixel-border"
         style={{ boxShadow: '0 4px 0px rgba(0,0,0,0.8)' }}
       >
         <div className="justify-self-start">
@@ -180,13 +180,29 @@ const HUD = ({
                               onClick={OnSelect}
                               className={`flex w-full items-center gap-4 border-b border-[#9f741b]/35 px-6 py-5 text-left transition-colors last:border-b-0 ${
                                 IsDestructive
-                                  ? 'text-cassino-red hover:bg-[#733322]'
+                                  ? 'text-[#cc2222] hover:bg-[#733322]'
                                   : 'text-foreground hover:bg-[#745628]'
                               }`}
+                              style={
+                                IsDestructive
+                                  ? {
+                                      textShadow:
+                                        '0 0 8px rgba(180, 30, 30, 0.8), 1px 1px 0px rgba(0,0,0,0.8)',
+                                    }
+                                  : undefined
+                              }
                             >
                               <Icon
                                 className="h-5 w-5 shrink-0"
                                 strokeWidth={2.2}
+                                style={
+                                  IsDestructive
+                                    ? {
+                                        filter:
+                                          'drop-shadow(0 0 4px rgba(180, 30, 30, 0.8)) drop-shadow(1px 1px 0px rgba(0,0,0,0.8))',
+                                      }
+                                    : undefined
+                                }
                               />
                               <span className="font-mono text-[11px] uppercase tracking-[0.25em]">
                                 {Label}
