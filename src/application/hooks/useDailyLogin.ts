@@ -26,6 +26,7 @@ interface DailyStateSnapshot {
 
 const DailyLoginEndpoint = '/user/daily-login';
 const DailyStatusEndpoint = '/user/profile';
+const DailyStatusCacheKey = [DailyStatusEndpoint, 'daily-login-state'] as const;
 const TotalRewardDays = 7;
 const MillisecondsInDay = 24 * 60 * 60 * 1000;
 
@@ -138,8 +139,8 @@ export const UseDailyLogin = (Enabled: boolean = true) => {
     isLoading: IsStateLoading,
     mutate: MutateDailyState,
   } = useSWR<DailyStateSnapshot>(
-    Enabled ? DailyStatusEndpoint : null,
-    async (Url) => {
+    Enabled ? DailyStatusCacheKey : null,
+    async ([Url]) => {
       const Response = await apiClient.get<Record<string, unknown>>(Url);
       const Data = (Response.data?.User ?? Response.data) as Record<
         string,

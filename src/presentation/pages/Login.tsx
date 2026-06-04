@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CassinoLogo from '@ui/CassinoLogo';
 import { IsBirthDateFormatValid, IsValidBirthDate } from '../../validators';
+import { apiClient } from '@infrastructure/http/client';
 
 type Step = 'identify' | 'login' | 'signup';
 
@@ -84,25 +85,12 @@ const Login = () => {
     }
 
     try {
-      const url = `http://localhost:3000/auth/check-email?email=${encodeURIComponent(Email)}`;
-      console.log('URL:', url);
-
-      const Response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
+      const Response = await apiClient.get('/auth/check-email', {
+        params: {
+          email: Email,
         },
       });
-
-      console.log('STATUS:', Response.status);
-
-      const Data = await Response.json();
-      console.log('DATA:', Data);
-
-      if (!Response.ok) {
-        SetToastMessage('ERRO AO VERIFICAR EMAIL.');
-        return;
-      }
+      const Data = Response.data;
 
       const EmailTaken = Data?.taken;
 
@@ -130,22 +118,14 @@ const Login = () => {
         return;
       }
 
-      const Response = await fetch('http://localhost:3000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          Email: Identifier,
-          Password: Password,
-        }),
+      const Response = await apiClient.post('/auth/login', {
+        Email: Identifier,
+        Password: Password,
       });
 
-      const Data = await Response.json();
-      console.log('LOGIN DATA:', Data);
+      const Data = Response.data;
 
-      if (!Response.ok) {
+      if (Response.status >= 400) {
         SetToastMessage('SENHA INVÁLIDA.');
         return;
       }
@@ -164,8 +144,16 @@ const Login = () => {
 
       SetToastMessage('');
       window.location.href = '/';
-    } catch (error) {
-      console.error('ERROR LOGGING IN:', error);
+    } catch (Error) {
+      const Status = (Error as { response?: { status?: number } })?.response
+        ?.status;
+
+      if (Status === 400 || Status === 401) {
+        SetToastMessage('SENHA INVÁLIDA.');
+        return;
+      }
+
+      console.error('ERROR LOGGING IN:', Error);
       SetToastMessage('ERRO AO CONECTAR AO SERVIDOR.');
     }
   };
@@ -230,35 +218,31 @@ const Login = () => {
       const [day, month, year] = BirthDate.split('/');
       const FormattedBirthDate = `${year}-${month}-${day}`;
 
-      const Response = await fetch('http://localhost:3000/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          Name: Name,
-          BirthDate: FormattedBirthDate,
-          Nickname: Nickname,
-          Email: Identifier.trim().toLowerCase(),
-          Password: Password,
-          ChipBalance: 10000,
-          DailyLoginStreak: 0,
-          Active: true,
-          UserType: 'User',
-        }),
+      const Response = await apiClient.post('/auth/register', {
+        Name: Name,
+        BirthDate: FormattedBirthDate,
+        Nickname: Nickname,
+        Email: Identifier.trim().toLowerCase(),
+        Password: Password,
+        ChipBalance: 10000,
+        DailyLoginStreak: 0,
+        Active: true,
+        UserType: 'User',
       });
 
-      const Data = await Response.json();
+      const Data = Response.data;
 
-      if (!Response.ok) {
+      if (Response.status >= 400) {
         SetToastMessage(Data.message || 'ERRO AO CRIAR CONTA.');
         return;
       }
 
       SetToastMessage('');
       SetStep('login');
-    } catch {
-      SetToastMessage('ERRO AO CONECTAR AO SERVIDOR.');
+    } catch (Error) {
+      const Message = (Error as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      SetToastMessage(Message || 'ERRO AO CONECTAR AO SERVIDOR.');
     }
   };
 

@@ -12,9 +12,14 @@ const topPlayers = [
 interface RankingPanelProps {
   IsOpen: boolean;
   OnClose: () => void;
+  OnExitComplete?: () => void;
 }
 
-const RankingPanel = ({ IsOpen, OnClose }: RankingPanelProps) => {
+const RankingPanel = ({
+  IsOpen,
+  OnClose,
+  OnExitComplete,
+}: RankingPanelProps) => {
   const FormatChips = (Chips: number) => {
     if (Chips >= 1000000) return (Chips / 1000000).toFixed(1) + 'k';
     if (Chips >= 1000) return (Chips / 1000).toFixed(1) + 'k';
@@ -22,17 +27,17 @@ const RankingPanel = ({ IsOpen, OnClose }: RankingPanelProps) => {
   };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={OnExitComplete}>
       {IsOpen && (
         <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 40 }}
-          transition={{ duration: 0.3 }}
-          className="fixed top-24 right-6 w-72 z-40"
+          initial={{ x: 16, scale: 0.98 }}
+          animate={{ x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 16, scale: 0.98 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="fixed top-28 right-6 w-72 z-50 transform-gpu"
         >
           <div
-            className="bg-card/90 backdrop-blur-md pixel-border overflow-hidden"
+            className="relative overflow-hidden bg-card/95 backdrop-blur-md pixel-border"
             style={{ boxShadow: 'var(--shadow-active)' }}
           >
             <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-border">
@@ -48,33 +53,37 @@ const RankingPanel = ({ IsOpen, OnClose }: RankingPanelProps) => {
               </button>
             </div>
 
-            <div className="divide-y-2 divide-border max-h-96 overflow-y-auto">
-              {topPlayers.map((player, i) => (
+            <div className="divide-y-2 divide-border overflow-hidden">
+              {topPlayers.map((Player, I) => (
                 <motion.div
-                  key={player.Name}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  className={`flex items-center justify-between p-3 ${i === 0 ? 'bg-cassino-gold/10' : ''}`}
+                  key={Player.Name}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: 0.06 + I * 0.03,
+                    duration: 0.18,
+                    ease: 'easeOut',
+                  }}
+                  className={`flex items-center justify-between p-3 ${I === 0 ? 'bg-cassino-gold/10' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={`text-sm w-5 text-center font-display ${
-                        i === 0 ? 'text-cassino-gold' : 'text-muted-foreground'
+                        I === 0 ? 'text-cassino-gold' : 'text-muted-foreground'
                       }`}
                     >
-                      {i === 0 ? '♛' : i + 1}
+                      {I === 0 ? '♛' : I + 1}
                     </span>
                     <span className="text-foreground text-sm font-medium font-body truncate">
-                      {player.Name}
+                      {Player.Name}
                     </span>
                   </div>
                   <span
                     className={`text-sm font-mono shrink-0 ${
-                      i === 0 ? 'text-cassino-gold' : 'text-accent-green'
+                      I === 0 ? 'text-cassino-gold' : 'text-accent-green'
                     }`}
                   >
-                    {FormatChips(player.Chips)}
+                    {FormatChips(Player.Chips)}
                   </span>
                 </motion.div>
               ))}

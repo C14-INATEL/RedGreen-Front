@@ -1,8 +1,13 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy } from 'lucide-react';
+
 import { SlotMachine } from '../games/SlotMachine';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
+
+import RankingPanel from '@ui/RankingPanel';
 
 type StoredUserSnapshot = {
   ChipBalance?: number;
@@ -19,7 +24,34 @@ export const SlotMachineRoom = () => {
 
   const IsLoggedIn = !!Token;
 
+  const [IsActive, SetIsActive] = useState(() => {
+    if (!IsLoggedIn) return false;
+
+    return sessionStorage.getItem('hudActive') === 'true';
+  });
+
+  const [RankingOpen, SetRankingOpen] = useState(true);
+
+  useEffect(() => {
+    if (IsLoggedIn) {
+      sessionStorage.setItem('hudActive', String(IsActive));
+    }
+  }, [IsActive, IsLoggedIn]);
+
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem('hudActive');
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!IsLoggedIn) {
+      sessionStorage.removeItem('hudActive');
+    }
+  }, [IsLoggedIn]);
+
   const StoredUserValue = localStorage.getItem('user');
+
   let StoredUser: StoredUserSnapshot | null = null;
 
   if (StoredUserValue) {
@@ -32,9 +64,11 @@ export const SlotMachineRoom = () => {
 
   const { nickname: Nickname, isLoading: ProfileLoading } =
     useUserProfile(IsLoggedIn);
+
   const { chips: ChipsFromHook } = useUserChips(IsLoggedIn);
 
   const LocalNickname = StoredUser?.Nickname || StoredUser?.NicknameAlt;
+
   const LocalChips = StoredUser?.ChipBalance ?? StoredUser?.Chips;
 
   const PlayerName =
@@ -63,7 +97,7 @@ export const SlotMachineRoom = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 60 }}
             transition={{ duration: 0.3 }}
-            className="absolute top-6 right-6 z-20"
+            className="absolute top-4 right-6 z-20"
           >
             <div className="flex items-center gap-6 bg-card/60 backdrop-blur-sm pixel-border px-5 py-3">
               <div className="flex items-center gap-2">
@@ -76,6 +110,7 @@ export const SlotMachineRoom = () => {
                       height="6"
                       fill="hsl(var(--cassino-gold))"
                     />
+
                     <rect
                       x="4"
                       y="8"
@@ -83,6 +118,7 @@ export const SlotMachineRoom = () => {
                       height="4"
                       fill="hsl(var(--cassino-gold))"
                     />
+
                     <rect
                       x="5"
                       y="12"
@@ -90,6 +126,7 @@ export const SlotMachineRoom = () => {
                       height="2"
                       fill="hsl(var(--cassino-gold))"
                     />
+
                     <rect
                       x="9"
                       y="12"
@@ -116,6 +153,7 @@ export const SlotMachineRoom = () => {
                     height="2"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="2"
                     y="4"
@@ -123,6 +161,7 @@ export const SlotMachineRoom = () => {
                     height="2"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="12"
                     y="4"
@@ -130,6 +169,7 @@ export const SlotMachineRoom = () => {
                     height="2"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="2"
                     y="6"
@@ -137,6 +177,7 @@ export const SlotMachineRoom = () => {
                     height="4"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="6"
                     y="4"
@@ -144,6 +185,7 @@ export const SlotMachineRoom = () => {
                     height="8"
                     fill="hsl(var(--cassino-gold) / 0.7)"
                   />
+
                   <rect
                     x="2"
                     y="10"
@@ -151,6 +193,7 @@ export const SlotMachineRoom = () => {
                     height="2"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="12"
                     y="10"
@@ -158,6 +201,7 @@ export const SlotMachineRoom = () => {
                     height="2"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="4"
                     y="12"
@@ -165,6 +209,7 @@ export const SlotMachineRoom = () => {
                     height="2"
                     fill="hsl(var(--cassino-gold))"
                   />
+
                   <rect
                     x="7"
                     y="5"
@@ -189,7 +234,34 @@ export const SlotMachineRoom = () => {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 flex items-center justify-center">
+      {IsLoggedIn && IsActive && (
+        <RankingPanel
+          IsOpen={RankingOpen}
+          OnClose={() => SetRankingOpen(false)}
+        />
+      )}
+
+      {IsLoggedIn && IsActive && !RankingOpen && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={() => SetRankingOpen(true)}
+          className="absolute top-32 right-6 z-50 flex h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 pixel-border"
+        >
+          <Trophy className="h-5 w-5" />
+        </motion.button>
+      )}
+
+      <div
+        className="relative z-10 flex items-center justify-center"
+        onClick={() => {
+          if (!IsActive && IsLoggedIn) {
+            SetIsActive(true);
+          }
+        }}
+      >
+        {!IsActive && <div className="absolute inset-0 z-20 cursor-pointer" />}
+
         <SlotMachine />
       </div>
     </main>
