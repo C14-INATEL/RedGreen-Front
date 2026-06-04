@@ -128,20 +128,22 @@ export const makeMockGambitSession = (
 };
 
 export const applyMockGambitEffect = (
-  points: number,
+  points: number | null,
   effect: GambitCardEffect | null
 ) => {
+  const pointValue = points ?? 0;
+
   switch (effect) {
     case 'DOBRO_DE_POTASSIO':
-      return points * 2;
+      return pointValue * 2;
     case 'MELANCIDIO':
-      return Math.trunc(points / 2);
+      return Math.trunc(pointValue / 2);
     case 'CLARIVIDENCIA':
     case 'INVERSAO_GRAVITACIONAL':
     case null:
-      return points;
+      return pointValue;
     default:
-      return points;
+      return pointValue;
   }
 };
 
@@ -195,11 +197,14 @@ export const revealMockGambitCard = (
     return session;
   }
 
+  const isBoardEffectCard = selectedCard.Effect !== null;
   const nextManualFlipsCount = session.ManualFlipsCount + 1;
-  const effectToApply = selectedCard.Effect ? null : session.NextEffect;
+  const effectToApply = isBoardEffectCard ? null : session.NextEffect;
   const nextAccumulatedPoints =
     session.AccumulatedPoints +
-    applyMockGambitEffect(selectedCard.Points, effectToApply);
+    (isBoardEffectCard
+      ? 0
+      : applyMockGambitEffect(selectedCard.Points, effectToApply));
   const nextEffect = selectedCard.Effect ?? null;
   const eventInterval = session.GambitTable?.EventInterval ?? 3;
   const shouldCreatePendingEvent =

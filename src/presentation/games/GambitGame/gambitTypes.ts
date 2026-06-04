@@ -28,7 +28,7 @@ export type GambitTable = {
 
 export type GambitGridCard = {
   Effect: GambitCardEffect | null;
-  Points: number;
+  Points: number | null;
   Position: number;
 };
 
@@ -112,7 +112,7 @@ export type GambitTableViewModel = {
 export type GambitGridCardViewModel = {
   effect: GambitCardEffectViewModel | null;
   id: number;
-  points: number;
+  points: number | null;
   position: number;
   revealed: boolean;
 };

@@ -127,14 +127,14 @@ describe('Gambit visual flow', () => {
       })
     );
 
-    fireEvent.click(screen.getByText('reveal-2'));
+    fireEvent.click(screen.getByText('reveal-1'));
 
     expect(mockRegisterCardReveal).not.toHaveBeenCalled();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
           expect.objectContaining({
-            id: 2,
+            id: 1,
             points: -15,
             previewed: true,
             revealed: false,

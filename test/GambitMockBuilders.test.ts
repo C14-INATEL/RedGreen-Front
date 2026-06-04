@@ -29,7 +29,7 @@ describe('Gambit visual mock mechanics', () => {
   });
 
   it('subtracts a revealed negative card from the accumulated total', () => {
-    const session = [0, 2].reduce(
+    const session = [0, 1].reduce(
       (currentSession, position) =>
         revealMockGambitCard(currentSession, position),
       makeMockGambitSession('mixedPositiveNegative')
@@ -44,7 +44,7 @@ describe('Gambit visual mock mechanics', () => {
 
     expect(
       session.CurrentGridSnapshot?.Unrevealed.find(
-        (card) => card.Position === 2
+        (card) => card.Position === 1
       )
     ).toMatchObject({
       Points: -15,
@@ -52,26 +52,84 @@ describe('Gambit visual mock mechanics', () => {
     expect(session.AccumulatedPoints).toBe(0);
   });
 
-  it('maps position 13 to row 3 and column 4 in the 5x5 grid', () => {
+  it('keeps position 12 as Clarividencia without points', () => {
+    const session = makeMockGambitSession('effectsOnBoard');
+
+    expect(
+      session.CurrentGridSnapshot?.Unrevealed.find(
+        (card) => card.Position === 12
+      )
+    ).toEqual({
+      Effect: 'CLARIVIDENCIA',
+      Points: null,
+      Position: 12,
+    });
+  });
+
+  it('keeps position 13 as a +30 point card', () => {
+    const session = makeMockGambitSession('effectsOnBoard');
+
+    expect(
+      session.CurrentGridSnapshot?.Unrevealed.find(
+        (card) => card.Position === 13
+      )
+    ).toEqual({
+      Effect: null,
+      Points: 30,
+      Position: 13,
+    });
     expect(getGambitGridCoordinates(13)).toEqual({
       column: 4,
       row: 3,
     });
   });
 
+  it('reveals board effect cards without adding +0 to the total', () => {
+    const session = revealMockGambitCard(
+      makeMockGambitSession('effectsOnBoard'),
+      12
+    );
+
+    expect(session.AccumulatedPoints).toBe(0);
+    expect(sumRevealedGambitCardPoints(session)).toBe(0);
+    expect(session.NextEffect).toBe('CLARIVIDENCIA');
+    expect(session.CurrentGridSnapshot?.Revealed).toEqual([
+      {
+        Effect: 'CLARIVIDENCIA',
+        Points: null,
+        Position: 12,
+      },
+    ]);
+  });
+
+  it('creates the choice event every three revealed cards', () => {
+    const session = [0, 2, 4].reduce(
+      (currentSession, position) =>
+        revealMockGambitCard(currentSession, position),
+      makeMockGambitSession('effectsOnBoard')
+    );
+
+    expect(session.ManualFlipsCount).toBe(3);
+    expect(session.AccumulatedPoints).toBe(35);
+    expect(session.CurrentGridSnapshot?.PendingEvent).toEqual({
+      CardsOffered: ['DOBRO_DE_POTASSIO', 'MELANCIDIO', 'CLARIVIDENCIA'],
+      EventType: 'Neutral',
+    });
+  });
+
   it('starts Clarividencia preview without revealing automatically', () => {
     const session = makeMockGambitSession('clarividenciaFlow');
-    const preview = startMockClarividenciaPreview(session, 2);
+    const preview = startMockClarividenciaPreview(session, 1);
 
     expect(CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL).toBe(true);
-    expect(preview.previewedCardId).toBe(2);
+    expect(preview.previewedCardId).toBe(1);
     expect(preview.session.AccumulatedPoints).toBe(0);
     expect(preview.session.ManualFlipsCount).toBe(0);
     expect(preview.session.CurrentGridSnapshot?.PendingEvent).toBeNull();
     expect(preview.session.CurrentGridSnapshot?.Revealed).toHaveLength(0);
     expect(
       preview.session.CurrentGridSnapshot?.Unrevealed.find(
-        (card) => card.Position === 2
+        (card) => card.Position === 1
       )
     ).toMatchObject({
       Points: -15,

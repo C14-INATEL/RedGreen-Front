@@ -50,7 +50,7 @@ const createHiddenGambitGridCards = (): GambitGridCardViewModel[] =>
   Array.from({ length: GAMBIT_CELL_COUNT }, (_, position) => ({
     effect: null,
     id: position,
-    points: 0,
+    points: null,
     position,
     revealed: false,
   }));
@@ -61,6 +61,17 @@ const requireFiniteNumber = (value: number, fieldName: string) => {
   }
 
   return value;
+};
+
+const requireNullableFiniteNumber = (
+  value: number | null,
+  fieldName: string
+) => {
+  if (value == null) {
+    return null;
+  }
+
+  return requireFiniteNumber(value, fieldName);
 };
 
 const requireGridPosition = (value: number) => {
@@ -204,7 +215,7 @@ const mapBackendGambitGridPositionToViewModel = (
   return {
     effect: mapBackendGambitCardToViewModel(position.Effect),
     id: visualPosition,
-    points: requireFiniteNumber(position.Points, 'Points'),
+    points: requireNullableFiniteNumber(position.Points, 'Points'),
     position: visualPosition,
     revealed,
   };

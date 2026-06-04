@@ -14,7 +14,7 @@ export type GambitCardProps = {
   revealOnClick: boolean;
   revealed: boolean;
   size: number;
-  value: number;
+  value: number | null;
   x: number;
   y: number;
 };
@@ -44,13 +44,13 @@ const REVEAL_ANIMATION_SPEED = 0.42;
 const drawRevealedCardFace = (
   graphics: Graphics,
   size: number,
-  value: number,
+  value: number | null,
   effect: GambitCardEffectViewModel | null,
   previewed: boolean
 ) => {
   const borderWidth = Math.max(2, Math.round(size * 0.055));
   const inset = Math.max(3, Math.round(size * 0.08));
-  const isNegative = value < 0;
+  const isNegative = (value ?? 0) < 0;
   const surfaceColor = effect
     ? CARD_EFFECT_COLOR
     : isNegative
@@ -87,14 +87,14 @@ const drawRevealedCardFace = (
 };
 
 const getCardTextColor = (
-  value: number,
+  value: number | null,
   effect: GambitCardEffectViewModel | null
 ) => {
   if (effect) {
     return CARD_EFFECT_TEXT_COLOR;
   }
 
-  if (value < 0) {
+  if ((value ?? 0) < 0) {
     return CARD_NEGATIVE_TEXT_COLOR;
   }
 
@@ -103,7 +103,7 @@ const getCardTextColor = (
 
 const createValueTextStyle = (
   size: number,
-  value: number,
+  value: number | null,
   effect: GambitCardEffectViewModel | null
 ) =>
   new TextStyle({
@@ -116,7 +116,11 @@ const createValueTextStyle = (
     wordWrapWidth: Math.max(24, Math.floor(size * 0.82)),
   });
 
-const formatCardValue = (value: number) => {
+const formatCardValue = (value: number | null) => {
+  if (value == null) {
+    return '';
+  }
+
   if (value > 0) {
     return `+${value}`;
   }
@@ -140,7 +144,7 @@ const formatCardEffect = (effect: GambitCardEffectViewModel) => {
 };
 
 const formatCardLabel = (
-  value: number,
+  value: number | null,
   effect: GambitCardEffectViewModel | null
 ) => (effect ? formatCardEffect(effect) : formatCardValue(value));
 
