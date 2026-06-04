@@ -18,6 +18,7 @@ import type {
   GambitSessionViewModel,
   GambitStatusViewModel,
   GambitTableViewModel,
+  GambitVisualCard,
 } from './gambitTypes';
 
 const GAMBIT_CARD_EFFECT_MAP: Record<
@@ -314,8 +315,16 @@ export const mapBackendGambitSessionToViewModel = (
 };
 
 export const mapGambitSessionToMinefieldCards = (
-  session: GambitSession
-): GambitGridCardViewModel[] =>
-  mapBackendGambitGridToViewModel(session.CurrentGridSnapshot).cards;
+  session: GambitSession,
+  previewedCardId: number | null = null
+): GambitVisualCard[] =>
+  mapBackendGambitGridToViewModel(session.CurrentGridSnapshot).cards.map(
+    (card) => ({
+      ...card,
+      previewed: card.id === previewedCardId,
+    })
+  );
+
+export const mapGambitSessionToVisualCards = mapGambitSessionToMinefieldCards;
 
 export const mapGambitSessionToViewModel = mapBackendGambitSessionToViewModel;

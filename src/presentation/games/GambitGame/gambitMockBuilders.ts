@@ -20,6 +20,8 @@ const DEFAULT_TABLE_ID = 1;
 const DEFAULT_SESSION_ID = 1;
 const DEFAULT_USER_ID = 'mock-gambit-user';
 
+export const CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL = true;
+
 type ScenarioInput = GambitMockScenario | GambitMockScenarioId;
 
 const sortGridCards = (cards: GambitGridCard[]) =>
@@ -57,6 +59,11 @@ const buildPendingEvent = (
   CardsOffered: cardsOffered,
   EventType: eventType,
 });
+
+const findUnrevealedCardByPosition = (
+  snapshot: GambitGridSnapshot,
+  position: number
+) => snapshot.Unrevealed.find((card) => card.Position === position) ?? null;
 
 export const makeMockGambitTable = (
   overrides: Partial<GambitTable> = {}
@@ -128,7 +135,7 @@ export const applyMockGambitEffect = (
     case 'DOBRO_DE_POTASSIO':
       return points * 2;
     case 'MELANCIDIO':
-      return Math.floor(points / 2);
+      return Math.trunc(points / 2);
     case 'CLARIVIDENCIA':
     case 'INVERSAO_GRAVITACIONAL':
     case null:
@@ -136,6 +143,40 @@ export const applyMockGambitEffect = (
     default:
       return points;
   }
+};
+
+export const startMockClarividenciaPreview = (
+  session: GambitSession,
+  position: number
+): { previewedCardId: number | null; session: GambitSession } => {
+  const snapshot = session.CurrentGridSnapshot;
+
+  if (!snapshot || session.NextEffect !== 'CLARIVIDENCIA') {
+    return {
+      previewedCardId: null,
+      session,
+    };
+  }
+
+  const selectedCard = findUnrevealedCardByPosition(snapshot, position);
+
+  if (!selectedCard) {
+    return {
+      previewedCardId: null,
+      session,
+    };
+  }
+
+  return {
+    previewedCardId: selectedCard.Position,
+    session: {
+      ...session,
+      NextEffect: CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL
+        ? null
+        : session.NextEffect,
+      UpdatedAt: MOCK_NOW,
+    },
+  };
 };
 
 export const revealMockGambitCard = (
@@ -148,19 +189,18 @@ export const revealMockGambitCard = (
     return session;
   }
 
-  const selectedCard = snapshot.Unrevealed.find(
-    (card) => card.Position === position
-  );
+  const selectedCard = findUnrevealedCardByPosition(snapshot, position);
 
   if (!selectedCard) {
     return session;
   }
 
   const nextManualFlipsCount = session.ManualFlipsCount + 1;
-  const effectToApply = session.NextEffect ?? selectedCard.Effect;
+  const effectToApply = selectedCard.Effect ? null : session.NextEffect;
   const nextAccumulatedPoints =
     session.AccumulatedPoints +
     applyMockGambitEffect(selectedCard.Points, effectToApply);
+  const nextEffect = selectedCard.Effect ?? null;
   const eventInterval = session.GambitTable?.EventInterval ?? 3;
   const shouldCreatePendingEvent =
     !snapshot.PendingEvent &&
@@ -182,7 +222,7 @@ export const revealMockGambitCard = (
     AccumulatedPoints: nextAccumulatedPoints,
     CurrentGridSnapshot: nextSnapshot,
     ManualFlipsCount: nextManualFlipsCount,
-    NextEffect: null,
+    NextEffect: nextEffect,
     Result: hasFinished ? nextAccumulatedPoints : session.Result,
     Status: hasFinished ? 'Finished' : session.Status,
     UpdatedAt: MOCK_NOW,

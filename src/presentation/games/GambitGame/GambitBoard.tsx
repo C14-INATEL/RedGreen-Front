@@ -10,6 +10,7 @@ type GambitBoardProps = Pick<
   'className' | 'style'
 > & {
   cards: GambitCard[];
+  clarividenciaPreviewMode?: boolean;
   interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;
   onCardRevealAnimationComplete?: (cardId: number) => void;
@@ -90,6 +91,7 @@ const getBoardLayout = (width: number, height: number) => {
 
 export const GambitBoard = ({
   cards,
+  clarividenciaPreviewMode = false,
   className,
   interactionLocked = false,
   onCardReveal,
@@ -98,6 +100,7 @@ export const GambitBoard = ({
 }: GambitBoardProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef(cards);
+  const clarividenciaPreviewModeRef = useRef(clarividenciaPreviewMode);
   const interactionLockedRef = useRef(interactionLocked);
   const onCardRevealAnimationCompleteRef = useRef(
     onCardRevealAnimationComplete
@@ -112,6 +115,10 @@ export const GambitBoard = ({
   useEffect(() => {
     onCardRevealAnimationCompleteRef.current = onCardRevealAnimationComplete;
   }, [onCardRevealAnimationComplete]);
+
+  useEffect(() => {
+    clarividenciaPreviewModeRef.current = clarividenciaPreviewMode;
+  }, [clarividenciaPreviewMode]);
 
   useEffect(() => {
     interactionLockedRef.current = interactionLocked;
@@ -199,12 +206,15 @@ export const GambitBoard = ({
 
         const nextProps = {
           disabled: interactionLockedRef.current,
+          effect: card.effect,
           onClick: () => {
             onCardRevealRef.current(card.id);
           },
           onRevealComplete: () => {
             onCardRevealAnimationCompleteRef.current?.(card.id);
           },
+          previewed: card.previewed,
+          revealOnClick: !clarividenciaPreviewModeRef.current,
           revealed: card.revealed,
           size: layout.cellSize,
           value: card.points,

@@ -11,9 +11,10 @@ import {
   makeMockGambitSession,
   revealMockGambitCard,
   selectMockPendingEventCard,
+  startMockClarividenciaPreview,
 } from './GambitGame/gambitMockBuilders';
 import { mapGambitSessionToMinefieldCards } from './GambitGame/gambitMapper';
-import type { GambitCardEffect } from './GambitGame/gambitTypes';
+import type { GambitCardEffect, GambitSession } from './GambitGame/gambitTypes';
 
 const REWARD_CARD_ID_TO_GAMBIT_EFFECT: Record<string, GambitCardEffect> = {
   clarividencia: 'CLARIVIDENCIA',
@@ -25,11 +26,29 @@ const REWARD_CARD_ID_TO_GAMBIT_EFFECT: Record<string, GambitCardEffect> = {
 const mapRewardCardIdToGambitEffect = (cardId: string) =>
   REWARD_CARD_ID_TO_GAMBIT_EFFECT[cardId] ?? null;
 
-export const Gambit = () => {
-  const [session, setSession] = useState(makeMockGambitSession);
+export type GambitProps = {
+  initialSession?: GambitSession;
+};
+
+type GambitVisualState = {
+  cards: ReturnType<typeof mapGambitSessionToMinefieldCards>;
+  preparedEffect: GambitCardEffect | null;
+  previewedCardId: number | null;
+};
+
+export const Gambit = ({ initialSession }: GambitProps = {}) => {
+  const [session, setSession] = useState(
+    () => initialSession ?? makeMockGambitSession()
+  );
+  const [previewedCardId, setPreviewedCardId] = useState<number | null>(null);
   const [isRevealAnimationLocked, setIsRevealAnimationLocked] = useState(false);
   const revealAnimationLockedRef = useRef(false);
-  const cards = mapGambitSessionToMinefieldCards(session);
+  const visualState: GambitVisualState = {
+    cards: mapGambitSessionToMinefieldCards(session, previewedCardId),
+    preparedEffect: session.NextEffect,
+    previewedCardId,
+  };
+  const { cards } = visualState;
   const revealedCardCount = cards.filter((card) => card.revealed).length;
   const handleRewardSelected = ({ selectedCards }: RewardSelectionResult) => {
     setSession((currentSession) =>
@@ -62,6 +81,7 @@ export const Gambit = () => {
 
   const handleCardReveal = (cardId: number) => {
     if (
+      previewedCardId !== null ||
       revealAnimationLockedRef.current ||
       rewardController.isInteractionLocked
     ) {
@@ -71,6 +91,17 @@ export const Gambit = () => {
     const selectedCard = cards.find((card) => card.id === cardId);
 
     if (!selectedCard || selectedCard.revealed) {
+      return;
+    }
+
+    if (session.NextEffect === 'CLARIVIDENCIA') {
+      const preview = startMockClarividenciaPreview(session, cardId);
+
+      if (preview.previewedCardId !== null) {
+        setSession(preview.session);
+        setPreviewedCardId(preview.previewedCardId);
+      }
+
       return;
     }
 
@@ -84,6 +115,24 @@ export const Gambit = () => {
   const handleCardRevealAnimationComplete = (cardId: number) => {
     rewardController.handleRevealAnimationComplete(cardId);
     unlockRevealAnimation();
+  };
+
+  const handlePreviewConfirm = () => {
+    if (previewedCardId === null) {
+      return;
+    }
+
+    const confirmedCardId = previewedCardId;
+
+    setPreviewedCardId(null);
+    setSession((currentSession) =>
+      revealMockGambitCard(currentSession, confirmedCardId)
+    );
+    rewardController.registerCardReveal(confirmedCardId);
+  };
+
+  const handlePreviewCancel = () => {
+    setPreviewedCardId(null);
   };
 
   return (
@@ -110,7 +159,9 @@ export const Gambit = () => {
               Proxima Escolha
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/55">
-              {session.NextEffect ? 'Efeito preparado' : 'Evento configuravel'}
+              {visualState.preparedEffect
+                ? 'Efeito preparado'
+                : 'Evento configuravel'}
             </p>
           </div>
 
@@ -125,13 +176,37 @@ export const Gambit = () => {
         <GambitBoard
           cards={cards}
           className="aspect-square w-full overflow-hidden"
+          clarividenciaPreviewMode={
+            visualState.preparedEffect === 'CLARIVIDENCIA'
+          }
           interactionLocked={
-            rewardController.isInteractionLocked || isRevealAnimationLocked
+            rewardController.isInteractionLocked ||
+            isRevealAnimationLocked ||
+            visualState.previewedCardId !== null
           }
           onCardReveal={handleCardReveal}
           onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
         />
       </div>
+
+      {visualState.previewedCardId !== null ? (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <button
+            className="bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
+            onClick={handlePreviewConfirm}
+            type="button"
+          >
+            Virar carta
+          </button>
+          <button
+            className="bg-card px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-foreground pixel-border"
+            onClick={handlePreviewCancel}
+            type="button"
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : null}
 
       <RewardChoiceModal
         isSelectionLocked={rewardController.isRewardSelectionLocked}

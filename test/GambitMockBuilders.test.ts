@@ -1,82 +1,80 @@
 import { describe, expect, it } from '@jest/globals';
 import {
-  applyMockGambitEffect,
+  CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL,
+  getGambitGridCoordinates,
   makeMockGambitSession,
-  selectMockPendingEventCard,
   revealMockGambitCard,
-} from '../src/presentation/games/GambitGame/gambitMockBuilders';
-import {
-  ACTIVE_GAMBIT_MOCK_SCENARIO,
-  gambitMockScenarios,
-} from '../src/presentation/games/GambitGame/gambitMockScenarios';
+  startMockClarividenciaPreview,
+  sumRevealedGambitCardPoints,
+} from '../src/presentation/games/GambitGame/gambitGameMock';
 
-describe('Gambit mock builders', () => {
-  it('builds the active scenario as a backend-shaped session', () => {
-    const session = makeMockGambitSession();
-
-    expect(gambitMockScenarios[ACTIVE_GAMBIT_MOCK_SCENARIO]).toMatchObject({
-      name: 'Fluxo basico de revelacao',
-    });
-    expect(session).toMatchObject({
-      AccumulatedPoints: 0,
-      CardsPurchased: 25,
-      CurrentGridSnapshot: {
-        PendingEvent: null,
-        Revealed: [],
-      },
-      Status: 'InProgress',
-    });
-    expect(session.CurrentGridSnapshot?.Unrevealed).toHaveLength(25);
-  });
-
-  it('reveals a card by moving it from Unrevealed to Revealed', () => {
-    const session = revealMockGambitCard(makeMockGambitSession(), 0);
-
-    expect(session.AccumulatedPoints).toBe(10);
-    expect(session.ManualFlipsCount).toBe(1);
-    expect(session.CurrentGridSnapshot?.Revealed).toEqual([
-      {
-        Effect: null,
-        Points: 10,
-        Position: 0,
-      },
-    ]);
-    expect(
-      session.CurrentGridSnapshot?.Unrevealed.some(
-        (card) => card.Position === 0
-      )
-    ).toBe(false);
-  });
-
-  it('creates a pending event every three manual reveals', () => {
-    const session = [0, 1, 2].reduce(
+describe('Gambit visual mock mechanics', () => {
+  it('sums revealed positive cards into the accumulated total', () => {
+    const session = [0, 1].reduce(
       (currentSession, position) =>
         revealMockGambitCard(currentSession, position),
-      makeMockGambitSession()
+      makeMockGambitSession('basicPoints')
     );
 
-    expect(session.ManualFlipsCount).toBe(3);
-    expect(session.CurrentGridSnapshot?.PendingEvent).toEqual({
-      CardsOffered: ['DOBRO_DE_POTASSIO', 'MELANCIDIO', 'CLARIVIDENCIA'],
-      EventType: 'Neutral',
+    expect(sumRevealedGambitCardPoints(session)).toBe(25);
+    expect(session.AccumulatedPoints).toBe(25);
+  });
+
+  it('keeps closed cards out of the accumulated total', () => {
+    const session = makeMockGambitSession('basicPoints');
+
+    expect(session.CurrentGridSnapshot?.Revealed).toHaveLength(0);
+    expect(sumRevealedGambitCardPoints(session)).toBe(0);
+    expect(session.AccumulatedPoints).toBe(0);
+  });
+
+  it('subtracts a revealed negative card from the accumulated total', () => {
+    const session = [0, 2].reduce(
+      (currentSession, position) =>
+        revealMockGambitCard(currentSession, position),
+      makeMockGambitSession('mixedPositiveNegative')
+    );
+
+    expect(sumRevealedGambitCardPoints(session)).toBe(-5);
+    expect(session.AccumulatedPoints).toBe(-5);
+  });
+
+  it('does not subtract a closed negative card', () => {
+    const session = makeMockGambitSession('mixedPositiveNegative');
+
+    expect(
+      session.CurrentGridSnapshot?.Unrevealed.find(
+        (card) => card.Position === 2
+      )
+    ).toMatchObject({
+      Points: -15,
+    });
+    expect(session.AccumulatedPoints).toBe(0);
+  });
+
+  it('maps position 13 to row 3 and column 4 in the 5x5 grid', () => {
+    expect(getGambitGridCoordinates(13)).toEqual({
+      column: 4,
+      row: 3,
     });
   });
 
-  it('stores the selected pending-event card as the next effect', () => {
-    const sessionWithEvent = makeMockGambitSession('pendingEventChoice');
-    const session = selectMockPendingEventCard(
-      sessionWithEvent,
-      'DOBRO_DE_POTASSIO'
-    );
+  it('starts Clarividencia preview without revealing automatically', () => {
+    const session = makeMockGambitSession('clarividenciaFlow');
+    const preview = startMockClarividenciaPreview(session, 2);
 
-    expect(session.CurrentGridSnapshot?.PendingEvent).toBeNull();
-    expect(session.NextEffect).toBe('DOBRO_DE_POTASSIO');
-  });
-
-  it('applies backend-named effects to mock points', () => {
-    expect(applyMockGambitEffect(20, 'DOBRO_DE_POTASSIO')).toBe(40);
-    expect(applyMockGambitEffect(21, 'MELANCIDIO')).toBe(10);
-    expect(applyMockGambitEffect(20, 'CLARIVIDENCIA')).toBe(20);
-    expect(applyMockGambitEffect(20, 'INVERSAO_GRAVITACIONAL')).toBe(20);
+    expect(CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL).toBe(true);
+    expect(preview.previewedCardId).toBe(2);
+    expect(preview.session.AccumulatedPoints).toBe(0);
+    expect(preview.session.ManualFlipsCount).toBe(0);
+    expect(preview.session.CurrentGridSnapshot?.PendingEvent).toBeNull();
+    expect(preview.session.CurrentGridSnapshot?.Revealed).toHaveLength(0);
+    expect(
+      preview.session.CurrentGridSnapshot?.Unrevealed.find(
+        (card) => card.Position === 2
+      )
+    ).toMatchObject({
+      Points: -15,
+    });
   });
 });

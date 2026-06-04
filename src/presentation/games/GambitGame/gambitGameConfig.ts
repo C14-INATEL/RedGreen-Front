@@ -1,9 +1,9 @@
-import type { GambitGridCardViewModel } from './gambitTypes';
+import type { GambitVisualCard } from './gambitTypes';
 
 export const GAMBIT_GRID_SIZE = 5;
 export const GAMBIT_CELL_COUNT = GAMBIT_GRID_SIZE * GAMBIT_GRID_SIZE;
 
-export type GambitCard = GambitGridCardViewModel;
+export type GambitCard = GambitVisualCard;
 
 const MOCK_CARD_POINTS = [
   10, 15, 20, 25, 30, 15, 35, 40, 20, 45, 25, 10, 50, 30, 20, 40, 15, 35, 25,
@@ -15,6 +15,7 @@ export const createMockGambitCards = (): GambitCard[] =>
     effect: null,
     id: index,
     points: MOCK_CARD_POINTS[index] ?? 10,
+    previewed: false,
     position: index,
     revealed: false,
   }));

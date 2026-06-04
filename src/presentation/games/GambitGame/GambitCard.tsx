@@ -3,11 +3,15 @@ import {
   GAMBIT_CLOSED_CARD_SPRITES,
   GAMBIT_REVEAL_ANIMATION_FRAMES,
 } from './gambitTextures';
+import type { GambitCardEffectViewModel } from './gambitTypes';
 
 export type GambitCardProps = {
   disabled: boolean;
+  effect: GambitCardEffectViewModel | null;
   onClick: () => void;
   onRevealComplete?: () => void;
+  previewed: boolean;
+  revealOnClick: boolean;
   revealed: boolean;
   size: number;
   value: number;
@@ -27,16 +31,42 @@ const CARD_REVEALED_COLOR = 0xf1d28a;
 const CARD_REVEALED_BORDER_COLOR = 0xf0c350;
 const CARD_REVEALED_TEXT_COLOR = 0x2a1f12;
 const CARD_REVEALED_GLOW_COLOR = 0xfff4b5;
+const CARD_NEGATIVE_COLOR = 0x5f2028;
+const CARD_NEGATIVE_BORDER_COLOR = 0xf06a3d;
+const CARD_NEGATIVE_TEXT_COLOR = 0xffefe8;
+const CARD_EFFECT_COLOR = 0x20345f;
+const CARD_EFFECT_BORDER_COLOR = 0x8ee7ff;
+const CARD_EFFECT_TEXT_COLOR = 0xf3fbff;
+const CARD_PREVIEW_BORDER_COLOR = 0xffffff;
 const CLOSED_CARD_ANIMATION_SPEED = 0.12;
 const REVEAL_ANIMATION_SPEED = 0.42;
 
-const drawRevealedCardFace = (graphics: Graphics, size: number) => {
+const drawRevealedCardFace = (
+  graphics: Graphics,
+  size: number,
+  value: number,
+  effect: GambitCardEffectViewModel | null,
+  previewed: boolean
+) => {
   const borderWidth = Math.max(2, Math.round(size * 0.055));
   const inset = Math.max(3, Math.round(size * 0.08));
+  const isNegative = value < 0;
+  const surfaceColor = effect
+    ? CARD_EFFECT_COLOR
+    : isNegative
+      ? CARD_NEGATIVE_COLOR
+      : CARD_REVEALED_COLOR;
+  const borderColor = previewed
+    ? CARD_PREVIEW_BORDER_COLOR
+    : effect
+      ? CARD_EFFECT_BORDER_COLOR
+      : isNegative
+        ? CARD_NEGATIVE_BORDER_COLOR
+        : CARD_REVEALED_BORDER_COLOR;
 
   graphics.clear();
-  graphics.lineStyle(borderWidth, CARD_REVEALED_BORDER_COLOR, 0.96);
-  graphics.beginFill(CARD_REVEALED_COLOR, 1);
+  graphics.lineStyle(borderWidth, borderColor, previewed ? 1 : 0.96);
+  graphics.beginFill(surfaceColor, 1);
   graphics.drawRoundedRect(0, 0, size, size, Math.max(8, size * 0.11));
   graphics.endFill();
 
@@ -56,14 +86,63 @@ const drawRevealedCardFace = (graphics: Graphics, size: number) => {
   graphics.lineTo(inset, size - inset);
 };
 
-const createValueTextStyle = (size: number) =>
+const getCardTextColor = (
+  value: number,
+  effect: GambitCardEffectViewModel | null
+) => {
+  if (effect) {
+    return CARD_EFFECT_TEXT_COLOR;
+  }
+
+  if (value < 0) {
+    return CARD_NEGATIVE_TEXT_COLOR;
+  }
+
+  return CARD_REVEALED_TEXT_COLOR;
+};
+
+const createValueTextStyle = (
+  size: number,
+  value: number,
+  effect: GambitCardEffectViewModel | null
+) =>
   new TextStyle({
     align: 'center',
-    fill: CARD_REVEALED_TEXT_COLOR,
+    fill: getCardTextColor(value, effect),
     fontFamily: 'Press Start 2P',
-    fontSize: Math.max(10, Math.floor(size * 0.2)),
+    fontSize: Math.max(9, Math.floor(size * (effect ? 0.15 : 0.2))),
     fontWeight: '700',
+    wordWrap: true,
+    wordWrapWidth: Math.max(24, Math.floor(size * 0.82)),
   });
+
+const formatCardValue = (value: number) => {
+  if (value > 0) {
+    return `+${value}`;
+  }
+
+  return String(value);
+};
+
+const formatCardEffect = (effect: GambitCardEffectViewModel) => {
+  switch (effect) {
+    case 'clarividencia':
+      return 'CLAR';
+    case 'dobro-de-potassio':
+      return '2X';
+    case 'inversao-gravitacional':
+      return 'INV';
+    case 'melancidio':
+      return 'MEL';
+    default:
+      return '';
+  }
+};
+
+const formatCardLabel = (
+  value: number,
+  effect: GambitCardEffectViewModel | null
+) => (effect ? formatCardEffect(effect) : formatCardValue(value));
 
 const createRevealAnimation = (size: number) => {
   const revealAnimation = AnimatedSprite.fromFrames(
@@ -100,8 +179,12 @@ export const createGambitCard = (
   const container = new Container();
   const revealedCardFace = new Graphics();
   const revealedCardLabel = new Text(
-    `+${initialProps.value}`,
-    createValueTextStyle(initialProps.size)
+    formatCardLabel(initialProps.value, initialProps.effect),
+    createValueTextStyle(
+      initialProps.size,
+      initialProps.value,
+      initialProps.effect
+    )
   );
   const closedCardAnimation = createClosedCardAnimation(initialProps.size);
   const revealAnimation = createRevealAnimation(initialProps.size);
@@ -118,6 +201,7 @@ export const createGambitCard = (
     const isCardClickable =
       !currentProps.disabled &&
       !currentProps.revealed &&
+      !currentProps.previewed &&
       overlayState === 'closed';
 
     container.eventMode = isCardClickable ? 'static' : 'none';
@@ -125,14 +209,14 @@ export const createGambitCard = (
   };
 
   const syncLayout = () => {
-    const { size, value, x, y } = currentProps;
+    const { effect, previewed, size, value, x, y } = currentProps;
 
     container.position.set(x, y);
 
-    drawRevealedCardFace(revealedCardFace, size);
+    drawRevealedCardFace(revealedCardFace, size, value, effect, previewed);
 
-    revealedCardLabel.text = `+${value}`;
-    revealedCardLabel.style = createValueTextStyle(size);
+    revealedCardLabel.text = formatCardLabel(value, effect);
+    revealedCardLabel.style = createValueTextStyle(size, value, effect);
     revealedCardLabel.anchor.set(0.5);
     revealedCardLabel.resolution = 2;
     revealedCardLabel.position.set(Math.round(size / 2), Math.round(size / 2));
@@ -187,12 +271,16 @@ export const createGambitCard = (
     if (
       currentProps.disabled ||
       currentProps.revealed ||
+      currentProps.previewed ||
       overlayState !== 'closed'
     ) {
       return;
     }
 
-    playRevealAnimation();
+    if (currentProps.revealOnClick) {
+      playRevealAnimation();
+    }
+
     currentProps.onClick();
   };
 
@@ -206,7 +294,7 @@ export const createGambitCard = (
 
   syncLayout();
 
-  if (currentProps.revealed) {
+  if (currentProps.revealed || currentProps.previewed) {
     hideOverlay();
   } else {
     showClosedOverlay();
@@ -214,10 +302,22 @@ export const createGambitCard = (
 
   const update = (nextProps: GambitCardProps) => {
     const wasRevealed = currentProps.revealed;
+    const wasPreviewed = currentProps.previewed;
 
     currentProps = nextProps;
 
     syncLayout();
+
+    if (currentProps.previewed) {
+      hideOverlay();
+      return;
+    }
+
+    if (wasPreviewed && currentProps.revealed) {
+      hideOverlay();
+      currentProps.onRevealComplete?.();
+      return;
+    }
 
     if (!wasRevealed && currentProps.revealed && overlayState === 'closed') {
       playRevealAnimation();

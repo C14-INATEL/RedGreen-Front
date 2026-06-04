@@ -117,6 +117,10 @@ export type GambitGridCardViewModel = {
   revealed: boolean;
 };
 
+export type GambitVisualCard = GambitGridCardViewModel & {
+  previewed: boolean;
+};
+
 export type GambitPendingEventViewModel = {
   cardsOffered: [
     GambitCardEffectViewModel,

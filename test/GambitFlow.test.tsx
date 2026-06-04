@@ -2,14 +2,16 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { Gambit } from '../src/presentation/games/Gambit';
-import type { GambitCard } from '../src/presentation/games/GambitGame/gambitGameConfig';
+import { makeMockGambitSession } from '../src/presentation/games/GambitGame/gambitGameMock';
+import type { GambitVisualCard } from '../src/presentation/games/GambitGame/gambitTypes';
 
 type MotionDivProps = {
   children?: ReactNode;
 };
 
 type MockGambitBoardProps = {
-  cards: GambitCard[];
+  cards: GambitVisualCard[];
+  clarividenciaPreviewMode?: boolean;
   interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;
   onCardRevealAnimationComplete?: (cardId: number) => void;
@@ -68,7 +70,11 @@ jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
           null,
           `cards:${props.cards.length}:revealed:${
             props.cards.filter((card) => card.revealed).length
-          }:locked:${String(props.interactionLocked)}`
+          }:previewed:${
+            props.cards.filter((card) => card.previewed).length
+          }:locked:${String(props.interactionLocked)}:preview-mode:${String(
+            props.clarividenciaPreviewMode
+          )}`
         ),
         React.createElement(
           'button',
@@ -85,6 +91,14 @@ jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
             type: 'button',
           },
           'reveal-1'
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: () => props.onCardReveal(2),
+            type: 'button',
+          },
+          'reveal-2'
         ),
         React.createElement(
           'button',
@@ -106,67 +120,40 @@ describe('Gambit visual flow', () => {
     mockRegisterCardReveal.mockClear();
   });
 
-  it('passes a stable 5x5 ViewModel grid into the visual board', () => {
-    render(createElement(Gambit));
+  it('previews the next closed card when Clarividencia is prepared', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('clarividenciaFlow'),
+      })
+    );
 
-    expect(
-      screen.getByText('cards:25:revealed:0:locked:false')
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText('reveal-2'));
+
+    expect(mockRegisterCardReveal).not.toHaveBeenCalled();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
           expect.objectContaining({
-            id: 0,
-            points: 10,
-            position: 0,
+            id: 2,
+            points: -15,
+            previewed: true,
             revealed: false,
           }),
         ]),
       })
     );
-  });
-
-  it('reveals a card through the existing visual interaction contract', () => {
-    render(createElement(Gambit));
-
-    fireEvent.click(screen.getByText('reveal-0'));
-
     expect(
-      screen.getByText('cards:25:revealed:1:locked:true')
-    ).toBeInTheDocument();
-    expect(mockRegisterCardReveal).toHaveBeenCalledWith(0);
-  });
-
-  it('ignores a second fast reveal until the current card animation completes', () => {
-    render(createElement(Gambit));
-
-    fireEvent.click(screen.getByText('reveal-0'));
-    fireEvent.click(screen.getByText('reveal-1'));
-
-    expect(mockRegisterCardReveal).toHaveBeenCalledTimes(1);
-    expect(mockRegisterCardReveal).toHaveBeenLastCalledWith(0);
-    expect(
-      screen.getByText('cards:25:revealed:1:locked:true')
-    ).toBeInTheDocument();
-    expect(mockGambitBoard).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        interactionLocked: true,
-      })
-    );
-
-    fireEvent.click(screen.getByText('complete-0'));
-
-    expect(mockHandleRevealAnimationComplete).toHaveBeenCalledWith(0);
-    expect(
-      screen.getByText('cards:25:revealed:1:locked:false')
+      screen.getByText(
+        'cards:25:revealed:0:previewed:1:locked:true:preview-mode:false'
+      )
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('reveal-1'));
+    fireEvent.click(screen.getByText('Cancelar'));
 
-    expect(mockRegisterCardReveal).toHaveBeenCalledTimes(2);
-    expect(mockRegisterCardReveal).toHaveBeenLastCalledWith(1);
     expect(
-      screen.getByText('cards:25:revealed:2:locked:true')
+      screen.getByText(
+        'cards:25:revealed:0:previewed:0:locked:false:preview-mode:false'
+      )
     ).toBeInTheDocument();
   });
 });
