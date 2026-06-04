@@ -9,6 +9,7 @@ import { Trophy, Gift } from 'lucide-react';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { UseDailyLogin } from '@application/hooks/useDailyLogin';
+import { useRanking } from '@application/hooks/useRanking';
 
 type StoredUserSnapshot = {
   ChipBalance?: number;
@@ -51,6 +52,11 @@ const Home = () => {
   const [RankingOpen, SetRankingOpen] = useState(false);
   const [RankingLayoutOpen, SetRankingLayoutOpen] = useState(false);
   const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
+  const {
+    Players: RankingPlayers,
+    IsLoading: IsRankingLoading,
+    Error: RankingError,
+  } = useRanking(RankingLayoutOpen);
   const HasAutoOpenedDailyBonus = useRef(false);
   const {
     DailyState,
@@ -100,6 +106,14 @@ const Home = () => {
     SetRankingLayoutOpen(false);
   };
 
+  const RankingRows =
+    IsRankingLoading || RankingError || RankingPlayers.length === 0
+      ? 1
+      : RankingPlayers.length;
+  const DailyBonusTop = RankingLayoutOpen
+    ? `${10.75 + RankingRows * 3}rem`
+    : '11rem';
+
   return (
     <div className="relative h-screen w-screen overflow-hidden suit-pattern">
       <div
@@ -127,7 +141,7 @@ const Home = () => {
             animate={{
               opacity: 1,
               scale: 1,
-              y: RankingLayoutOpen ? 256 : 0,
+              y: 0,
             }}
             transition={{
               duration: 0.22,
@@ -135,9 +149,9 @@ const Home = () => {
             }}
             onClick={() => SetDailyBonusOpen(true)}
             className={`fixed right-6 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)] ${
-              RankingLayoutOpen ? 'z-30' : 'z-50'
+              RankingLayoutOpen ? 'z-40' : 'z-50'
             }`}
-            style={{ top: '11rem' }}
+            style={{ top: DailyBonusTop }}
           >
             <Gift className="h-4 w-4" />
           </motion.button>

@@ -1,13 +1,6 @@
 import { X, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const topPlayers = [
-  { Name: 'HighRoller', Chips: 152300 },
-  { Name: 'LuckyAce', Chips: 98750 },
-  { Name: 'CardShark', Chips: 87200 },
-  { Name: 'BluffMaster', Chips: 64500 },
-  { Name: 'ChipKing', Chips: 51800 },
-];
+import { useRanking } from '@application/hooks/useRanking';
 
 interface RankingPanelProps {
   IsOpen: boolean;
@@ -20,8 +13,10 @@ const RankingPanel = ({
   OnClose,
   OnExitComplete,
 }: RankingPanelProps) => {
+  const { Players, IsLoading, Error } = useRanking(IsOpen);
+
   const FormatChips = (Chips: number) => {
-    if (Chips >= 1000000) return (Chips / 1000000).toFixed(1) + 'k';
+    if (Chips >= 1000000) return (Chips / 1000000).toFixed(1) + 'M';
     if (Chips >= 1000) return (Chips / 1000).toFixed(1) + 'k';
     return Chips.toLocaleString('pt-BR');
   };
@@ -54,39 +49,61 @@ const RankingPanel = ({
             </div>
 
             <div className="divide-y-2 divide-border overflow-hidden">
-              {topPlayers.map((Player, I) => (
-                <motion.div
-                  key={Player.Name}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: 0.06 + I * 0.03,
-                    duration: 0.18,
-                    ease: 'easeOut',
-                  }}
-                  className={`flex items-center justify-between p-3 ${I === 0 ? 'bg-cassino-gold/10' : ''}`}
-                >
-                  <div className="flex items-center gap-3">
+              {IsLoading && (
+                <div className="p-4 text-center text-sm font-body text-muted-foreground">
+                  Carregando ranking...
+                </div>
+              )}
+
+              {!IsLoading && Error && (
+                <div className="p-4 text-center text-sm font-body text-muted-foreground">
+                  Nao foi possivel carregar o ranking.
+                </div>
+              )}
+
+              {!IsLoading && !Error && Players.length === 0 && (
+                <div className="p-4 text-center text-sm font-body text-muted-foreground">
+                  Ranking vazio.
+                </div>
+              )}
+
+              {!IsLoading &&
+                !Error &&
+                Players.map((Player, I) => (
+                  <motion.div
+                    key={`${Player.Position}-${Player.Nickname}`}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: 0.06 + I * 0.03,
+                      duration: 0.18,
+                      ease: 'easeOut',
+                    }}
+                    className={`flex items-center justify-between p-3 ${I === 0 ? 'bg-cassino-gold/10' : ''}`}
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={`text-sm w-5 shrink-0 text-center font-display ${
+                          I === 0
+                            ? 'text-cassino-gold'
+                            : 'text-muted-foreground'
+                        }`}
+                      >
+                        {Player.Position}
+                      </span>
+                      <span className="text-foreground text-sm font-medium font-body truncate">
+                        {Player.Nickname}
+                      </span>
+                    </div>
                     <span
-                      className={`text-sm w-5 text-center font-display ${
-                        I === 0 ? 'text-cassino-gold' : 'text-muted-foreground'
+                      className={`ml-3 text-sm font-mono shrink-0 ${
+                        I === 0 ? 'text-cassino-gold' : 'text-accent-green'
                       }`}
                     >
-                      {I === 0 ? '♛' : I + 1}
+                      {FormatChips(Player.ChipBalance)}
                     </span>
-                    <span className="text-foreground text-sm font-medium font-body truncate">
-                      {Player.Name}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-sm font-mono shrink-0 ${
-                      I === 0 ? 'text-cassino-gold' : 'text-accent-green'
-                    }`}
-                  >
-                    {FormatChips(Player.Chips)}
-                  </span>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
             </div>
           </div>
         </motion.div>
