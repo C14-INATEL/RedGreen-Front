@@ -2,8 +2,8 @@ import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { createMineCard, type MineCardInstance } from './MineCard';
-import { MINEFIELD_GRID_SIZE, type MinefieldCard } from './minefieldGameConfig';
-import { preloadMinefieldCardTextures } from './minefieldTextures';
+import { MINEFIELD_GRID_SIZE, type MinefieldCard } from './MinefieldGameConfig';
+import { preloadMinefieldCardTextures } from './MinefieldTextures';
 
 type MinefieldBoardProps = Pick<
   HTMLAttributes<HTMLDivElement>,

@@ -2,7 +2,7 @@ import { AnimatedSprite, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import {
   MINEFIELD_CLOSED_CARD_SPRITES,
   MINEFIELD_REVEAL_ANIMATION_FRAMES,
-} from './minefieldTextures';
+} from './MinefieldTextures';
 
 export type MineCardProps = {
   disabled: boolean;

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { RewardCardOption, RewardChoiceSession } from '../types/cardReward';
+import type {
+  RewardCardOption,
+  RewardChoiceSession,
+} from '../types/CardReward';
 
 export type RewardSelectionOverlay = {
   optionId: string;
@@ -16,28 +19,28 @@ const getCardsForTable = (
   tableType: RewardChoiceSession['tableState']['currentTable']
 ) => (tableType === 'bad' ? session.badTableCards : session.normalTableCards);
 
-export const useCardSelectionAnimation = ({ session }: UseCardSelectionAnimationProps) => {
+export const useCardSelectionAnimation = ({
+  session,
+}: UseCardSelectionAnimationProps) => {
   const modalRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [overlayState, setOverlayState] = useState<RewardSelectionOverlay | null>(null);
+  const [overlayState, setOverlayState] =
+    useState<RewardSelectionOverlay | null>(null);
 
   const latestSelection =
     session?.selectionHistory[session.selectionHistory.length - 1] ?? null;
   const selectedOptionId = latestSelection?.optionId ?? null;
-  const selectedCard = useMemo(
-    () => {
-      if (!session || !latestSelection) {
-        return null;
-      }
+  const selectedCard = useMemo(() => {
+    if (!session || !latestSelection) {
+      return null;
+    }
 
-      return (
-        getCardsForTable(session, latestSelection.tableType).find(
-          (card: RewardCardOption) => card.optionId === selectedOptionId
-        ) ?? null
-      );
-    },
-    [latestSelection, selectedOptionId, session]
-  );
+    return (
+      getCardsForTable(session, latestSelection.tableType).find(
+        (card: RewardCardOption) => card.optionId === selectedOptionId
+      ) ?? null
+    );
+  }, [latestSelection, selectedOptionId, session]);
 
   const registerCardRef = useCallback(
     (optionId: string) => (node: HTMLButtonElement | null) => {
@@ -95,7 +98,8 @@ export const useCardSelectionAnimation = ({ session }: UseCardSelectionAnimation
     };
   }, [session, selectedOptionId, overlayState]);
 
-  const isResolvingSelection = session?.status === 'resolving' && Boolean(selectedOptionId);
+  const isResolvingSelection =
+    session?.status === 'resolving' && Boolean(selectedOptionId);
 
   const getSelectionState = useCallback(
     (optionId: string) => {
@@ -104,7 +108,7 @@ export const useCardSelectionAnimation = ({ session }: UseCardSelectionAnimation
       }
 
       if (optionId === selectedOptionId) {
-        return overlayState ? 'hidden' as const : 'active' as const;
+        return overlayState ? ('hidden' as const) : ('active' as const);
       }
 
       return 'dimmed' as const;

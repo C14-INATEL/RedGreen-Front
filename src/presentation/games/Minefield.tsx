@@ -6,7 +6,7 @@ import {
   useCardRewardController,
 } from './cardReward';
 import { MinefieldBoard } from './MinefieldGame/MinefieldBoard';
-import { createMockMinefieldCards } from './MinefieldGame/minefieldGameConfig';
+import { createMockMinefieldCards } from './MinefieldGame/MinefieldGameConfig';
 
 export const Minefield = () => {
   const [cards, setCards] = useState(createMockMinefieldCards);
@@ -94,7 +94,9 @@ export const Minefield = () => {
         onSelectedCardCinematicComplete={
           rewardController.handleSelectedCardCinematicComplete
         }
-        onTableTransitionComplete={rewardController.handleTableTransitionComplete}
+        onTableTransitionComplete={
+          rewardController.handleTableTransitionComplete
+        }
         session={rewardController.activeSession}
       />
     </motion.div>

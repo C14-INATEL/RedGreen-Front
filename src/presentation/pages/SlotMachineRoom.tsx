@@ -1,5 +1,5 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 
@@ -91,7 +91,7 @@ export const SlotMachineRoom = () => {
       />
 
       <AnimatePresence>
-        {IsLoggedIn && IsActive && (
+        {IsLoggedIn && (
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}

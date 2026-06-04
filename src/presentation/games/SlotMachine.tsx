@@ -27,14 +27,31 @@ type SlotMachineRouteState = {
 export const SlotMachine = () => {
   const Location = useLocation();
   const Navigate = useNavigate();
+
   const RouteState = Location.state as SlotMachineRouteState | null;
+
   const SelectedSlotMachineId = RouteState?.SlotMachineId;
+
   const [HasEnteredMachineView, SetHasEnteredMachineView] = useState(
     RouteState?.SlotMachineIntroCompleted === true
   );
 
   return (
-    <div className="relative">
+    <div className="relative flex w-full items-start justify-center gap-4 xl:gap-6">
+      <motion.div
+        initial={false}
+        animate={
+          HasEnteredMachineView ? { opacity: 1, x: 0 } : { opacity: 0, x: -120 }
+        }
+        className="mt-3 hidden shrink-0 lg:block"
+        transition={{
+          ...MACHINE_ENTRY_TRANSITION,
+          delay: HasEnteredMachineView ? 0.08 : 0,
+        }}
+      >
+        <SlotPaytableHUD />
+      </motion.div>
+
       <motion.div
         initial={false}
         animate={
@@ -42,56 +59,40 @@ export const SlotMachine = () => {
             ? { opacity: 1, scale: 1, y: 0 }
             : { opacity: 0.88, scale: 0.66, y: 46 }
         }
-        className="origin-center"
+        className="relative origin-center shrink-0"
         transition={MACHINE_ENTRY_TRANSITION}
       >
         <SlotMachinePixi
           animateMachineSprite={HasEnteredMachineView}
           slotMachineId={SelectedSlotMachineId}
         />
-      </motion.div>
 
-      <div className="pointer-events-none absolute left-0 top-3 z-10 hidden -translate-x-[calc(100%+18px)] lg:block">
-        <motion.div
-          initial={false}
-          animate={
-            HasEnteredMachineView
-              ? { opacity: 1, x: 0 }
-              : { opacity: 0, x: -120 }
-          }
-          transition={{
-            ...MACHINE_ENTRY_TRANSITION,
-            delay: HasEnteredMachineView ? 0.08 : 0,
-          }}
-        >
-          <SlotPaytableHUD />
-        </motion.div>
-      </div>
+        {!HasEnteredMachineView ? (
+          <button
+            aria-label="Aproximar da Slot Machine"
+            className="absolute inset-0 z-20 cursor-zoom-in bg-transparent"
+            onClick={() => {
+              SetHasEnteredMachineView(true);
 
-      {!HasEnteredMachineView ? (
-        <button
-          aria-label="Aproximar da Slot Machine"
-          className="absolute inset-0 z-20 cursor-zoom-in bg-transparent"
-          onClick={() => {
-            SetHasEnteredMachineView(true);
-            Navigate(
-              {
-                hash: Location.hash,
-                pathname: Location.pathname,
-                search: Location.search,
-              },
-              {
-                replace: true,
-                state: {
-                  ...RouteState,
-                  SlotMachineIntroCompleted: true,
+              Navigate(
+                {
+                  hash: Location.hash,
+                  pathname: Location.pathname,
+                  search: Location.search,
                 },
-              }
-            );
-          }}
-          type="button"
-        />
-      ) : null}
+                {
+                  replace: true,
+                  state: {
+                    ...RouteState,
+                    SlotMachineIntroCompleted: true,
+                  },
+                }
+              );
+            }}
+            type="button"
+          />
+        ) : null}
+      </motion.div>
     </div>
   );
 };
