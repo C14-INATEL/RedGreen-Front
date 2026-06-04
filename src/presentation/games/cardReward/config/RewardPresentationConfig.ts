@@ -1,4 +1,4 @@
-import type { RewardPresentationConfig } from '../types/cardReward';
+import type { RewardPresentationConfig } from '../types/CardReward';
 
 export const rewardPresentationConfig: RewardPresentationConfig = {
   audioCues: {

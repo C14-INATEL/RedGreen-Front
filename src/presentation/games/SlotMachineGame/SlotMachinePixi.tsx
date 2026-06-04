@@ -17,7 +17,7 @@ import {
   getSlotMachineSessionState,
   rerollActiveSlotSession,
   type SlotMachineApiSession,
-} from './slotMachineApi';
+} from './SlotMachineApi';
 import {
   SlotMachineReels,
   type SlotMachineReelsMode,

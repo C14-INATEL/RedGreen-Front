@@ -6,7 +6,7 @@ import {
   it,
   jest,
 } from '@jest/globals';
-import { buildSpinAnimationFromSession } from '../src/presentation/games/SlotMachineGame/slotMachineApi';
+import { buildSpinAnimationFromSession } from '../src/presentation/games/SlotMachineGame/SlotMachineApi';
 import { createSlotMachineSession } from './SlotMachineTestBuilders';
 
 const mockApiGet = jest.fn();

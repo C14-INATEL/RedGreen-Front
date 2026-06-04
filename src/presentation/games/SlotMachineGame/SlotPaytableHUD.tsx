@@ -1,4 +1,4 @@
-import { SLOT_PAYTABLE_ENTRIES } from './slotPaytable';
+import { SLOT_PAYTABLE_ENTRIES } from './SlotPaytable';
 
 const HUD_ROW_CLASSES =
   'flex min-h-[84px] items-center justify-between gap-5 rounded-[9px] border border-[#d9b453]/18 bg-[rgba(6,20,9,0.88)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,236,173,0.06)]';

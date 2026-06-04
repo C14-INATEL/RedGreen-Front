@@ -4,7 +4,7 @@ import type {
   SlotMachineSpinDirection,
   SlotMachineSpinResult,
   SlotMachineSymbolId,
-} from './slotMachineGameConfig';
+} from './SlotMachineGameConfig';
 
 type BackendSlotSymbol =
   | 'Orange'

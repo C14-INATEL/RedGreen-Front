@@ -1,4 +1,4 @@
-import type { RewardCardDefinition } from '../types/cardReward';
+import type { RewardCardDefinition } from '../types/CardReward';
 
 const CARD_TEST_SPRITES = [
   '/MineField/CardTest.png',

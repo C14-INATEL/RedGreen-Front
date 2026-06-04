@@ -1,4 +1,4 @@
-import type { MinefieldTableType } from '../../MinefieldGame/minefieldTableConfig';
+import type { MinefieldTableType } from '../../MinefieldGame/MinefieldTableConfig';
 
 export type RewardSelectionPhase = 'selecting' | 'resolving';
 export type RewardTablePhase = 'normal' | 'transitioning' | 'bad';
