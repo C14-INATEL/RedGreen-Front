@@ -1,6 +1,11 @@
 import { Assets, SCALE_MODES, Texture } from 'pixi.js';
+import { GAMBIT_EFFECT_CARD_SPRITES } from './gambitEffectCardAssets';
 import { type GambitTableType, gambitTableThemes } from './gambitTableConfig';
-import type { GambitCardEffectViewModel } from './gambitTypes';
+
+export {
+  GAMBIT_EFFECT_CARD_SPRITES,
+  getGambitEffectCardSpritePath,
+} from './gambitEffectCardAssets';
 
 const CLOSED_CARD_SPRITE_TOTAL = 7;
 const PARTICLE_FRAME_TOTAL = 8;
@@ -20,16 +25,6 @@ export const GAMBIT_PARTICLE_ANIMATION_FRAMES = Array.from(
   { length: PARTICLE_FRAME_TOTAL },
   (_, index) => `/Gambit/SpriteParticle${index + 1}.png`
 );
-
-export const GAMBIT_EFFECT_CARD_SPRITES: Record<
-  GambitCardEffectViewModel,
-  string
-> = {
-  clarividencia: '/Gambit/CardTest2.png',
-  'dobro-de-potassio': '/Gambit/CardTest.png',
-  'inversao-gravitacional': '/Gambit/CardTest3.png',
-  melancidio: '/Gambit/CardTest1.png',
-};
 
 let preloadGambitCardTexturesPromise: Promise<void> | null = null;
 let preloadGambitParticleTexturesPromise: Promise<void> | null = null;
@@ -118,7 +113,3 @@ export const getRandomGambitClosedCardSprite = () =>
   GAMBIT_CLOSED_CARD_SPRITES[
     Math.floor(Math.random() * GAMBIT_CLOSED_CARD_SPRITES.length)
   ] ?? GAMBIT_CLOSED_CARD_SPRITES[0];
-
-export const getGambitEffectCardSpritePath = (
-  effect: GambitCardEffectViewModel
-) => GAMBIT_EFFECT_CARD_SPRITES[effect];

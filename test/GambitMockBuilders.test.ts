@@ -66,6 +66,18 @@ describe('Gambit visual mock mechanics', () => {
     });
   });
 
+  it('models every visual mock card as either points or effect, never both', () => {
+    const session = makeMockGambitSession('effectsOnBoard');
+    const cards = [
+      ...(session.CurrentGridSnapshot?.Revealed ?? []),
+      ...(session.CurrentGridSnapshot?.Unrevealed ?? []),
+    ];
+
+    cards.forEach((card) => {
+      expect(card.Effect === null).toBe(card.Points !== null);
+    });
+  });
+
   it('keeps position 13 as a +30 point card', () => {
     const session = makeMockGambitSession('effectsOnBoard');
 

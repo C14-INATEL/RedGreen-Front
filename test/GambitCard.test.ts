@@ -3,10 +3,18 @@ import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGa
 import {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
-} from '../src/presentation/games/GambitGame/gambitTextures';
+} from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
 import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/gambitTypes';
+import { rewardCardPool } from '../src/presentation/games/cardReward/config/rewardCardPool';
 
 const EFFECT_TEXT_FALLBACKS = ['CLAR', 'MEL', '2X', 'INV'];
+const TEMPORARY_SPRITE_PREFIX = ['Card', 'Test'].join('');
+const EXPECTED_EFFECT_SPRITES: Record<GambitCardEffectViewModel, string> = {
+  clarividencia: '/Gambit/Clarividencia.png',
+  'dobro-de-potassio': '/Gambit/DobroDePotassio.png',
+  'inversao-gravitacional': '/Gambit/InversaoGravitacional.png',
+  melancidio: '/Gambit/QuantoMenosMelhor.png',
+};
 
 describe('GambitCard visual secrecy', () => {
   it('keeps positive, negative and effect cards visually identical while closed', () => {
@@ -58,25 +66,49 @@ describe('GambitCard visual secrecy', () => {
       'inversao-gravitacional',
     ];
 
-    expect(GAMBIT_EFFECT_CARD_SPRITES).toEqual({
-      clarividencia: '/Gambit/CardTest2.png',
-      'dobro-de-potassio': '/Gambit/CardTest.png',
-      'inversao-gravitacional': '/Gambit/CardTest3.png',
-      melancidio: '/Gambit/CardTest1.png',
-    });
+    expect(GAMBIT_EFFECT_CARD_SPRITES).toEqual(EXPECTED_EFFECT_SPRITES);
     expect(
       effects.map((effect) => getGambitEffectCardSpritePath(effect))
     ).toEqual([
-      '/Gambit/CardTest.png',
-      '/Gambit/CardTest1.png',
-      '/Gambit/CardTest2.png',
-      '/Gambit/CardTest3.png',
+      '/Gambit/DobroDePotassio.png',
+      '/Gambit/QuantoMenosMelhor.png',
+      '/Gambit/Clarividencia.png',
+      '/Gambit/InversaoGravitacional.png',
     ]);
 
     effects.forEach((effect) => {
       expect(EFFECT_TEXT_FALLBACKS).not.toContain(
         getGambitEffectCardSpritePath(effect)
       );
+    });
+  });
+
+  it('keeps board and reward modal effects on the same final sprite paths', () => {
+    const rewardSpritesById = Object.fromEntries(
+      rewardCardPool.map((card) => [card.id, card.spritePath])
+    );
+
+    expect(rewardSpritesById).toEqual(GAMBIT_EFFECT_CARD_SPRITES);
+    expect(rewardSpritesById['dobro-de-potassio']).toBe(
+      '/Gambit/DobroDePotassio.png'
+    );
+    expect(rewardSpritesById.clarividencia).toBe('/Gambit/Clarividencia.png');
+    expect(rewardSpritesById['inversao-gravitacional']).toBe(
+      '/Gambit/InversaoGravitacional.png'
+    );
+    expect(rewardSpritesById.melancidio).toBe('/Gambit/QuantoMenosMelhor.png');
+  });
+
+  it('does not use temporary placeholder sprites for official effects', () => {
+    const temporarySpritePattern = new RegExp(
+      `${TEMPORARY_SPRITE_PREFIX}\\d*\\.png$`
+    );
+
+    [
+      ...Object.values(GAMBIT_EFFECT_CARD_SPRITES),
+      ...rewardCardPool.map((card) => card.spritePath),
+    ].forEach((spritePath) => {
+      expect(spritePath).not.toMatch(temporarySpritePattern);
     });
   });
 

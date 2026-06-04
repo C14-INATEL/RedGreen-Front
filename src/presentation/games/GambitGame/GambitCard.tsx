@@ -11,8 +11,8 @@ import {
 import {
   GAMBIT_CLOSED_CARD_SPRITES,
   GAMBIT_REVEAL_ANIMATION_FRAMES,
-  getGambitEffectCardSpritePath,
 } from './gambitTextures';
+import { getGambitEffectCardSpritePath } from './gambitEffectCardAssets';
 import type { GambitCardEffectViewModel } from './gambitTypes';
 
 export type GambitCardProps = {
