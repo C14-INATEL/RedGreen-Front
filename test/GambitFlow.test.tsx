@@ -103,10 +103,42 @@ jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
         React.createElement(
           'button',
           {
+            onClick: () => props.onCardReveal(13),
+            type: 'button',
+          },
+          'reveal-13'
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: () => props.onCardReveal(18),
+            type: 'button',
+          },
+          'reveal-18'
+        ),
+        React.createElement(
+          'button',
+          {
             onClick: () => props.onCardRevealAnimationComplete?.(0),
             type: 'button',
           },
           'complete-0'
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: () => props.onCardRevealAnimationComplete?.(13),
+            type: 'button',
+          },
+          'complete-13'
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: () => props.onCardRevealAnimationComplete?.(18),
+            type: 'button',
+          },
+          'complete-18'
         )
       );
     },
@@ -155,5 +187,46 @@ describe('Gambit visual flow', () => {
         'cards:25:revealed:0:previewed:0:locked:false:preview-mode:false'
       )
     ).toBeInTheDocument();
+  });
+
+  it('applies Inversao Gravitacional to the next point card in the visual flow', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('effectsOnBoard'),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-18'));
+
+    expect(screen.getByText('Efeito preparado')).toBeInTheDocument();
+    expect(mockGambitBoard).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        cards: expect.arrayContaining([
+          expect.objectContaining({
+            effect: 'inversao-gravitacional',
+            id: 18,
+            points: null,
+            revealed: true,
+          }),
+        ]),
+      })
+    );
+
+    fireEvent.click(screen.getByText('complete-18'));
+    fireEvent.click(screen.getByText('reveal-13'));
+
+    expect(screen.getByText('-30')).toBeInTheDocument();
+    expect(screen.getByText('Evento configuravel')).toBeInTheDocument();
+    expect(mockGambitBoard).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        cards: expect.arrayContaining([
+          expect.objectContaining({
+            id: 13,
+            points: 30,
+            revealed: true,
+          }),
+        ]),
+      })
+    );
   });
 });

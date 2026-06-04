@@ -138,8 +138,9 @@ export const applyMockGambitEffect = (
       return pointValue * 2;
     case 'MELANCIDIO':
       return Math.trunc(pointValue / 2);
-    case 'CLARIVIDENCIA':
     case 'INVERSAO_GRAVITACIONAL':
+      return pointValue === 0 ? 0 : -pointValue;
+    case 'CLARIVIDENCIA':
     case null:
       return pointValue;
     default:
