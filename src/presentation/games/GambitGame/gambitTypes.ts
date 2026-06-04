@@ -1,19 +1,23 @@
-export type BackendGambitStatus = 'InProgress' | 'Finished' | 'CashedOut';
+export type GambitId = number | string;
 
-export type BackendGambitCard =
+export type GambitSessionStatus = 'InProgress' | 'Finished' | 'CashedOut';
+
+export type GambitCardEffect =
   | 'DOBRO_DE_POTASSIO'
   | 'MELANCIDIO'
   | 'CLARIVIDENCIA'
   | 'INVERSAO_GRAVITACIONAL';
 
-export type BackendGambitEventType = 'Good' | 'Bad' | 'Neutral';
+export type GambitCard = GambitCardEffect;
 
-export type BackendGambitTable = {
+export type GambitCardNature = 'Good' | 'Bad' | 'Neutral';
+
+export type GambitTable = {
   Active: boolean;
   CardPrice: number;
   Description: string | null;
   EventInterval: number;
-  GambitTableId: number | string;
+  GambitTableId: GambitId;
   MaxCardsPurchased: number;
   MinimumCardsPurchased: number;
   MinimumChipsRequired: number | null;
@@ -22,40 +26,63 @@ export type BackendGambitTable = {
   TableMultiplier: number;
 };
 
-export type BackendGambitGridPosition = {
-  Effect: BackendGambitCard | null;
+export type GambitGridCard = {
+  Effect: GambitCardEffect | null;
   Points: number;
   Position: number;
 };
 
-export type BackendGambitPendingEvent = {
-  CardsOffered: [BackendGambitCard, BackendGambitCard, BackendGambitCard];
-  EventType: BackendGambitEventType;
+export type GambitPendingEvent = {
+  CardsOffered: [GambitCard, GambitCard, GambitCard];
+  EventType: GambitCardNature;
 };
 
-export type BackendGambitCurrentGridSnapshot = {
-  PendingEvent: BackendGambitPendingEvent | null;
-  Revealed: BackendGambitGridPosition[];
-  Unrevealed?: BackendGambitGridPosition[];
+export type GambitGridSnapshot = {
+  PendingEvent: GambitPendingEvent | null;
+  Revealed: GambitGridCard[];
+  Unrevealed: GambitGridCard[];
 };
 
-export type BackendGambitSession = {
+export type GambitSession = {
   AccumulatedPoints: number;
   CardsPurchased: number;
-  CreatedAt: string;
-  CurrentGridSnapshot: BackendGambitCurrentGridSnapshot | null;
-  GambitSessionId: number | string;
-  GambitTable: BackendGambitTable | null;
-  GambitTableId: number | string;
+  CreatedAt?: string;
+  CurrentGridSnapshot: GambitGridSnapshot | null;
+  GambitSessionId: GambitId;
+  GambitTable?: GambitTable | null;
+  GambitTableId: GambitId;
   ManualFlipsCount: number;
-  NextEffect: BackendGambitCard | null;
+  NextEffect: GambitCardEffect | null;
   Result: number | null;
-  Status: BackendGambitStatus;
-  UpdatedAt: string;
-  UserId: number | string;
+  Status: GambitSessionStatus;
+  UpdatedAt?: string;
+  UserId: GambitId;
 };
 
-export type GambitId = number | string;
+export type CreateGambitSessionPayload = {
+  CardsPurchased: number;
+};
+
+export type UpdateGambitSessionPayload = Partial<
+  Pick<
+    GambitSession,
+    | 'AccumulatedPoints'
+    | 'CurrentGridSnapshot'
+    | 'ManualFlipsCount'
+    | 'NextEffect'
+    | 'Result'
+    | 'Status'
+  >
+>;
+
+export type BackendGambitStatus = GambitSessionStatus;
+export type BackendGambitCard = GambitCardEffect;
+export type BackendGambitEventType = GambitCardNature;
+export type BackendGambitTable = GambitTable;
+export type BackendGambitGridPosition = GambitGridCard;
+export type BackendGambitPendingEvent = GambitPendingEvent;
+export type BackendGambitCurrentGridSnapshot = GambitGridSnapshot;
+export type BackendGambitSession = GambitSession;
 
 export type GambitStatusViewModel = 'in-progress' | 'finished' | 'cashed-out';
 

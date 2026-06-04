@@ -117,7 +117,7 @@ describe('Gambit visual flow', () => {
         cards: expect.arrayContaining([
           expect.objectContaining({
             id: 0,
-            points: 0,
+            points: 10,
             position: 0,
             revealed: false,
           }),

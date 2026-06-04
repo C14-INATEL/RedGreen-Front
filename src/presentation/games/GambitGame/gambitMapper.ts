@@ -8,6 +8,7 @@ import type {
   BackendGambitSession,
   BackendGambitStatus,
   BackendGambitTable,
+  GambitSession,
   GambitCardEffectViewModel,
   GambitCurrentGridSnapshotViewModel,
   GambitEventTypeViewModel,
@@ -194,7 +195,8 @@ export const mapBackendGambitPendingEventToViewModel = (
 };
 
 const mapBackendGambitGridPositionToViewModel = (
-  position: BackendGambitGridPosition
+  position: BackendGambitGridPosition,
+  revealed: boolean
 ): GambitGridCardViewModel => {
   const visualPosition = requireGridPosition(position.Position);
 
@@ -203,7 +205,7 @@ const mapBackendGambitGridPositionToViewModel = (
     id: visualPosition,
     points: requireFiniteNumber(position.Points, 'Points'),
     position: visualPosition,
-    revealed: true,
+    revealed,
   };
 };
 
@@ -219,7 +221,12 @@ export const mapBackendGambitGridToViewModel = (
     };
   }
 
+  const unrevealedPositions = snapshot.Unrevealed ?? [];
   const revealedPositions = snapshot.Revealed ?? [];
+
+  if (!Array.isArray(unrevealedPositions)) {
+    throw new Error('Invalid Gambit CurrentGridSnapshot.Unrevealed.');
+  }
 
   if (!Array.isArray(revealedPositions)) {
     throw new Error('Invalid Gambit CurrentGridSnapshot.Revealed.');
@@ -227,9 +234,27 @@ export const mapBackendGambitGridToViewModel = (
 
   const seenPositions = new Set<number>();
 
+  unrevealedPositions.forEach((unrevealedPosition) => {
+    const unrevealedCard = mapBackendGambitGridPositionToViewModel(
+      unrevealedPosition,
+      false
+    );
+
+    if (seenPositions.has(unrevealedCard.position)) {
+      throw new Error(
+        `Invalid Gambit grid: duplicate Position "${unrevealedCard.position}".`
+      );
+    }
+
+    seenPositions.add(unrevealedCard.position);
+    cards[unrevealedCard.position] = unrevealedCard;
+  });
+
   revealedPositions.forEach((revealedPosition) => {
-    const revealedCard =
-      mapBackendGambitGridPositionToViewModel(revealedPosition);
+    const revealedCard = mapBackendGambitGridPositionToViewModel(
+      revealedPosition,
+      true
+    );
 
     if (seenPositions.has(revealedCard.position)) {
       throw new Error(
@@ -264,7 +289,7 @@ export const mapBackendGambitSessionToViewModel = (
       session.CardsPurchased,
       'CardsPurchased'
     ),
-    createdAt: session.CreatedAt,
+    createdAt: session.CreatedAt ?? '',
     gambitSessionId: sessionId,
     gambitTableId: tableId,
     grid: mapBackendGambitGridToViewModel(session.CurrentGridSnapshot),
@@ -283,7 +308,14 @@ export const mapBackendGambitSessionToViewModel = (
       ? mapBackendGambitTableToViewModel(session.GambitTable)
       : null,
     tableId,
-    updatedAt: session.UpdatedAt,
+    updatedAt: session.UpdatedAt ?? session.CreatedAt ?? '',
     userId: requireId(session.UserId, 'UserId'),
   };
 };
+
+export const mapGambitSessionToMinefieldCards = (
+  session: GambitSession
+): GambitGridCardViewModel[] =>
+  mapBackendGambitGridToViewModel(session.CurrentGridSnapshot).cards;
+
+export const mapGambitSessionToViewModel = mapBackendGambitSessionToViewModel;

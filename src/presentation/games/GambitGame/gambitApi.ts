@@ -1,45 +1,145 @@
-import { mapBackendGambitSessionToViewModel } from './gambitMapper';
+import { config } from '../../../config';
+import { apiClient } from '../../../infrastructure/http/client';
+import {
+  makeMockGambitSession,
+  makeMockGambitTable,
+} from './gambitMockBuilders';
+import { mapGambitSessionToViewModel } from './gambitMapper';
 import type {
-  BackendGambitSession,
-  BackendGambitTable,
+  CreateGambitSessionPayload,
+  GambitId,
+  GambitSession,
   GambitSessionViewModel,
+  GambitTable,
+  UpdateGambitSessionPayload,
 } from './gambitTypes';
 
-const createBackendGambitTableStub = (): BackendGambitTable => ({
-  Active: true,
-  CardPrice: 10,
-  Description: 'Tabela local usada ate o contrato HTTP do Gambit entrar.',
-  EventInterval: 3,
-  GambitTableId: 1,
-  MaxCardsPurchased: 25,
-  MinimumCardsPurchased: 1,
-  MinimumChipsRequired: 10,
-  Name: 'Gambit',
-  PurchaseMultiplierScale: 1,
-  TableMultiplier: 1,
-});
+const getMockGambitSession = (
+  overrides: Partial<GambitSession> = {}
+): GambitSession => makeMockGambitSession(undefined, overrides);
 
-export const createMockBackendGambitSession = (): BackendGambitSession => ({
-  AccumulatedPoints: 0,
-  CardsPurchased: 0,
-  CreatedAt: '2026-06-01T00:00:00.000Z',
-  CurrentGridSnapshot: {
-    PendingEvent: null,
-    Revealed: [],
-  },
-  GambitSessionId: 'local-gambit-session',
-  GambitTable: createBackendGambitTableStub(),
-  GambitTableId: 1,
-  ManualFlipsCount: 0,
-  NextEffect: null,
-  Result: null,
-  Status: 'InProgress',
-  UpdatedAt: '2026-06-01T00:00:00.000Z',
-  UserId: 'local-user',
-});
+export const createMockBackendGambitSession = (): GambitSession =>
+  getMockGambitSession();
 
 export const createMockGambitViewModel = (): GambitSessionViewModel =>
-  mapBackendGambitSessionToViewModel(createMockBackendGambitSession());
+  mapGambitSessionToViewModel(createMockBackendGambitSession());
+
+export const fetchGambitTables = async (): Promise<GambitTable[]> => {
+  if (config.useGambitMock) {
+    return [makeMockGambitTable()];
+  }
+
+  const response = await apiClient.get<GambitTable[]>('/gambit-table');
+
+  return response.data;
+};
+
+export const fetchGambitTable = async (
+  gambitTableId: GambitId
+): Promise<GambitTable> => {
+  if (config.useGambitMock) {
+    return makeMockGambitTable({
+      GambitTableId: gambitTableId,
+    });
+  }
+
+  const response = await apiClient.get<GambitTable>(
+    `/gambit-table/${gambitTableId}`
+  );
+
+  return response.data;
+};
+
+export const createGambitSession = async (
+  gambitTableId: GambitId,
+  payload: CreateGambitSessionPayload
+): Promise<GambitSession> => {
+  if (config.useGambitMock) {
+    return getMockGambitSession({
+      CardsPurchased: payload.CardsPurchased,
+      GambitTableId: gambitTableId,
+    });
+  }
+
+  const response = await apiClient.post<GambitSession>(
+    `/gambit-tables/${gambitTableId}/sessions`,
+    payload
+  );
+
+  return response.data;
+};
+
+export const fetchGambitSessions = async (
+  gambitTableId: GambitId
+): Promise<GambitSession[]> => {
+  if (config.useGambitMock) {
+    return [
+      getMockGambitSession({
+        GambitTableId: gambitTableId,
+      }),
+    ];
+  }
+
+  const response = await apiClient.get<GambitSession[]>(
+    `/gambit-tables/${gambitTableId}/sessions`
+  );
+
+  return response.data;
+};
+
+export const fetchGambitSession = async (
+  gambitTableId: GambitId,
+  sessionId: GambitId
+): Promise<GambitSession> => {
+  if (config.useGambitMock) {
+    return getMockGambitSession({
+      GambitSessionId: sessionId,
+      GambitTableId: gambitTableId,
+    });
+  }
+
+  const response = await apiClient.get<GambitSession>(
+    `/gambit-tables/${gambitTableId}/sessions/${sessionId}`
+  );
+
+  return response.data;
+};
+
+export const updateGambitSession = async (
+  gambitTableId: GambitId,
+  sessionId: GambitId,
+  payload: UpdateGambitSessionPayload
+): Promise<GambitSession> => {
+  if (config.useGambitMock) {
+    return {
+      ...getMockGambitSession({
+        GambitSessionId: sessionId,
+        GambitTableId: gambitTableId,
+      }),
+      ...payload,
+    };
+  }
+
+  const response = await apiClient.patch<GambitSession>(
+    `/gambit-tables/${gambitTableId}/sessions/${sessionId}`,
+    payload
+  );
+
+  return response.data;
+};
+
+export const deleteGambitSession = async (
+  gambitTableId: GambitId,
+  sessionId: GambitId
+): Promise<void> => {
+  if (config.useGambitMock) {
+    return;
+  }
+
+  await apiClient.delete(
+    `/gambit-tables/${gambitTableId}/sessions/${sessionId}`
+  );
+};
 
 export const getGambitSessionStub = async (): Promise<GambitSessionViewModel> =>
-  createMockGambitViewModel();
+  mapGambitSessionToViewModel(await fetchGambitSession(1, 1));

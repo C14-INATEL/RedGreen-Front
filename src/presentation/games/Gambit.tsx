@@ -2,26 +2,53 @@ import { motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import {
   RewardChoiceModal,
+  type RewardSelectionResult,
   rewardTriggerConfig,
   useCardRewardController,
 } from './cardReward';
-import { createMockGambitViewModel } from './GambitGame/gambitApi';
 import { GambitBoard } from './GambitGame/GambitBoard';
+import {
+  makeMockGambitSession,
+  revealMockGambitCard,
+  selectMockPendingEventCard,
+} from './GambitGame/gambitMockBuilders';
+import { mapGambitSessionToMinefieldCards } from './GambitGame/gambitMapper';
+import type { GambitCardEffect } from './GambitGame/gambitTypes';
+
+const REWARD_CARD_ID_TO_GAMBIT_EFFECT: Record<string, GambitCardEffect> = {
+  clarividencia: 'CLARIVIDENCIA',
+  'dobro-de-potassio': 'DOBRO_DE_POTASSIO',
+  'inversao-gravitacional': 'INVERSAO_GRAVITACIONAL',
+  melancidio: 'MELANCIDIO',
+};
+
+const mapRewardCardIdToGambitEffect = (cardId: string) =>
+  REWARD_CARD_ID_TO_GAMBIT_EFFECT[cardId] ?? null;
 
 export const Gambit = () => {
-  const [viewModel, setViewModel] = useState(createMockGambitViewModel);
+  const [session, setSession] = useState(makeMockGambitSession);
   const [isRevealAnimationLocked, setIsRevealAnimationLocked] = useState(false);
   const revealAnimationLockedRef = useRef(false);
-  const cards = viewModel.grid.cards;
+  const cards = mapGambitSessionToMinefieldCards(session);
   const revealedCardCount = cards.filter((card) => card.revealed).length;
+  const handleRewardSelected = ({ selectedCards }: RewardSelectionResult) => {
+    setSession((currentSession) =>
+      selectedCards.reduce((nextSession, selectedCard) => {
+        const selectedEffect = mapRewardCardIdToGambitEffect(selectedCard.id);
+
+        if (!selectedEffect) {
+          return nextSession;
+        }
+
+        return selectMockPendingEventCard(nextSession, selectedEffect);
+      }, currentSession)
+    );
+  };
   const rewardController = useCardRewardController({
+    onRewardSelected: handleRewardSelected,
     revealedCardCount,
   });
-
-  const totalScore = cards.reduce(
-    (score, card) => (card.revealed ? score + card.points : score),
-    0
-  );
+  const totalScore = session.AccumulatedPoints;
 
   const lockRevealAnimation = () => {
     revealAnimationLockedRef.current = true;
@@ -48,23 +75,9 @@ export const Gambit = () => {
     }
 
     lockRevealAnimation();
-    setViewModel((currentViewModel) => {
-      const nextCards = currentViewModel.grid.cards.map((card) =>
-        card.id === cardId ? { ...card, revealed: true } : card
-      );
-
-      return {
-        ...currentViewModel,
-        accumulatedPoints: nextCards.reduce(
-          (score, card) => (card.revealed ? score + card.points : score),
-          0
-        ),
-        grid: {
-          ...currentViewModel.grid,
-          cards: nextCards,
-        },
-      };
-    });
+    setSession((currentSession) =>
+      revealMockGambitCard(currentSession, cardId)
+    );
     rewardController.registerCardReveal(cardId);
   };
 
@@ -97,7 +110,7 @@ export const Gambit = () => {
               Proxima Escolha
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/55">
-              Evento configuravel
+              {session.NextEffect ? 'Efeito preparado' : 'Evento configuravel'}
             </p>
           </div>
 

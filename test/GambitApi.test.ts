@@ -12,7 +12,7 @@ describe('GambitApi stub', () => {
         PendingEvent: null,
         Revealed: [],
       },
-      GambitSessionId: 'local-gambit-session',
+      GambitSessionId: 1,
       Result: null,
       Status: 'InProgress',
     });
@@ -22,7 +22,7 @@ describe('GambitApi stub', () => {
     const viewModel = createMockGambitViewModel();
 
     expect(viewModel).toMatchObject({
-      gambitSessionId: 'local-gambit-session',
+      gambitSessionId: 1,
       result: null,
       status: 'in-progress',
     });
