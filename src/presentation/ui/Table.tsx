@@ -10,7 +10,7 @@ const Table = () => {
   const Navigate = useNavigate();
 
   const HandleStartGame = () => {
-    const Token = localStorage.getItem('authToken');
+    const Token = localStorage.getItem('token');
     const IsLoggedIn = !!Token;
 
     if (IsLoggedIn) {
@@ -23,6 +23,10 @@ const Table = () => {
         slotMachineIntroCompleted: false,
       },
     });
+  };
+
+  const HandleCardGameClick = () => {
+    Navigate(paths.minefieldRoom);
   };
 
   return (
@@ -62,6 +66,7 @@ const Table = () => {
               subtitle="Em breve"
               icon={<CardGameIcon />}
               delay={0.18}
+              onClick={HandleCardGameClick}
             />
           </div>
 
