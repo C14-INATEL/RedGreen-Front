@@ -14,7 +14,21 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
+  (error) => Promise.reject(error)
+);
+
+apiClient.interceptors.response.use(
+  (response) => response,
   (error) => {
+    const IsUnauthorized = error.response?.status === 401;
+    const HasToken = !!localStorage.getItem('token');
+
+    if (IsUnauthorized && HasToken) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new CustomEvent('session-expired'));
+    }
+
     return Promise.reject(error);
   }
 );

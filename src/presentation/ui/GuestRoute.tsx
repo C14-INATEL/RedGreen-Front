@@ -6,7 +6,7 @@ interface GuestRouteProps {
 }
 
 const GuestRoute = ({ children }: GuestRouteProps) => {
-  const Token = localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
 
   if (Token) {
     return <Navigate to={paths.home} replace />;
