@@ -67,8 +67,6 @@ export const CreateTableModal = ({
         MinimumSpinValue: Number(MinimumBet),
         MinimumChipsRequired: Number(MinimumChips),
         MinimumRerollValue: Number(MinimumRerollValue),
-        MaxRerolls: 5,
-        Active: true,
       });
 
       const NewTable = Response.data;
