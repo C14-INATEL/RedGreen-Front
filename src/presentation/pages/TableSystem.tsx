@@ -5,7 +5,7 @@ import { paths } from '@/paths';
 import { useUserChips } from '@/application/hooks/useUserChips';
 import { apiClient } from '@/infrastructure/http/client';
 import { CreateTableModal } from '../ui/CreateTableModal';
-import { DeleteTableModal } from '../ui/DeleteTableModal';
+import { EditTableModal } from '../ui/EditTableModal';
 import { ResultModal } from '../ui/ResultModal';
 import { SessionWarningModal } from '../ui/SessionWarningModal';
 import { SlotMachineCard } from '../ui/SlotMachineCard';
@@ -36,7 +36,16 @@ export const SlotMachineTablesRoom = () => {
 
   const [ShowCreateTableModal, SetShowCreateTableModal] = useState(false);
 
-  const [ShowDeleteModal, SetShowDeleteModal] = useState(false);
+  const [ShowEditModal, SetShowEditModal] = useState(false);
+  const [SelectedTableMinimumSpinValue, SetSelectedTableMinimumSpinValue] =
+    useState(0);
+  const [
+    SelectedTableMinimumChipsRequired,
+    SetSelectedTableMinimumChipsRequired,
+  ] = useState(0);
+  const [SelectedTableMinimumRerollValue, SetSelectedTableMinimumRerollValue] =
+    useState(0);
+  const [SelectedTableActive, SetSelectedTableActive] = useState(true);
 
   const [SelectedTableId, SetSelectedTableId] = useState<number | null>(null);
 
@@ -67,7 +76,7 @@ export const SlotMachineTablesRoom = () => {
     FetchTables();
   }, []);
 
-  const Tables = ApiTables.filter((Table) => Table.Active).sort(
+  const Tables = ApiTables.filter((Table) => Table.Active || IsAdmin).sort(
     (a, b) => a.MinimumChipsRequired - b.MinimumChipsRequired
   );
 
@@ -168,11 +177,20 @@ export const SlotMachineTablesRoom = () => {
                     console.error(err);
                   }
                 }}
-                OnDelete={() => {
+                OnEdit={() => {
                   SetSelectedTableId(TableItem.SlotMachineId);
                   SetSelectedTableName(TableItem.Name);
-                  SetShowDeleteModal(true);
+                  SetSelectedTableMinimumSpinValue(TableItem.MinimumSpinValue);
+                  SetSelectedTableMinimumChipsRequired(
+                    TableItem.MinimumChipsRequired
+                  );
+                  SetSelectedTableMinimumRerollValue(
+                    TableItem.MinimumRerollValue
+                  );
+                  SetSelectedTableActive(TableItem.Active);
+                  SetShowEditModal(true);
                 }}
+                IsActive={TableItem.Active}
               />
             );
           })
@@ -206,25 +224,38 @@ export const SlotMachineTablesRoom = () => {
         />
       )}
 
-      {ShowDeleteModal && (
-        <DeleteTableModal
-          TableName={SelectedTableName}
+      {ShowEditModal && (
+        <EditTableModal
           TableId={SelectedTableId}
-          OnClose={() => SetShowDeleteModal(false)}
-          OnTableDeleted={(tableId) =>
-            SetApiTables((current) =>
-              current.filter((Table) => Table.SlotMachineId !== tableId)
+          TableName={SelectedTableName}
+          TableMinimumSpinValue={SelectedTableMinimumSpinValue}
+          TableMinimumChipsRequired={SelectedTableMinimumChipsRequired}
+          TableMinimumRerollValue={SelectedTableMinimumRerollValue}
+          TableActive={SelectedTableActive}
+          OnClose={() => SetShowEditModal(false)}
+          OnTableDeleted={(TableId) =>
+            SetApiTables((Current) =>
+              Current.filter((Table) => Table.SlotMachineId !== TableId)
             )
           }
-          OnSuccess={(message) => {
+          OnTableUpdated={(UpdatedTable) =>
+            SetApiTables((Current) =>
+              Current.map((Table) =>
+                Table.SlotMachineId === UpdatedTable.SlotMachineId
+                  ? { ...Table, ...UpdatedTable }
+                  : Table
+              )
+            )
+          }
+          OnSuccess={(Message) => {
             SetModalTitle('Sucesso');
-            SetModalMessage(message);
+            SetModalMessage(Message);
             SetModalType('success');
             SetShowResultModal(true);
           }}
-          OnError={(message) => {
+          OnError={(Message) => {
             SetModalTitle('Erro');
-            SetModalMessage(message);
+            SetModalMessage(Message);
             SetModalType('error');
             SetShowResultModal(true);
           }}
