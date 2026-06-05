@@ -7,8 +7,9 @@ type SlotMachineCardProps = {
   MinimumChipsRequired: number;
   IsLocked: boolean;
   IsAdmin: boolean;
+  IsActive: boolean;
   OnClick: () => void;
-  OnDelete: () => void;
+  OnEdit: () => void;
 };
 
 export const SlotMachineCard = ({
@@ -18,7 +19,8 @@ export const SlotMachineCard = ({
   IsLocked,
   IsAdmin,
   OnClick,
-  OnDelete,
+  OnEdit,
+  IsActive,
 }: SlotMachineCardProps) => {
   return (
     <motion.div
@@ -68,7 +70,7 @@ export const SlotMachineCard = ({
         {MinimumChipsRequired.toLocaleString('pt-BR')}
       </p>
 
-      {IsLocked && (
+      {IsLocked && !IsAdmin && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60">
           <span
             className="text-[9px] uppercase text-red-400"
@@ -79,16 +81,27 @@ export const SlotMachineCard = ({
         </div>
       )}
 
+      {!IsActive && IsAdmin && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+          <span
+            className="text-[9px] uppercase text-orange-400"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            Desativado
+          </span>
+        </div>
+      )}
+
       {IsAdmin && (
         <button
-          className="relative z-10 mt-4 w-full border border-[#ff4444] px-2 py-2 text-[8px] uppercase text-[#ff6b6b] hover:bg-[#ff4444]/20 transition-colors opacity-90"
+          className="relative z-10 mt-4 w-full border border-[#FFD700] px-2 py-2 text-[8px] uppercase text-[#FFD700] hover:bg-[#FFD700]/20 transition-colors opacity-90"
           style={{ fontFamily: '"Press Start 2P", monospace' }}
           onClick={(e) => {
             e.stopPropagation();
-            OnDelete();
+            OnEdit();
           }}
         >
-          Excluir
+          Editar
         </button>
       )}
     </motion.div>
