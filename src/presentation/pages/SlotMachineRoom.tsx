@@ -19,8 +19,7 @@ type StoredUserSnapshot = {
 export const SlotMachineRoom = () => {
   const Navigate = useNavigate();
 
-  const Token =
-    localStorage.getItem('token') ?? localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
 
   const IsLoggedIn = !!Token;
 

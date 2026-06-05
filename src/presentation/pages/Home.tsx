@@ -19,8 +19,7 @@ type StoredUserSnapshot = {
 
 const Home = () => {
   const Navigate = useNavigate();
-  const Token =
-    localStorage.getItem('token') ?? localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
   const storedUserValue = localStorage.getItem('user');
   let StoredUser: StoredUserSnapshot | null = null;
 
@@ -84,7 +83,6 @@ const Home = () => {
 
   const HandleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     SetIsLoggedIn(false);
     Navigate('/');

@@ -135,7 +135,6 @@ const Login = () => {
 
       if (Token) {
         localStorage.setItem('token', Token);
-        localStorage.setItem('authToken', Token);
       }
 
       if (User) {
