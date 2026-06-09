@@ -25,7 +25,7 @@ const RankingPanel = ({
 
   const FormatChips = (Chips: number) => {
     const FormatCompactValue = (Value: number) =>
-      (Math.floor(Value * 10) / 10).toFixed(1);
+      (Math.floor(Value * 1000) / 1000).toFixed(3);
 
     if (Chips >= 1000000) return FormatCompactValue(Chips / 1000000) + 'M';
     if (Chips >= 1000) return FormatCompactValue(Chips / 1000) + 'k';
