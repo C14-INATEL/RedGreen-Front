@@ -6,18 +6,29 @@ interface RankingPanelProps {
   IsOpen: boolean;
   OnClose: () => void;
   OnExitComplete?: () => void;
+  ClassName?: string;
+  Placement?: 'fixed' | 'inline';
 }
 
 const RankingPanel = ({
   IsOpen,
   OnClose,
   OnExitComplete,
+  ClassName,
+  Placement = 'fixed',
 }: RankingPanelProps) => {
   const { Players, IsLoading, Error } = useRanking(IsOpen);
+  const PanelClassName =
+    Placement === 'fixed'
+      ? `fixed right-6 z-50 w-80 transform-gpu ${ClassName ?? 'top-28'}`
+      : `relative z-50 w-80 transform-gpu ${ClassName ?? ''}`;
 
   const FormatChips = (Chips: number) => {
-    if (Chips >= 1000000) return (Chips / 1000000).toFixed(1) + 'M';
-    if (Chips >= 1000) return (Chips / 1000).toFixed(1) + 'k';
+    const FormatCompactValue = (Value: number) =>
+      (Math.floor(Value * 10) / 10).toFixed(1);
+
+    if (Chips >= 1000000) return FormatCompactValue(Chips / 1000000) + 'M';
+    if (Chips >= 1000) return FormatCompactValue(Chips / 1000) + 'k';
     return Chips.toLocaleString('pt-BR');
   };
 
@@ -29,7 +40,7 @@ const RankingPanel = ({
           animate={{ x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 16, scale: 0.98 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="fixed top-28 right-6 w-72 z-50 transform-gpu"
+          className={PanelClassName}
         >
           <div
             className="relative overflow-hidden bg-card/95 backdrop-blur-md pixel-border"
