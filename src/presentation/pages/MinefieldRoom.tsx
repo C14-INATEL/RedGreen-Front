@@ -6,9 +6,17 @@ import { Trophy } from 'lucide-react';
 import { Minefield } from '../games/Minefield';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
-import { MinefieldBetPanel } from '../ui/MineFieldBetPanel';
-
+import { GambitBetPanel } from '../ui/GambitBetPanel';
 import RankingPanel from '@ui/RankingPanel';
+import { useLocation } from 'react-router-dom';
+
+type MinefieldRoomState = {
+  GambitTableId?: number;
+  CardPrice?: number;
+  TableMultiplier?: number;
+  MinimumCardsPurchased?: number;
+  MaxCardsPurchased?: number;
+};
 
 type StoredUserSnapshot = {
   ChipBalance?: number;
@@ -27,6 +35,9 @@ export const MinefieldRoom = () => {
   const [IsActive, SetIsActive] = useState(true);
 
   const [RankingOpen, SetRankingOpen] = useState(true);
+
+  const Location = useLocation();
+  const RouteState = Location.state as MinefieldRoomState | null;
 
   useEffect(() => {
     if (IsLoggedIn) {
@@ -235,7 +246,13 @@ export const MinefieldRoom = () => {
 
       <div className="relative z-10 flex items-center justify-center">
         <div className="absolute right-full mr-4 top-0 z-20">
-          <MinefieldBetPanel IsActive={IsActive} />
+          <GambitBetPanel
+            IsActive={IsActive}
+            CardPrice={RouteState?.CardPrice ?? 5}
+            TableMultiplier={RouteState?.TableMultiplier ?? 1}
+            MinimumCardsPurchased={RouteState?.MinimumCardsPurchased ?? 1}
+            MaxCardsPurchased={RouteState?.MaxCardsPurchased ?? 20}
+          />
         </div>
 
         <div
