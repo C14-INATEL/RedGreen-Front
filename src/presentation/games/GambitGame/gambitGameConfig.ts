@@ -10,6 +10,7 @@ export const createMockGambitCards = (): GambitCard[] =>
   basicPointsBoardMockCards.map((card) => ({
     effect: null,
     id: card.id,
+    locked: false,
     points: card.points,
     previewed: false,
     position: card.position,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGame/GambitCard';
 import {
+  FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
 } from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
@@ -10,10 +11,25 @@ import { rewardCardPool } from '../src/presentation/games/cardReward/config/rewa
 const EFFECT_TEXT_FALLBACKS = ['CLAR', 'MEL', '2X', 'INV'];
 const TEMPORARY_SPRITE_PREFIX = ['Card', 'Test'].join('');
 const EXPECTED_EFFECT_SPRITES: Record<GambitCardEffectViewModel, string> = {
+  'anulacao-total': '/Gambit/AnulacaoTotal.png',
+  'bumis-infiltrados': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  cabecinha: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'chris-joker': '/Gambit/OCoringaDoInatel.png',
   clarividencia: '/Gambit/Clarividencia.png',
+  coloridinho: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'coringa-do-inatel': '/Gambit/OCoringaDoInatel.png',
   'dobro-de-potassio': '/Gambit/DobroDePotassio.png',
+  headgear: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
   'inversao-gravitacional': '/Gambit/InversaoGravitacional.png',
+  jackpot: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'jonas-joker': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
   melancidio: '/Gambit/QuantoMenosMelhor.png',
+  'mente-lisa': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'mosca-joker': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'pao-com-oque': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'quanto-mais-melhor': '/Gambit/QuantoMaisMelhor.png',
+  'quanto-menos-melhor': '/Gambit/QuantoMenosMelhor.png',
+  ratimundio: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
 };
 
 describe('GambitCard visual secrecy', () => {
@@ -64,6 +80,9 @@ describe('GambitCard visual secrecy', () => {
       'melancidio',
       'clarividencia',
       'inversao-gravitacional',
+      'anulacao-total',
+      'cabecinha',
+      'jackpot',
     ];
 
     expect(GAMBIT_EFFECT_CARD_SPRITES).toEqual(EXPECTED_EFFECT_SPRITES);
@@ -74,6 +93,9 @@ describe('GambitCard visual secrecy', () => {
       '/Gambit/QuantoMenosMelhor.png',
       '/Gambit/Clarividencia.png',
       '/Gambit/InversaoGravitacional.png',
+      '/Gambit/AnulacaoTotal.png',
+      FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+      FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
     ]);
 
     effects.forEach((effect) => {
@@ -88,7 +110,6 @@ describe('GambitCard visual secrecy', () => {
       rewardCardPool.map((card) => [card.id, card.spritePath])
     );
 
-    expect(rewardSpritesById).toEqual(GAMBIT_EFFECT_CARD_SPRITES);
     expect(rewardSpritesById['dobro-de-potassio']).toBe(
       '/Gambit/DobroDePotassio.png'
     );

@@ -1,10 +1,17 @@
 import { GAMBIT_GRID_SIZE } from './gambitGameConfig';
 import {
   CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL,
+  FIRST_MOCK_EVENT_FLIP,
+  SECOND_MOCK_EVENT_FLIP,
   applyMockGambitEffect,
+  canRevealMockGambitCard,
+  getGambitSessionGridSnapshot,
   makeMockGambitSession,
   makeMockGambitTable,
   revealMockGambitCard,
+  resolveMockPendingEvent,
+  resolveMockPendingInteraction,
+  selectMockPendingInteractionPosition,
   selectMockPendingEventCard,
   startMockClarividenciaPreview,
 } from './gambitMockBuilders';
@@ -17,11 +24,18 @@ import type { GambitSession } from './gambitTypes';
 export {
   ACTIVE_GAMBIT_MOCK_SCENARIO,
   CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL,
+  FIRST_MOCK_EVENT_FLIP,
+  SECOND_MOCK_EVENT_FLIP,
   applyMockGambitEffect,
+  canRevealMockGambitCard,
   gambitMockScenarios,
+  getGambitSessionGridSnapshot,
   makeMockGambitSession,
   makeMockGambitTable,
   revealMockGambitCard,
+  resolveMockPendingEvent,
+  resolveMockPendingInteraction,
+  selectMockPendingInteractionPosition,
   selectMockPendingEventCard,
   startMockClarividenciaPreview,
 };
@@ -32,9 +46,9 @@ export const getGambitGridCoordinates = (position: number) => ({
 });
 
 export const sumRevealedGambitCardPoints = (session: GambitSession) =>
-  session.CurrentGridSnapshot?.Revealed.reduce(
+  getGambitSessionGridSnapshot(session)?.Revealed.reduce(
     (total, card) =>
-      card.Effect === null && card.Points !== null
+      (card.Effect ?? null) === null && (card.Points ?? null) !== null
         ? total + card.Points
         : total,
     0

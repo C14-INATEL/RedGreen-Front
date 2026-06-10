@@ -18,8 +18,6 @@ type MockGambitBoardProps = {
 };
 
 const mockGambitBoard = jest.fn();
-const mockRegisterCardReveal = jest.fn();
-const mockHandleRevealAnimationComplete = jest.fn();
 
 jest.mock('framer-motion', () => {
   const React = jest.requireActual('react') as typeof import('react');
@@ -31,29 +29,6 @@ jest.mock('framer-motion', () => {
     },
   };
 });
-
-jest.mock('../src/presentation/games/cardReward', () => ({
-  RewardChoiceModal: () => null,
-  rewardTriggerConfig: {
-    revealInterval: 3,
-  },
-  useCardRewardController: ({
-    revealedCardCount,
-  }: {
-    revealedCardCount: number;
-  }) => ({
-    activeSession: null,
-    handleRevealAnimationComplete: (...args: unknown[]) =>
-      mockHandleRevealAnimationComplete(...args),
-    handleRewardCardHover: jest.fn(),
-    handleRewardCardSelect: jest.fn(),
-    handleSelectedCardCinematicComplete: jest.fn(),
-    handleTableTransitionComplete: jest.fn(),
-    isInteractionLocked: false,
-    registerCardReveal: (...args: unknown[]) => mockRegisterCardReveal(...args),
-    revealProgress: revealedCardCount,
-  }),
-}));
 
 jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
   const React = jest.requireActual('react') as typeof import('react');
@@ -76,115 +51,99 @@ jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
             props.clarividenciaPreviewMode
           )}`
         ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardReveal(0),
-            type: 'button',
-          },
-          'reveal-0'
+        ...props.cards.map((card) =>
+          React.createElement(
+            'button',
+            {
+              key: `reveal-${card.id}`,
+              onClick: () => props.onCardReveal(card.id),
+              type: 'button',
+            },
+            `reveal-${card.id}`
+          )
         ),
         React.createElement(
           'button',
           {
-            onClick: () => props.onCardReveal(1),
+            onClick: () => props.onCardRevealAnimationComplete?.(-1),
             type: 'button',
           },
-          'reveal-1'
-        ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardReveal(2),
-            type: 'button',
-          },
-          'reveal-2'
-        ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardReveal(13),
-            type: 'button',
-          },
-          'reveal-13'
-        ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardReveal(18),
-            type: 'button',
-          },
-          'reveal-18'
-        ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardRevealAnimationComplete?.(0),
-            type: 'button',
-          },
-          'complete-0'
-        ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardRevealAnimationComplete?.(13),
-            type: 'button',
-          },
-          'complete-13'
-        ),
-        React.createElement(
-          'button',
-          {
-            onClick: () => props.onCardRevealAnimationComplete?.(18),
-            type: 'button',
-          },
-          'complete-18'
+          'complete'
         )
       );
     },
   };
 });
 
+const revealAndComplete = (position: number) => {
+  fireEvent.click(screen.getByText(`reveal-${position}`));
+  fireEvent.click(screen.getByText('complete'));
+};
+
 describe('Gambit visual flow', () => {
   beforeEach(() => {
     mockGambitBoard.mockClear();
-    mockHandleRevealAnimationComplete.mockClear();
-    mockRegisterCardReveal.mockClear();
   });
 
-  it('previews the next closed card when Clarividencia is prepared', () => {
+  it('opens Clarividencia interaction and peeks without revealing the target card', () => {
     render(
       createElement(Gambit, {
         initialSession: makeMockGambitSession('clarividenciaFlow'),
       })
     );
 
-    fireEvent.click(screen.getByText('reveal-1'));
+    revealAndComplete(10);
 
-    expect(mockRegisterCardReveal).not.toHaveBeenCalled();
-    expect(mockGambitBoard).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        cards: expect.arrayContaining([
-          expect.objectContaining({
-            id: 1,
-            points: -15,
-            previewed: true,
-            revealed: false,
-          }),
-        ]),
-      })
-    );
+    expect(screen.getByText('CLARIVIDENCIA')).toBeInTheDocument();
+    expect(screen.getByText('0/1')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'cards:25:revealed:0:previewed:1:locked:true:preview-mode:false'
+        'cards:25:revealed:1:previewed:0:locked:false:preview-mode:true'
       )
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Cancelar'));
+    fireEvent.click(screen.getByText('reveal-0'));
+
+    expect(screen.getByText('Carta 0: +10')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'cards:25:revealed:1:previewed:1:locked:true:preview-mode:true'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Fechar espiada'));
 
     expect(
       screen.getByText(
-        'cards:25:revealed:0:previewed:0:locked:false:preview-mode:false'
+        'cards:25:revealed:1:previewed:0:locked:false:preview-mode:false'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('blocks the board while PendingEvent is open and resolves it with good and bad choices', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('effectsOnBoard'),
+      })
+    );
+
+    [0, 1, 2, 3, 4].forEach(revealAndComplete);
+
+    expect(screen.getByText('Evento pendente')).toBeInTheDocument();
+    expect(screen.getByText('5/25')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'cards:25:revealed:5:previewed:0:locked:true:preview-mode:false'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Boa 1'));
+    fireEvent.click(screen.getByText('Ruim 3'));
+
+    expect(screen.queryByText('Evento pendente')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'cards:25:revealed:5:previewed:0:locked:false:preview-mode:false'
       )
     ).toBeInTheDocument();
   });
@@ -196,15 +155,15 @@ describe('Gambit visual flow', () => {
       })
     );
 
-    fireEvent.click(screen.getByText('reveal-18'));
+    revealAndComplete(6);
 
-    expect(screen.getByText('Efeito preparado')).toBeInTheDocument();
+    expect(screen.getByText('INVERSAO GRAVITACIONAL')).toBeInTheDocument();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
           expect.objectContaining({
             effect: 'inversao-gravitacional',
-            id: 18,
+            id: 6,
             points: null,
             revealed: true,
           }),
@@ -212,17 +171,16 @@ describe('Gambit visual flow', () => {
       })
     );
 
-    fireEvent.click(screen.getByText('complete-18'));
-    fireEvent.click(screen.getByText('reveal-13'));
+    revealAndComplete(0);
 
-    expect(screen.getByText('-30')).toBeInTheDocument();
-    expect(screen.getByText('Evento configuravel')).toBeInTheDocument();
+    expect(screen.getByText('-10')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum')).toBeInTheDocument();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
           expect.objectContaining({
-            id: 13,
-            points: 30,
+            id: 0,
+            points: 10,
             revealed: true,
           }),
         ]),

@@ -1,38 +1,91 @@
 import { describe, expect, it } from '@jest/globals';
 import {
-  CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL,
   applyMockGambitEffect,
+  canRevealMockGambitCard,
   getGambitGridCoordinates,
+  getGambitSessionGridSnapshot,
   makeMockGambitSession,
+  makeMockGambitTable,
   revealMockGambitCard,
-  startMockClarividenciaPreview,
+  resolveMockPendingEvent,
+  resolveMockPendingInteraction,
   sumRevealedGambitCardPoints,
 } from '../src/presentation/games/GambitGame/gambitGameMock';
+import {
+  mapBackendGambitCardToViewModel,
+  mapBackendGambitGridToViewModel,
+} from '../src/presentation/games/GambitGame/gambitMapper';
+import type {
+  GambitCardEffect,
+  GambitGridSnapshot,
+} from '../src/presentation/games/GambitGame/gambitTypes';
+
+const CONTRACT_EFFECTS: GambitCardEffect[] = [
+  'DOBRO_DE_POTASSIO',
+  'MELANCIDIO',
+  'INVERSAO_GRAVITACIONAL',
+  'ANULACAO_TOTAL',
+  'COLORIDINHO',
+  'HEADGEAR',
+  'CLARIVIDENCIA',
+  'CABECINHA',
+  'JONAS_JOKER',
+  'CHRIS_JOKER',
+  'QUANTO_MAIS_MELHOR',
+  'QUANTO_MENOS_MELHOR',
+  'MENTE_LISA',
+  'MOSCA_JOKER',
+  'JACKPOT',
+  'RATIMUNDIO',
+  'PAO_COM_OQUE',
+  'BUMIS_INFILTRADOS',
+];
+
+const revealMany = (positions: number[]) =>
+  positions.reduce(
+    (currentSession, position) =>
+      revealMockGambitCard(currentSession, position),
+    makeMockGambitSession('effectsOnBoard')
+  );
 
 describe('Gambit visual mock mechanics', () => {
-  it('inverts positive, negative and zero point values with Inversao Gravitacional', () => {
-    expect(applyMockGambitEffect(30, 'INVERSAO_GRAVITACIONAL')).toBe(-30);
-    expect(applyMockGambitEffect(-15, 'INVERSAO_GRAVITACIONAL')).toBe(15);
-    expect(applyMockGambitEffect(0, 'INVERSAO_GRAVITACIONAL')).toBe(0);
+  it('maps the complete new card catalog', () => {
+    expect(CONTRACT_EFFECTS).toHaveLength(18);
+
+    CONTRACT_EFFECTS.forEach((effect) => {
+      expect(mapBackendGambitCardToViewModel(effect)).toEqual(
+        expect.any(String)
+      );
+    });
   });
 
-  it('sums revealed positive cards into the accumulated total', () => {
-    const session = [0, 1].reduce(
-      (currentSession, position) =>
-        revealMockGambitCard(currentSession, position),
-      makeMockGambitSession('basicPoints')
-    );
+  it('uses GoodOptions and BadOptions for pending events', () => {
+    const session = makeMockGambitSession('pendingEventChoice');
+    const pendingEvent = getGambitSessionGridSnapshot(session)?.PendingEvent;
 
-    expect(sumRevealedGambitCardPoints(session)).toBe(25);
-    expect(session.AccumulatedPoints).toBe(25);
+    expect(pendingEvent).toEqual({
+      BadOptions: ['RATIMUNDIO', 'QUANTO_MENOS_MELHOR', 'PAO_COM_OQUE'],
+      EventType: 'Neutral',
+      GoodOptions: ['DOBRO_DE_POTASSIO', 'JACKPOT', 'QUANTO_MAIS_MELHOR'],
+    });
+    expect(pendingEvent).not.toHaveProperty('CardsOffered');
   });
 
-  it('keeps closed cards out of the accumulated total', () => {
-    const session = makeMockGambitSession('basicPoints');
+  it('maps hidden backend cards without requiring Points or Effect', () => {
+    const snapshot: GambitGridSnapshot = {
+      PendingEvent: null,
+      PendingInteraction: null,
+      Revealed: [],
+      Unrevealed: [{ Locked: false, Position: 0 }],
+    };
 
-    expect(session.CurrentGridSnapshot?.Revealed).toHaveLength(0);
-    expect(sumRevealedGambitCardPoints(session)).toBe(0);
-    expect(session.AccumulatedPoints).toBe(0);
+    expect(mapBackendGambitGridToViewModel(snapshot).cards[0]).toMatchObject({
+      effect: null,
+      locked: false,
+      points: null,
+      position: 0,
+      revealed: false,
+    });
   });
 
   it('subtracts a revealed negative card from the accumulated total', () => {
@@ -46,175 +99,274 @@ describe('Gambit visual mock mechanics', () => {
     expect(session.AccumulatedPoints).toBe(-5);
   });
 
-  it('does not subtract a closed negative card', () => {
-    const session = makeMockGambitSession('mixedPositiveNegative');
+  it('keeps closed cards out of the accumulated total', () => {
+    const session = makeMockGambitSession('basicPoints');
 
-    expect(
-      session.CurrentGridSnapshot?.Unrevealed.find(
-        (card) => card.Position === 1
-      )
-    ).toMatchObject({
-      Points: -15,
-    });
+    expect(getGambitSessionGridSnapshot(session)?.Revealed).toHaveLength(0);
+    expect(sumRevealedGambitCardPoints(session)).toBe(0);
     expect(session.AccumulatedPoints).toBe(0);
   });
 
-  it('keeps position 12 as Clarividencia without points', () => {
-    const session = makeMockGambitSession('effectsOnBoard');
+  it('applies every next-card point effect and consumes it', () => {
+    expect(
+      revealMockGambitCard(
+        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 4),
+        0
+      ).AccumulatedPoints
+    ).toBe(20);
+    expect(
+      revealMockGambitCard(
+        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 5),
+        0
+      ).AccumulatedPoints
+    ).toBe(5);
+    expect(
+      revealMockGambitCard(
+        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 6),
+        0
+      ).AccumulatedPoints
+    ).toBe(-10);
+    expect(
+      revealMockGambitCard(
+        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 8),
+        0
+      ).AccumulatedPoints
+    ).toBe(0);
+    expect(
+      revealMockGambitCard(
+        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 9),
+        0
+      ).AccumulatedPoints
+    ).toBe(-10);
+  });
+
+  it('keeps the next effect ready when an effect-only card is revealed before a point card', () => {
+    const withPreparedDouble = revealMockGambitCard(
+      makeMockGambitSession('effectsOnBoard'),
+      4
+    );
+    const afterEffectOnlyCard = revealMockGambitCard(withPreparedDouble, 5);
+    const afterPointCard = revealMockGambitCard(afterEffectOnlyCard, 0);
+
+    expect(afterEffectOnlyCard.NextEffect).toBe('MELANCIDIO');
+    expect(afterPointCard.AccumulatedPoints).toBe(5);
+    expect(afterPointCard.NextEffect).toBeNull();
+  });
+
+  it('uses Anulacao Total to cancel the next card effect', () => {
+    const withAnulacao = revealMockGambitCard(
+      makeMockGambitSession('effectsOnBoard'),
+      7
+    );
+    const session = revealMockGambitCard(withAnulacao, 12);
+
+    expect(session.AccumulatedPoints).toBe(0);
+    expect(session.NextEffect).toBeNull();
+  });
+
+  it('opens PendingInteraction for Clarividencia and resolves a one-card peek', () => {
+    const withClarividencia = revealMockGambitCard(
+      makeMockGambitSession('clarividenciaFlow'),
+      10
+    );
 
     expect(
-      session.CurrentGridSnapshot?.Unrevealed.find(
-        (card) => card.Position === 12
-      )
+      getGambitSessionGridSnapshot(withClarividencia)?.PendingInteraction
     ).toEqual({
+      Action: 'SELECT_CARD',
       Effect: 'CLARIVIDENCIA',
-      Points: null,
-      Position: 12,
+      RequiredSelections: 1,
+      SelectedPositions: [],
     });
+
+    const resolution = resolveMockPendingInteraction(withClarividencia, [0]);
+
+    expect(resolution.PeekResult).toEqual({
+      Effect: null,
+      Locked: false,
+      Points: 10,
+      Position: 0,
+    });
+    expect(
+      getGambitSessionGridSnapshot(resolution.session)?.PendingInteraction
+    ).toBeNull();
+    expect(
+      getGambitSessionGridSnapshot(resolution.session)?.Revealed.some(
+        (card) => card.Position === 0
+      )
+    ).toBe(false);
   });
 
-  it('models every visual mock card as either points or effect, never both', () => {
-    const session = makeMockGambitSession('effectsOnBoard');
-    const cards = [
-      ...(session.CurrentGridSnapshot?.Revealed ?? []),
-      ...(session.CurrentGridSnapshot?.Unrevealed ?? []),
-    ];
-
-    cards.forEach((card) => {
-      expect(card.Effect === null).toBe(card.Points !== null);
-    });
-  });
-
-  it('keeps position 13 as a +30 point card', () => {
-    const session = makeMockGambitSession('effectsOnBoard');
+  it('opens PendingInteraction for Cabecinha and reports if any selected card is bad', () => {
+    const withCabecinha = revealMockGambitCard(
+      makeMockGambitSession('cabecinhaFlow'),
+      11
+    );
 
     expect(
-      session.CurrentGridSnapshot?.Unrevealed.find(
-        (card) => card.Position === 13
-      )
+      getGambitSessionGridSnapshot(withCabecinha)?.PendingInteraction
     ).toEqual({
-      Effect: null,
-      Points: 30,
-      Position: 13,
+      Action: 'SELECT_MULTIPLE_CARDS',
+      Effect: 'CABECINHA',
+      RequiredSelections: 3,
+      SelectedPositions: [],
     });
+
+    const resolution = resolveMockPendingInteraction(withCabecinha, [0, 1, 2]);
+
+    expect(resolution.PeekResult).toEqual({
+      AtLeastOneBad: true,
+    });
+    expect(
+      getGambitSessionGridSnapshot(resolution.session)?.PendingInteraction
+    ).toBeNull();
+  });
+
+  it('creates mock PendingEvent at the fixed fifth reveal trigger', () => {
+    const session = revealMany([0, 1, 2, 3, 4]);
+
+    expect(session.ManualFlipsCount).toBe(5);
+    expect(getGambitSessionGridSnapshot(session)?.PendingEvent).toMatchObject({
+      BadOptions: ['RATIMUNDIO', 'QUANTO_MENOS_MELHOR', 'PAO_COM_OQUE'],
+      GoodOptions: ['DOBRO_DE_POTASSIO', 'JACKPOT', 'QUANTO_MAIS_MELHOR'],
+    });
+  });
+
+  it('blocks reveals while PendingEvent or PendingInteraction exists', () => {
+    const pendingEventSession = makeMockGambitSession('pendingEventChoice');
+    const pendingInteractionSession = revealMockGambitCard(
+      makeMockGambitSession('clarividenciaFlow'),
+      10
+    );
+
+    expect(canRevealMockGambitCard(pendingEventSession, 5)).toBe(false);
+    expect(revealMockGambitCard(pendingEventSession, 5)).toBe(
+      pendingEventSession
+    );
+    expect(canRevealMockGambitCard(pendingInteractionSession, 0)).toBe(false);
+    expect(revealMockGambitCard(pendingInteractionSession, 0)).toBe(
+      pendingInteractionSession
+    );
+  });
+
+  it('blocks invalid, revealed, locked, finished and out-of-burn reveals', () => {
+    const revealedOnce = revealMockGambitCard(
+      makeMockGambitSession('basicPoints'),
+      0
+    );
+    const lockedSession = makeMockGambitSession('lockedCardFlow');
+
+    expect(canRevealMockGambitCard(revealedOnce, 0)).toBe(false);
+    expect(canRevealMockGambitCard(lockedSession, 3)).toBe(false);
+    expect(
+      canRevealMockGambitCard(
+        makeMockGambitSession('basicPoints', { BurnSlotsAvailable: 0 }),
+        0
+      )
+    ).toBe(false);
+    expect(
+      canRevealMockGambitCard(
+        makeMockGambitSession('basicPoints', { Status: 'Finished' }),
+        0
+      )
+    ).toBe(false);
+    expect(
+      canRevealMockGambitCard(makeMockGambitSession('basicPoints'), 99)
+    ).toBe(false);
+  });
+
+  it('resolves PendingEvent by injecting one good and one bad card deterministically', () => {
+    const session = resolveMockPendingEvent(
+      makeMockGambitSession('pendingEventChoice'),
+      {
+        BadIndex: 2,
+        GoodIndex: 0,
+      }
+    );
+    const snapshot = getGambitSessionGridSnapshot(session);
+
+    expect(snapshot?.PendingEvent).toBeNull();
+    expect(
+      snapshot?.Unrevealed.find((card) => card.Position === 5)
+    ).toMatchObject({
+      Effect: 'DOBRO_DE_POTASSIO',
+      Points: null,
+    });
+    expect(
+      snapshot?.Unrevealed.find((card) => card.Position === 6)
+    ).toMatchObject({
+      Effect: 'PAO_COM_OQUE',
+      Points: null,
+    });
+  });
+
+  it('applies deterministic automatic immediate effects', () => {
+    const withMenteLisa = revealMockGambitCard(
+      makeMockGambitSession('effectsOnBoard'),
+      16
+    );
+    const withPaoComOque = revealMockGambitCard(
+      makeMockGambitSession('effectsOnBoard'),
+      19
+    );
+
+    expect(
+      getGambitSessionGridSnapshot(withMenteLisa)?.Unrevealed.find(
+        (card) => card.Position === 23
+      )
+    ).toMatchObject({
+      Locked: true,
+      Points: 50,
+    });
+    expect(
+      getGambitSessionGridSnapshot(withPaoComOque)?.Unrevealed.find(
+        (card) => card.Position === 23
+      )
+    ).toMatchObject({
+      Points: -50,
+    });
+  });
+
+  it('finishes by BurnSlotsAvailable and clamps negative results to zero', () => {
+    const session = revealMockGambitCard(
+      makeMockGambitSession('mixedPositiveNegative', {
+        BurnSlotsAvailable: 1,
+        GambitTable: makeMockGambitTable({ TableMultiplier: 2 }),
+      }),
+      1
+    );
+
+    expect(session.Status).toBe('Finished');
+    expect(session.AccumulatedPoints).toBe(-15);
+    expect(session.Result).toBe(0);
+  });
+
+  it('calculates positive Result with floor(points * multiplier)', () => {
+    const session = revealMockGambitCard(
+      makeMockGambitSession('basicPoints', {
+        BurnSlotsAvailable: 1,
+        GambitTable: makeMockGambitTable({ TableMultiplier: 1.5 }),
+      }),
+      1
+    );
+
+    expect(session.Status).toBe('Finished');
+    expect(session.AccumulatedPoints).toBe(15);
+    expect(session.Result).toBe(22);
+  });
+
+  it('keeps grid coordinate helpers unchanged', () => {
     expect(getGambitGridCoordinates(13)).toEqual({
       column: 4,
       row: 3,
     });
   });
 
-  it('reveals board effect cards without adding +0 to the total', () => {
-    const session = revealMockGambitCard(
-      makeMockGambitSession('effectsOnBoard'),
-      12
-    );
-
-    expect(session.AccumulatedPoints).toBe(0);
-    expect(sumRevealedGambitCardPoints(session)).toBe(0);
-    expect(session.NextEffect).toBe('CLARIVIDENCIA');
-    expect(session.CurrentGridSnapshot?.Revealed).toEqual([
-      {
-        Effect: 'CLARIVIDENCIA',
-        Points: null,
-        Position: 12,
-      },
-    ]);
-  });
-
-  it('prepares Inversao Gravitacional when its board card is revealed', () => {
-    const session = revealMockGambitCard(
-      makeMockGambitSession('effectsOnBoard'),
-      18
-    );
-
-    expect(session.AccumulatedPoints).toBe(0);
-    expect(session.NextEffect).toBe('INVERSAO_GRAVITACIONAL');
-    expect(session.CurrentGridSnapshot?.Revealed).toEqual([
-      {
-        Effect: 'INVERSAO_GRAVITACIONAL',
-        Points: null,
-        Position: 18,
-      },
-    ]);
-  });
-
-  it('applies Inversao Gravitacional to the next positive point card and consumes it', () => {
-    const withInversionPrepared = revealMockGambitCard(
-      makeMockGambitSession('effectsOnBoard'),
-      18
-    );
-    const session = revealMockGambitCard(withInversionPrepared, 13);
-
-    expect(session.AccumulatedPoints).toBe(-30);
-    expect(session.NextEffect).toBeNull();
-    expect(session.CurrentGridSnapshot?.Revealed).toEqual([
-      {
-        Effect: 'INVERSAO_GRAVITACIONAL',
-        Points: null,
-        Position: 18,
-      },
-      {
-        Effect: null,
-        Points: 30,
-        Position: 13,
-      },
-    ]);
-  });
-
-  it('applies Inversao Gravitacional to the next negative point card and consumes it', () => {
-    const withInversionPrepared = revealMockGambitCard(
-      makeMockGambitSession('effectsOnBoard'),
-      18
-    );
-    const session = revealMockGambitCard(withInversionPrepared, 1);
-
-    expect(session.AccumulatedPoints).toBe(15);
-    expect(session.NextEffect).toBeNull();
-  });
-
-  it('does not apply Inversao Gravitacional point math to board effect cards', () => {
-    const session = revealMockGambitCard(
-      makeMockGambitSession('effectsOnBoard', {
-        NextEffect: 'INVERSAO_GRAVITACIONAL',
-      }),
-      12
-    );
-
-    expect(session.AccumulatedPoints).toBe(0);
-    expect(session.NextEffect).toBe('CLARIVIDENCIA');
-  });
-
-  it('creates the choice event every three revealed cards', () => {
-    const session = [0, 2, 4].reduce(
-      (currentSession, position) =>
-        revealMockGambitCard(currentSession, position),
-      makeMockGambitSession('effectsOnBoard')
-    );
-
-    expect(session.ManualFlipsCount).toBe(3);
-    expect(session.AccumulatedPoints).toBe(35);
-    expect(session.CurrentGridSnapshot?.PendingEvent).toEqual({
-      CardsOffered: ['DOBRO_DE_POTASSIO', 'MELANCIDIO', 'CLARIVIDENCIA'],
-      EventType: 'Neutral',
-    });
-  });
-
-  it('starts Clarividencia preview without revealing automatically', () => {
-    const session = makeMockGambitSession('clarividenciaFlow');
-    const preview = startMockClarividenciaPreview(session, 1);
-
-    expect(CONSUME_CLARIVIDENCIA_ON_PREVIEW_CANCEL).toBe(true);
-    expect(preview.previewedCardId).toBe(1);
-    expect(preview.session.AccumulatedPoints).toBe(0);
-    expect(preview.session.ManualFlipsCount).toBe(0);
-    expect(preview.session.CurrentGridSnapshot?.PendingEvent).toBeNull();
-    expect(preview.session.CurrentGridSnapshot?.Revealed).toHaveLength(0);
-    expect(
-      preview.session.CurrentGridSnapshot?.Unrevealed.find(
-        (card) => card.Position === 1
-      )
-    ).toMatchObject({
-      Points: -15,
-    });
+  it('still exposes standalone next-effect point math for focused tests', () => {
+    expect(applyMockGambitEffect(30, 'DOBRO_DE_POTASSIO')).toBe(60);
+    expect(applyMockGambitEffect(30, 'MELANCIDIO')).toBe(15);
+    expect(applyMockGambitEffect(30, 'INVERSAO_GRAVITACIONAL')).toBe(-30);
+    expect(applyMockGambitEffect(30, 'COLORIDINHO')).toBe(0);
+    expect(applyMockGambitEffect(30, 'HEADGEAR')).toBe(-30);
   });
 });

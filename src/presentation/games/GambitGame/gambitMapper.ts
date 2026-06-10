@@ -5,16 +5,18 @@ import type {
   BackendGambitEventType,
   BackendGambitGridPosition,
   BackendGambitPendingEvent,
+  BackendGambitPendingInteraction,
   BackendGambitSession,
   BackendGambitStatus,
   BackendGambitTable,
-  GambitSession,
   GambitCardEffectViewModel,
   GambitCurrentGridSnapshotViewModel,
   GambitEventTypeViewModel,
   GambitGridCardViewModel,
   GambitId,
   GambitPendingEventViewModel,
+  GambitPendingInteractionViewModel,
+  GambitSession,
   GambitSessionViewModel,
   GambitStatusViewModel,
   GambitTableViewModel,
@@ -25,10 +27,25 @@ const GAMBIT_CARD_EFFECT_MAP: Record<
   BackendGambitCard,
   GambitCardEffectViewModel
 > = {
+  ANULACAO_TOTAL: 'anulacao-total',
+  BUMIS_INFILTRADOS: 'bumis-infiltrados',
+  CABECINHA: 'cabecinha',
+  CHRIS_JOKER: 'chris-joker',
   CLARIVIDENCIA: 'clarividencia',
+  COLORIDINHO: 'coloridinho',
+  CORINGA_DO_INATEL: 'coringa-do-inatel',
   DOBRO_DE_POTASSIO: 'dobro-de-potassio',
+  HEADGEAR: 'headgear',
   INVERSAO_GRAVITACIONAL: 'inversao-gravitacional',
+  JACKPOT: 'jackpot',
+  JONAS_JOKER: 'jonas-joker',
   MELANCIDIO: 'melancidio',
+  MENTE_LISA: 'mente-lisa',
+  MOSCA_JOKER: 'mosca-joker',
+  PAO_COM_OQUE: 'pao-com-oque',
+  QUANTO_MAIS_MELHOR: 'quanto-mais-melhor',
+  QUANTO_MENOS_MELHOR: 'quanto-menos-melhor',
+  RATIMUNDIO: 'ratimundio',
 };
 
 const GAMBIT_STATUS_MAP: Record<BackendGambitStatus, GambitStatusViewModel> = {
@@ -50,6 +67,7 @@ const createHiddenGambitGridCards = (): GambitGridCardViewModel[] =>
   Array.from({ length: GAMBIT_CELL_COUNT }, (_, position) => ({
     effect: null,
     id: position,
+    locked: false,
     points: null,
     position,
     revealed: false,
@@ -63,8 +81,8 @@ const requireFiniteNumber = (value: number, fieldName: string) => {
   return value;
 };
 
-const requireNullableFiniteNumber = (
-  value: number | null,
+const mapOptionalFiniteNumber = (
+  value: number | null | undefined,
   fieldName: string
 ) => {
   if (value == null) {
@@ -96,6 +114,33 @@ const requireId = (value: GambitId, fieldName: string): GambitId => {
   throw new Error(`Invalid Gambit ${fieldName}: expected a valid id.`);
 };
 
+const requireThreeCards = (
+  cards: BackendGambitCard[] | undefined,
+  fieldName: string
+) => {
+  if (!Array.isArray(cards)) {
+    throw new Error(`Invalid Gambit PendingEvent.${fieldName}.`);
+  }
+
+  if (cards.length !== 3) {
+    throw new Error(`Invalid Gambit PendingEvent.${fieldName} length.`);
+  }
+
+  return cards.map((card) => {
+    const mappedCard = mapBackendGambitCardToViewModel(card);
+
+    if (!mappedCard) {
+      throw new Error(`Invalid Gambit PendingEvent.${fieldName} card.`);
+    }
+
+    return mappedCard;
+  }) as [
+    GambitCardEffectViewModel,
+    GambitCardEffectViewModel,
+    GambitCardEffectViewModel,
+  ];
+};
+
 export const mapBackendGambitCardToViewModel = (
   card: BackendGambitCard | null | undefined
 ): GambitCardEffectViewModel | null => {
@@ -125,8 +170,12 @@ export const mapBackendGambitStatusToViewModel = (
 };
 
 export const mapBackendGambitEventTypeToViewModel = (
-  eventType: BackendGambitEventType
-): GambitEventTypeViewModel => {
+  eventType: BackendGambitEventType | null | undefined
+): GambitEventTypeViewModel | null => {
+  if (eventType == null) {
+    return null;
+  }
+
   const mappedEventType = GAMBIT_EVENT_TYPE_MAP[eventType];
 
   if (!mappedEventType) {
@@ -145,7 +194,10 @@ export const mapBackendGambitTableToViewModel = (
     active: table.Active,
     cardPrice: requireFiniteNumber(table.CardPrice, 'CardPrice'),
     description: table.Description ?? null,
-    eventInterval: requireFiniteNumber(table.EventInterval, 'EventInterval'),
+    eventInterval: mapOptionalFiniteNumber(
+      table.EventInterval,
+      'EventInterval'
+    ),
     gambitTableId: tableId,
     maxCardsPurchased: requireFiniteNumber(
       table.MaxCardsPurchased,
@@ -155,15 +207,12 @@ export const mapBackendGambitTableToViewModel = (
       table.MinimumCardsPurchased,
       'MinimumCardsPurchased'
     ),
-    minimumChipsRequired:
-      table.MinimumChipsRequired == null
-        ? null
-        : requireFiniteNumber(
-            table.MinimumChipsRequired,
-            'MinimumChipsRequired'
-          ),
+    minimumChipsRequired: mapOptionalFiniteNumber(
+      table.MinimumChipsRequired,
+      'MinimumChipsRequired'
+    ),
     name: table.Name,
-    purchaseMultiplierScale: requireFiniteNumber(
+    purchaseMultiplierScale: mapOptionalFiniteNumber(
       table.PurchaseMultiplierScale,
       'PurchaseMultiplierScale'
     ),
@@ -182,27 +231,30 @@ export const mapBackendGambitPendingEventToViewModel = (
     return null;
   }
 
-  if (!Array.isArray(pendingEvent.CardsOffered)) {
-    throw new Error('Invalid Gambit PendingEvent.CardsOffered.');
+  return {
+    badOptions: requireThreeCards(pendingEvent.BadOptions, 'BadOptions'),
+    eventType: mapBackendGambitEventTypeToViewModel(pendingEvent.EventType),
+    goodOptions: requireThreeCards(pendingEvent.GoodOptions, 'GoodOptions'),
+  };
+};
+
+export const mapBackendGambitPendingInteractionToViewModel = (
+  pendingInteraction: BackendGambitPendingInteraction | null | undefined
+): GambitPendingInteractionViewModel | null => {
+  if (!pendingInteraction) {
+    return null;
   }
-
-  if (pendingEvent.CardsOffered.length !== 3) {
-    throw new Error('Invalid Gambit PendingEvent.CardsOffered length.');
-  }
-
-  const cardsOffered = pendingEvent.CardsOffered.map((card) => {
-    const mappedCard = mapBackendGambitCardToViewModel(card);
-
-    if (!mappedCard) {
-      throw new Error('Invalid Gambit PendingEvent card.');
-    }
-
-    return mappedCard;
-  }) as GambitPendingEventViewModel['cardsOffered'];
 
   return {
-    cardsOffered,
-    eventType: mapBackendGambitEventTypeToViewModel(pendingEvent.EventType),
+    action: pendingInteraction.Action,
+    effect: mapBackendGambitCardToViewModel(pendingInteraction.Effect),
+    requiredSelections: requireFiniteNumber(
+      pendingInteraction.RequiredSelections,
+      'PendingInteraction.RequiredSelections'
+    ),
+    selectedPositions: pendingInteraction.SelectedPositions.map((position) =>
+      requireGridPosition(position)
+    ),
   };
 };
 
@@ -215,7 +267,8 @@ const mapBackendGambitGridPositionToViewModel = (
   return {
     effect: mapBackendGambitCardToViewModel(position.Effect),
     id: visualPosition,
-    points: requireNullableFiniteNumber(position.Points, 'Points'),
+    locked: Boolean(position.Locked),
+    points: mapOptionalFiniteNumber(position.Points, 'Points'),
     position: visualPosition,
     revealed,
   };
@@ -230,6 +283,7 @@ export const mapBackendGambitGridToViewModel = (
     return {
       cards,
       pendingEvent: null,
+      pendingInteraction: null,
     };
   }
 
@@ -237,11 +291,11 @@ export const mapBackendGambitGridToViewModel = (
   const revealedPositions = snapshot.Revealed ?? [];
 
   if (!Array.isArray(unrevealedPositions)) {
-    throw new Error('Invalid Gambit CurrentGridSnapshot.Unrevealed.');
+    throw new Error('Invalid Gambit Grid.Unrevealed.');
   }
 
   if (!Array.isArray(revealedPositions)) {
-    throw new Error('Invalid Gambit CurrentGridSnapshot.Revealed.');
+    throw new Error('Invalid Gambit Grid.Revealed.');
   }
 
   const seenPositions = new Set<number>();
@@ -283,37 +337,55 @@ export const mapBackendGambitGridToViewModel = (
     pendingEvent: mapBackendGambitPendingEventToViewModel(
       snapshot.PendingEvent
     ),
+    pendingInteraction: mapBackendGambitPendingInteractionToViewModel(
+      snapshot.PendingInteraction
+    ),
   };
 };
+
+const getSessionGridSnapshot = (session: BackendGambitSession) =>
+  session.Grid ?? session.CurrentGridSnapshot ?? null;
 
 export const mapBackendGambitSessionToViewModel = (
   session: BackendGambitSession
 ): GambitSessionViewModel => {
   const sessionId = requireId(session.GambitSessionId, 'GambitSessionId');
   const tableId = requireId(session.GambitTableId, 'GambitTableId');
+  const burnSlotsAvailable = requireFiniteNumber(
+    session.BurnSlotsAvailable,
+    'BurnSlotsAvailable'
+  );
+  const manualFlipsCount = requireFiniteNumber(
+    session.ManualFlipsCount,
+    'ManualFlipsCount'
+  );
 
   return {
     accumulatedPoints: requireFiniteNumber(
       session.AccumulatedPoints,
       'AccumulatedPoints'
     ),
+    burnSlotsAvailable,
+    burnsRemaining: Math.max(0, burnSlotsAvailable - manualFlipsCount),
     cardsPurchased: requireFiniteNumber(
       session.CardsPurchased,
       'CardsPurchased'
     ),
     createdAt: session.CreatedAt ?? '',
+    firstEventFlip: mapOptionalFiniteNumber(
+      session.FirstEventFlip,
+      'FirstEventFlip'
+    ),
     gambitSessionId: sessionId,
     gambitTableId: tableId,
-    grid: mapBackendGambitGridToViewModel(session.CurrentGridSnapshot),
-    manualFlipsCount: requireFiniteNumber(
-      session.ManualFlipsCount,
-      'ManualFlipsCount'
-    ),
+    grid: mapBackendGambitGridToViewModel(getSessionGridSnapshot(session)),
+    manualFlipsCount,
     nextEffect: mapBackendGambitCardToViewModel(session.NextEffect),
-    result:
-      session.Result == null
-        ? null
-        : requireFiniteNumber(session.Result, 'Result'),
+    result: mapOptionalFiniteNumber(session.Result, 'Result'),
+    secondEventFlip: mapOptionalFiniteNumber(
+      session.SecondEventFlip,
+      'SecondEventFlip'
+    ),
     sessionId,
     status: mapBackendGambitStatusToViewModel(session.Status),
     table: session.GambitTable
@@ -329,7 +401,7 @@ export const mapGambitSessionToMinefieldCards = (
   session: GambitSession,
   previewedCardId: number | null = null
 ): GambitVisualCard[] =>
-  mapBackendGambitGridToViewModel(session.CurrentGridSnapshot).cards.map(
+  mapBackendGambitGridToViewModel(getSessionGridSnapshot(session)).cards.map(
     (card) => ({
       ...card,
       previewed: card.id === previewedCardId,
