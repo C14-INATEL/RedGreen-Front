@@ -31,6 +31,7 @@ export const SlotMachineRoom = () => {
   });
 
   const [RankingOpen, SetRankingOpen] = useState(false);
+  const [CanShowRankingButton, SetCanShowRankingButton] = useState(true);
 
   useEffect(() => {
     if (IsLoggedIn) {
@@ -75,6 +76,15 @@ export const SlotMachineRoom = () => {
     Nickname ?? LocalNickname ?? (ProfileLoading ? 'Carregando...' : 'Jogador');
 
   const Chips = ChipsFromHook ?? LocalChips ?? (IsLoggedIn ? 0 : 10000);
+
+  const HandleOpenRanking = () => {
+    SetCanShowRankingButton(false);
+    SetRankingOpen(true);
+  };
+
+  const HandleCloseRanking = () => {
+    SetRankingOpen(false);
+  };
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden suit-pattern">
@@ -236,16 +246,18 @@ export const SlotMachineRoom = () => {
 
           <RankingPanel
             IsOpen={RankingOpen}
-            OnClose={() => SetRankingOpen(false)}
+            OnClose={HandleCloseRanking}
+            OnExitComplete={() => SetCanShowRankingButton(true)}
             ClassName="w-full sm:w-80"
             Placement="inline"
           />
 
-          {!RankingOpen && (
+          {!RankingOpen && CanShowRankingButton && (
             <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={() => SetRankingOpen(true)}
+              transition={{ duration: 0.1, ease: 'easeOut' }}
+              onClick={HandleOpenRanking}
               className="flex h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 pixel-border"
             >
               <Trophy className="h-5 w-5" />

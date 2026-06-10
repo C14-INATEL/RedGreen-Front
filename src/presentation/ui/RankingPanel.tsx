@@ -20,7 +20,7 @@ const RankingPanel = ({
   const { Players, IsLoading, Error } = useRanking(IsOpen);
   const PanelClassName =
     Placement === 'fixed'
-      ? `fixed right-6 z-50 w-80 transform-gpu ${ClassName ?? 'top-28'}`
+      ? `fixed right-4 z-50 w-80 max-w-[calc(100vw-2rem)] transform-gpu sm:right-6 ${ClassName ?? 'top-28'}`
       : `relative z-50 w-80 transform-gpu ${ClassName ?? ''}`;
 
   const FormatChips = (Chips: number) => {
@@ -36,10 +36,10 @@ const RankingPanel = ({
     <AnimatePresence onExitComplete={OnExitComplete}>
       {IsOpen && (
         <motion.div
-          initial={{ x: 16, scale: 0.98 }}
-          animate={{ x: 0, scale: 1 }}
+          initial={{ opacity: 0, x: 16, scale: 0.98 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 16, scale: 0.98 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+          transition={{ duration: 0.12, ease: 'easeOut' }}
           className={PanelClassName}
         >
           <div
