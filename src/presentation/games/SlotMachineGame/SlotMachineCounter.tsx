@@ -18,7 +18,7 @@ const SlotMachineCounterComponent = ({
   style,
 }: SlotMachineCounterProps) => {
   const spriteSources = getSlotMachineCounterSpriteSources();
-  const currentSpriteSource = active ? spriteSources.on : spriteSources.off;
+  const currentSpriteSource = active ? spriteSources.off : spriteSources.on;
 
   useEffect(() => {
     [spriteSources.off, spriteSources.on].forEach((source) => {
