@@ -30,7 +30,8 @@ export const SlotMachineRoom = () => {
     return sessionStorage.getItem('hudActive') === 'true';
   });
 
-  const [RankingOpen, SetRankingOpen] = useState(true);
+  const [RankingOpen, SetRankingOpen] = useState(false);
+  const [CanShowRankingButton, SetCanShowRankingButton] = useState(true);
 
   useEffect(() => {
     if (IsLoggedIn) {
@@ -76,6 +77,15 @@ export const SlotMachineRoom = () => {
 
   const Chips = ChipsFromHook ?? LocalChips ?? (IsLoggedIn ? 0 : 10000);
 
+  const HandleOpenRanking = () => {
+    SetCanShowRankingButton(false);
+    SetRankingOpen(true);
+  };
+
+  const HandleCloseRanking = () => {
+    SetRankingOpen(false);
+  };
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden suit-pattern">
       <button onClick={() => Navigate('/')} className="back-button">
@@ -90,166 +100,170 @@ export const SlotMachineRoom = () => {
         }}
       />
 
-      <AnimatePresence>
-        {IsLoggedIn && (
-          <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 60 }}
-            transition={{ duration: 0.3 }}
-            className="absolute top-4 right-6 z-20"
-          >
-            <div className="flex items-center gap-6 bg-card/60 backdrop-blur-sm pixel-border px-5 py-3">
-              <div className="flex items-center gap-2">
-                <div className="w-12 h-12 bg-card pixel-border-gold relative flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
+      {IsLoggedIn && IsActive && (
+        <div className="absolute right-4 top-4 z-50 flex w-[min(calc(100vw-2rem),29rem)] flex-col items-end gap-3 sm:right-6 sm:w-auto">
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, x: 60 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 60 }}
+              transition={{ duration: 0.3 }}
+              className="w-full sm:w-auto"
+            >
+              <div className="flex w-full items-center justify-between gap-3 bg-card/60 px-3 py-3 backdrop-blur-sm pixel-border sm:w-auto sm:gap-6 sm:px-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-12 bg-card pixel-border-gold relative flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
+                      <rect
+                        x="5"
+                        y="2"
+                        width="6"
+                        height="6"
+                        fill="hsl(var(--cassino-gold))"
+                      />
+
+                      <rect
+                        x="4"
+                        y="8"
+                        width="8"
+                        height="4"
+                        fill="hsl(var(--cassino-gold))"
+                      />
+
+                      <rect
+                        x="5"
+                        y="12"
+                        width="2"
+                        height="2"
+                        fill="hsl(var(--cassino-gold))"
+                      />
+
+                      <rect
+                        x="9"
+                        y="12"
+                        width="2"
+                        height="2"
+                        fill="hsl(var(--cassino-gold))"
+                      />
+                    </svg>
+
+                    <div className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-accent-green border-2 border-background" />
+                  </div>
+
+                  <span className="text-sm font-bold text-foreground font-display">
+                    {PlayerName}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 bg-card/60 px-5 py-3">
+                  <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
                     <rect
-                      x="5"
+                      x="4"
                       y="2"
-                      width="6"
-                      height="6"
+                      width="8"
+                      height="2"
                       fill="hsl(var(--cassino-gold))"
                     />
 
                     <rect
-                      x="4"
-                      y="8"
-                      width="8"
+                      x="2"
+                      y="4"
+                      width="2"
+                      height="2"
+                      fill="hsl(var(--cassino-gold))"
+                    />
+
+                    <rect
+                      x="12"
+                      y="4"
+                      width="2"
+                      height="2"
+                      fill="hsl(var(--cassino-gold))"
+                    />
+
+                    <rect
+                      x="2"
+                      y="6"
+                      width="12"
                       height="4"
                       fill="hsl(var(--cassino-gold))"
                     />
 
                     <rect
-                      x="5"
-                      y="12"
+                      x="6"
+                      y="4"
+                      width="4"
+                      height="8"
+                      fill="hsl(var(--cassino-gold) / 0.7)"
+                    />
+
+                    <rect
+                      x="2"
+                      y="10"
                       width="2"
                       height="2"
                       fill="hsl(var(--cassino-gold))"
                     />
 
                     <rect
-                      x="9"
-                      y="12"
+                      x="12"
+                      y="10"
                       width="2"
                       height="2"
                       fill="hsl(var(--cassino-gold))"
                     />
+
+                    <rect
+                      x="4"
+                      y="12"
+                      width="8"
+                      height="2"
+                      fill="hsl(var(--cassino-gold))"
+                    />
+
+                    <rect
+                      x="7"
+                      y="5"
+                      width="2"
+                      height="6"
+                      fill="hsl(var(--background) / 0.5)"
+                    />
                   </svg>
 
-                  <div className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-accent-green border-2 border-background" />
-                </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
+                      Fichas
+                    </span>
 
-                <span className="text-sm font-bold text-foreground font-display">
-                  {PlayerName}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 bg-card/60 px-5 py-3">
-                <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
-                  <rect
-                    x="4"
-                    y="2"
-                    width="8"
-                    height="2"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="2"
-                    y="4"
-                    width="2"
-                    height="2"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="12"
-                    y="4"
-                    width="2"
-                    height="2"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="2"
-                    y="6"
-                    width="12"
-                    height="4"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="6"
-                    y="4"
-                    width="4"
-                    height="8"
-                    fill="hsl(var(--cassino-gold) / 0.7)"
-                  />
-
-                  <rect
-                    x="2"
-                    y="10"
-                    width="2"
-                    height="2"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="12"
-                    y="10"
-                    width="2"
-                    height="2"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="4"
-                    y="12"
-                    width="8"
-                    height="2"
-                    fill="hsl(var(--cassino-gold))"
-                  />
-
-                  <rect
-                    x="7"
-                    y="5"
-                    width="2"
-                    height="6"
-                    fill="hsl(var(--background) / 0.5)"
-                  />
-                </svg>
-
-                <div className="flex flex-col items-end">
-                  <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
-                    Fichas
-                  </span>
-
-                  <span className="font-mono text-lg font-bold text-foreground">
-                    {Chips.toLocaleString('pt-BR')}
-                  </span>
+                    <span className="font-mono text-lg font-bold text-foreground">
+                      {Chips.toLocaleString('pt-BR')}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
 
-      {IsLoggedIn && IsActive && (
-        <RankingPanel
-          IsOpen={RankingOpen}
-          OnClose={() => SetRankingOpen(false)}
-        />
-      )}
+          <RankingPanel
+            IsOpen={RankingOpen}
+            OnClose={HandleCloseRanking}
+            OnExitComplete={() => SetCanShowRankingButton(true)}
+            ClassName="w-full sm:w-80"
+            Placement="inline"
+          />
 
-      {IsLoggedIn && IsActive && !RankingOpen && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={() => SetRankingOpen(true)}
-          className="absolute top-32 right-6 z-50 flex h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 pixel-border"
-        >
-          <Trophy className="h-5 w-5" />
-        </motion.button>
+          {!RankingOpen && CanShowRankingButton && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.1, ease: 'easeOut' }}
+              onClick={HandleOpenRanking}
+              className="flex h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 pixel-border"
+            >
+              <Trophy className="h-5 w-5" />
+            </motion.button>
+          )}
+        </div>
       )}
 
       <div
