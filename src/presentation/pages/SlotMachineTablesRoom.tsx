@@ -170,7 +170,7 @@ export const SlotMachineTablesRoom = () => {
                     Navigate(paths.slotmachineroom, {
                       state: {
                         bet: TableItem.MinimumSpinValue,
-                        slotMachineId: TableItem.SlotMachineId,
+                        SlotMachineId: TableItem.SlotMachineId,
                       },
                     });
                   } catch (err) {
