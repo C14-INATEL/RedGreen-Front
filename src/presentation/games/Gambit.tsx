@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { GambitBoard } from './GambitGame/GambitBoard';
+import { getGambitEffectCardSpritePath } from './GambitGame/gambitEffectCardAssets';
 import {
   canRevealMockGambitCard,
   getGambitSessionGridSnapshot,
@@ -42,6 +43,14 @@ const emptyPendingEventSelection: PendingEventSelection = {
 const formatEffectName = (effect: GambitCardEffect) =>
   mapBackendGambitCardToViewModel(effect)?.replaceAll('-', ' ').toUpperCase() ??
   effect;
+
+const getEffectSpritePath = (effect: GambitCardEffect) => {
+  const effectViewModel = mapBackendGambitCardToViewModel(effect);
+
+  return effectViewModel
+    ? getGambitEffectCardSpritePath(effectViewModel)
+    : null;
+};
 
 const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   if (!peekResult) {
@@ -212,11 +221,23 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
             Efeito
           </span>
 
-          <span className="max-w-[9rem] truncate text-right font-mono text-xs font-bold uppercase text-foreground">
-            {visualState.preparedEffect
-              ? formatEffectName(visualState.preparedEffect)
-              : 'Nenhum'}
-          </span>
+          {visualState.preparedEffect ? (
+            <div className="flex max-w-[10rem] items-center justify-end gap-2 text-right">
+              <img
+                alt={formatEffectName(visualState.preparedEffect)}
+                className="h-8 w-8 shrink-0 object-contain"
+                src={getEffectSpritePath(visualState.preparedEffect) ?? ''}
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <span className="truncate font-mono text-xs font-bold uppercase text-foreground">
+                {formatEffectName(visualState.preparedEffect)}
+              </span>
+            </div>
+          ) : (
+            <span className="font-mono text-xs font-bold uppercase text-foreground">
+              Nenhum
+            </span>
+          )}
         </div>
       </div>
 

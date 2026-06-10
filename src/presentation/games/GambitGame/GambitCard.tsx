@@ -2,17 +2,13 @@ import {
   AnimatedSprite,
   Container,
   Graphics,
-  SCALE_MODES,
-  Sprite,
   Text,
   TextStyle,
-  Texture,
 } from 'pixi.js';
 import {
   GAMBIT_CLOSED_CARD_SPRITES,
   GAMBIT_REVEAL_ANIMATION_FRAMES,
 } from './gambitTextures';
-import { getGambitEffectCardSpritePath } from './gambitEffectCardAssets';
 import type { GambitCardEffectViewModel } from './gambitTypes';
 
 export type GambitCardProps = {
@@ -64,18 +60,16 @@ const CLOSED_CARD_ANIMATION_SPEED = 0.12;
 const REVEAL_ANIMATION_SPEED = 0.42;
 
 export const getGambitCardVisibilityState = ({
-  effect,
   overlayState,
   previewed,
   revealed,
 }: GambitCardVisibilityParams): GambitCardVisibilityState => {
   const isContentVisible = revealed || previewed;
-  const isEffectContentVisible = isContentVisible && effect !== null;
-  const isPointContentVisible = isContentVisible && effect === null;
+  const isPointContentVisible = isContentVisible;
 
   return {
     closedOverlayVisible: overlayState === 'closed',
-    effectSpriteVisible: isEffectContentVisible && overlayState !== 'closed',
+    effectSpriteVisible: false,
     revealedFaceVisible: isPointContentVisible && overlayState !== 'closed',
     revealedLabelVisible: isPointContentVisible && overlayState !== 'closed',
     revealAnimationVisible: overlayState === 'animating',
@@ -86,7 +80,6 @@ const drawRevealedCardFace = (
   graphics: Graphics,
   size: number,
   value: number | null,
-  effect: GambitCardEffectViewModel | null,
   previewed: boolean
 ) => {
   const borderWidth = Math.max(2, Math.round(size * 0.055));
@@ -121,14 +114,7 @@ const drawRevealedCardFace = (
   graphics.lineTo(inset, size - inset);
 };
 
-const getCardTextColor = (
-  value: number | null,
-  effect: GambitCardEffectViewModel | null
-) => {
-  if (effect) {
-    return CARD_REVEALED_TEXT_COLOR;
-  }
-
+const getCardTextColor = (value: number | null) => {
   if ((value ?? 0) < 0) {
     return CARD_NEGATIVE_TEXT_COLOR;
   }
@@ -136,14 +122,10 @@ const getCardTextColor = (
   return CARD_REVEALED_TEXT_COLOR;
 };
 
-const createValueTextStyle = (
-  size: number,
-  value: number | null,
-  _effect: GambitCardEffectViewModel | null
-) =>
+const createValueTextStyle = (size: number, value: number | null) =>
   new TextStyle({
     align: 'center',
-    fill: getCardTextColor(value, null),
+    fill: getCardTextColor(value),
     fontFamily: 'Press Start 2P',
     fontSize: Math.max(9, Math.floor(size * 0.2)),
     fontWeight: '700',
@@ -163,10 +145,7 @@ const formatCardValue = (value: number | null) => {
   return String(value);
 };
 
-const formatCardLabel = (
-  value: number | null,
-  effect: GambitCardEffectViewModel | null
-) => (effect ? '' : formatCardValue(value));
+const formatCardLabel = (value: number | null) => formatCardValue(value);
 
 const createRevealAnimation = (size: number) => {
   const revealAnimation = AnimatedSprite.fromFrames(
@@ -203,14 +182,9 @@ export const createGambitCard = (
   const container = new Container();
   const revealedCardFace = new Graphics();
   const revealedCardLabel = new Text(
-    formatCardLabel(initialProps.value, initialProps.effect),
-    createValueTextStyle(
-      initialProps.size,
-      initialProps.value,
-      initialProps.effect
-    )
+    formatCardLabel(initialProps.value),
+    createValueTextStyle(initialProps.size, initialProps.value)
   );
-  const effectCardSprite = new Sprite(Texture.EMPTY);
   const closedCardAnimation = createClosedCardAnimation(initialProps.size);
   const revealAnimation = createRevealAnimation(initialProps.size);
   const closedCardAnimationInitialFrame = Math.floor(
@@ -234,29 +208,17 @@ export const createGambitCard = (
   };
 
   const syncLayout = () => {
-    const { effect, previewed, size, value, x, y } = currentProps;
+    const { previewed, size, value, x, y } = currentProps;
 
     container.position.set(x, y);
 
-    drawRevealedCardFace(revealedCardFace, size, value, effect, previewed);
+    drawRevealedCardFace(revealedCardFace, size, value, previewed);
 
-    revealedCardLabel.text = formatCardLabel(value, effect);
-    revealedCardLabel.style = createValueTextStyle(size, value, effect);
+    revealedCardLabel.text = formatCardLabel(value);
+    revealedCardLabel.style = createValueTextStyle(size, value);
     revealedCardLabel.anchor.set(0.5);
     revealedCardLabel.resolution = 2;
     revealedCardLabel.position.set(Math.round(size / 2), Math.round(size / 2));
-
-    if (effect) {
-      const effectTexture = Texture.from(getGambitEffectCardSpritePath(effect));
-      effectTexture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
-      effectCardSprite.texture = effectTexture;
-    } else {
-      effectCardSprite.texture = Texture.EMPTY;
-    }
-
-    effectCardSprite.width = size;
-    effectCardSprite.height = size;
-    effectCardSprite.roundPixels = true;
 
     closedCardAnimation.width = size;
     closedCardAnimation.height = size;
@@ -275,7 +237,6 @@ export const createGambitCard = (
 
     revealedCardFace.visible = visibilityState.revealedFaceVisible;
     revealedCardLabel.visible = visibilityState.revealedLabelVisible;
-    effectCardSprite.visible = visibilityState.effectSpriteVisible;
     closedCardAnimation.visible = visibilityState.closedOverlayVisible;
     revealAnimation.visible = visibilityState.revealAnimationVisible;
   };
@@ -336,7 +297,6 @@ export const createGambitCard = (
   container.addChild(
     revealedCardFace,
     revealedCardLabel,
-    effectCardSprite,
     closedCardAnimation,
     revealAnimation
   );

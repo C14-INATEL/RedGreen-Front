@@ -235,7 +235,7 @@ const transformFirstCardToPower = (snapshot: GambitGridSnapshot) => {
 
   return replaceUnrevealedCards(snapshot, (card) =>
     card.Position === targetCard.Position
-      ? { ...card, Effect: 'DOBRO_DE_POTASSIO', Points: null }
+      ? { ...card, Effect: 'DOBRO_DE_POTASSIO' }
       : card
   );
 };
@@ -691,7 +691,6 @@ export const resolveMockPendingEvent = (
             ...card,
             Effect: goodCard,
             Locked: false,
-            Points: null,
           };
         }
 
@@ -700,7 +699,6 @@ export const resolveMockPendingEvent = (
             ...card,
             Effect: badCard,
             Locked: false,
-            Points: null,
           };
         }
 

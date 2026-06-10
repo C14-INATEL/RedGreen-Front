@@ -92,7 +92,7 @@ describe('Gambit visual flow', () => {
       })
     );
 
-    revealAndComplete(10);
+    revealAndComplete(8);
 
     expect(screen.getByText('CLARIVIDENCIA')).toBeInTheDocument();
     expect(screen.getByText('0/1')).toBeInTheDocument();
@@ -148,23 +148,24 @@ describe('Gambit visual flow', () => {
     ).toBeInTheDocument();
   });
 
-  it('applies Inversao Gravitacional to the next point card in the visual flow', () => {
+  it('shows prepared effect sprite and clears the slot after the next point uses it', () => {
     render(
       createElement(Gambit, {
         initialSession: makeMockGambitSession('effectsOnBoard'),
       })
     );
 
-    revealAndComplete(6);
+    revealAndComplete(4);
 
-    expect(screen.getByText('INVERSAO GRAVITACIONAL')).toBeInTheDocument();
+    expect(screen.getByText('DOBRO DE POTASSIO')).toBeInTheDocument();
+    expect(screen.getByAltText('DOBRO DE POTASSIO')).toBeInTheDocument();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
           expect.objectContaining({
-            effect: 'inversao-gravitacional',
-            id: 6,
-            points: null,
+            effect: 'dobro-de-potassio',
+            id: 4,
+            points: 20,
             revealed: true,
           }),
         ]),
@@ -173,7 +174,7 @@ describe('Gambit visual flow', () => {
 
     revealAndComplete(0);
 
-    expect(screen.getByText('-10')).toBeInTheDocument();
+    expect(screen.getByText('40')).toBeInTheDocument();
     expect(screen.getByText('Nenhum')).toBeInTheDocument();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({

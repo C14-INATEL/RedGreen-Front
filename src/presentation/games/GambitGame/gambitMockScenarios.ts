@@ -43,9 +43,9 @@ export type GambitMockScenario = {
 };
 
 export const mockPendingEvent: GambitPendingEvent = {
-  BadOptions: ['RATIMUNDIO', 'QUANTO_MENOS_MELHOR', 'PAO_COM_OQUE'],
+  BadOptions: ['MELANCIDIO', 'QUANTO_MENOS_MELHOR', 'CORINGA_DO_INATEL'],
   EventType: 'Neutral',
-  GoodOptions: ['DOBRO_DE_POTASSIO', 'JACKPOT', 'QUANTO_MAIS_MELHOR'],
+  GoodOptions: ['DOBRO_DE_POTASSIO', 'QUANTO_MAIS_MELHOR', 'MENTE_LISA'],
 };
 
 const DEFAULT_BURN_SLOTS_AVAILABLE = 25;

@@ -133,7 +133,7 @@ describe('GambitCard visual secrecy', () => {
     });
   });
 
-  it('shows only the effect sprite layer for revealed effect cards', () => {
+  it('shows points instead of the effect sprite for revealed board effect cards', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'dobro-de-potassio',
@@ -143,14 +143,14 @@ describe('GambitCard visual secrecy', () => {
       })
     ).toEqual({
       closedOverlayVisible: false,
-      effectSpriteVisible: true,
-      revealedFaceVisible: false,
-      revealedLabelVisible: false,
+      effectSpriteVisible: false,
+      revealedFaceVisible: true,
+      revealedLabelVisible: true,
       revealAnimationVisible: false,
     });
   });
 
-  it('shows the real hidden content during Clarividencia preview', () => {
+  it('keeps the giant effect sprite hidden during Clarividencia preview', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'clarividencia',
@@ -160,7 +160,9 @@ describe('GambitCard visual secrecy', () => {
       })
     ).toMatchObject({
       closedOverlayVisible: false,
-      effectSpriteVisible: true,
+      effectSpriteVisible: false,
+      revealedFaceVisible: true,
+      revealedLabelVisible: true,
     });
   });
 });

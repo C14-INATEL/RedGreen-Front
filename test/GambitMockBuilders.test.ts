@@ -15,6 +15,7 @@ import {
   mapBackendGambitCardToViewModel,
   mapBackendGambitGridToViewModel,
 } from '../src/presentation/games/GambitGame/gambitMapper';
+import { gambitBoardMockCards } from '../src/presentation/games/GambitGame/gambitBoardMock';
 import type {
   GambitCardEffect,
   GambitGridSnapshot,
@@ -41,6 +42,21 @@ const CONTRACT_EFFECTS: GambitCardEffect[] = [
   'BUMIS_INFILTRADOS',
 ];
 
+const MAIN_BACKEND_EFFECTS = new Set<GambitCardEffect>([
+  'DOBRO_DE_POTASSIO',
+  'MELANCIDIO',
+  'CLARIVIDENCIA',
+  'INVERSAO_GRAVITACIONAL',
+  'JONAS_JOKER',
+  'CORINGA_DO_INATEL',
+  'ANULACAO_TOTAL',
+  'QUANTO_MENOS_MELHOR',
+  'QUANTO_MAIS_MELHOR',
+  'MENTE_LISA',
+  'MOSCA_JOKER',
+  'CABECINHA',
+]);
+
 const revealMany = (positions: number[]) =>
   positions.reduce(
     (currentSession, position) =>
@@ -64,11 +80,28 @@ describe('Gambit visual mock mechanics', () => {
     const pendingEvent = getGambitSessionGridSnapshot(session)?.PendingEvent;
 
     expect(pendingEvent).toEqual({
-      BadOptions: ['RATIMUNDIO', 'QUANTO_MENOS_MELHOR', 'PAO_COM_OQUE'],
+      BadOptions: ['MELANCIDIO', 'QUANTO_MENOS_MELHOR', 'CORINGA_DO_INATEL'],
       EventType: 'Neutral',
-      GoodOptions: ['DOBRO_DE_POTASSIO', 'JACKPOT', 'QUANTO_MAIS_MELHOR'],
+      GoodOptions: ['DOBRO_DE_POTASSIO', 'QUANTO_MAIS_MELHOR', 'MENTE_LISA'],
     });
     expect(pendingEvent).not.toHaveProperty('CardsOffered');
+  });
+
+  it('keeps every main mock board card with numeric points', () => {
+    expect(gambitBoardMockCards).toHaveLength(25);
+
+    gambitBoardMockCards.forEach((card) => {
+      expect(typeof card.points).toBe('number');
+      expect(card.points).not.toBeNull();
+    });
+  });
+
+  it('keeps the main mock board limited to effects currently expected by backend main', () => {
+    gambitBoardMockCards.forEach((card) => {
+      if (card.effect) {
+        expect(MAIN_BACKEND_EFFECTS.has(card.effect)).toBe(true);
+      }
+    });
   });
 
   it('maps hidden backend cards without requiring Points or Effect', () => {
@@ -107,49 +140,43 @@ describe('Gambit visual mock mechanics', () => {
     expect(session.AccumulatedPoints).toBe(0);
   });
 
-  it('applies every next-card point effect and consumes it', () => {
+  it('adds points from effect cards before preparing the next-card effect', () => {
     expect(
       revealMockGambitCard(
         revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 4),
         0
       ).AccumulatedPoints
-    ).toBe(20);
+    ).toBe(40);
     expect(
       revealMockGambitCard(
         revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 5),
         0
       ).AccumulatedPoints
-    ).toBe(5);
+    ).toBe(-15);
     expect(
       revealMockGambitCard(
         revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 6),
         0
       ).AccumulatedPoints
-    ).toBe(-10);
+    ).toBe(5);
     expect(
       revealMockGambitCard(
-        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 8),
+        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 7),
         0
       ).AccumulatedPoints
-    ).toBe(0);
-    expect(
-      revealMockGambitCard(
-        revealMockGambitCard(makeMockGambitSession('effectsOnBoard'), 9),
-        0
-      ).AccumulatedPoints
-    ).toBe(-10);
+    ).toBe(40);
   });
 
-  it('keeps the next effect ready when an effect-only card is revealed before a point card', () => {
+  it('uses one prepared effect and then returns NextEffect to null', () => {
     const withPreparedDouble = revealMockGambitCard(
       makeMockGambitSession('effectsOnBoard'),
       4
     );
-    const afterEffectOnlyCard = revealMockGambitCard(withPreparedDouble, 5);
-    const afterPointCard = revealMockGambitCard(afterEffectOnlyCard, 0);
+    const afterPointCard = revealMockGambitCard(withPreparedDouble, 0);
 
-    expect(afterEffectOnlyCard.NextEffect).toBe('MELANCIDIO');
-    expect(afterPointCard.AccumulatedPoints).toBe(5);
+    expect(withPreparedDouble.AccumulatedPoints).toBe(20);
+    expect(withPreparedDouble.NextEffect).toBe('DOBRO_DE_POTASSIO');
+    expect(afterPointCard.AccumulatedPoints).toBe(40);
     expect(afterPointCard.NextEffect).toBeNull();
   });
 
@@ -158,16 +185,16 @@ describe('Gambit visual mock mechanics', () => {
       makeMockGambitSession('effectsOnBoard'),
       7
     );
-    const session = revealMockGambitCard(withAnulacao, 12);
+    const session = revealMockGambitCard(withAnulacao, 10);
 
-    expect(session.AccumulatedPoints).toBe(0);
+    expect(session.AccumulatedPoints).toBe(55);
     expect(session.NextEffect).toBeNull();
   });
 
   it('opens PendingInteraction for Clarividencia and resolves a one-card peek', () => {
     const withClarividencia = revealMockGambitCard(
       makeMockGambitSession('clarividenciaFlow'),
-      10
+      8
     );
 
     expect(
@@ -200,7 +227,7 @@ describe('Gambit visual mock mechanics', () => {
   it('opens PendingInteraction for Cabecinha and reports if any selected card is bad', () => {
     const withCabecinha = revealMockGambitCard(
       makeMockGambitSession('cabecinhaFlow'),
-      11
+      9
     );
 
     expect(
@@ -227,8 +254,8 @@ describe('Gambit visual mock mechanics', () => {
 
     expect(session.ManualFlipsCount).toBe(5);
     expect(getGambitSessionGridSnapshot(session)?.PendingEvent).toMatchObject({
-      BadOptions: ['RATIMUNDIO', 'QUANTO_MENOS_MELHOR', 'PAO_COM_OQUE'],
-      GoodOptions: ['DOBRO_DE_POTASSIO', 'JACKPOT', 'QUANTO_MAIS_MELHOR'],
+      BadOptions: ['MELANCIDIO', 'QUANTO_MENOS_MELHOR', 'CORINGA_DO_INATEL'],
+      GoodOptions: ['DOBRO_DE_POTASSIO', 'QUANTO_MAIS_MELHOR', 'MENTE_LISA'],
     });
   });
 
@@ -236,7 +263,7 @@ describe('Gambit visual mock mechanics', () => {
     const pendingEventSession = makeMockGambitSession('pendingEventChoice');
     const pendingInteractionSession = revealMockGambitCard(
       makeMockGambitSession('clarividenciaFlow'),
-      10
+      8
     );
 
     expect(canRevealMockGambitCard(pendingEventSession, 5)).toBe(false);
@@ -275,7 +302,7 @@ describe('Gambit visual mock mechanics', () => {
     ).toBe(false);
   });
 
-  it('resolves PendingEvent by injecting one good and one bad card deterministically', () => {
+  it('resolves PendingEvent by injecting effects while preserving target points', () => {
     const session = resolveMockPendingEvent(
       makeMockGambitSession('pendingEventChoice'),
       {
@@ -290,40 +317,53 @@ describe('Gambit visual mock mechanics', () => {
       snapshot?.Unrevealed.find((card) => card.Position === 5)
     ).toMatchObject({
       Effect: 'DOBRO_DE_POTASSIO',
-      Points: null,
+      Points: -20,
     });
     expect(
       snapshot?.Unrevealed.find((card) => card.Position === 6)
     ).toMatchObject({
-      Effect: 'PAO_COM_OQUE',
-      Points: null,
+      Effect: 'CORINGA_DO_INATEL',
+      Points: 15,
     });
   });
 
-  it('applies deterministic automatic immediate effects', () => {
+  it('resolves PendingEvent without altering the current NextEffect', () => {
+    const session = resolveMockPendingEvent(
+      makeMockGambitSession('pendingEventChoice'),
+      {
+        BadIndex: 1,
+        GoodIndex: 1,
+      }
+    );
+
+    expect(session.NextEffect).toBe('DOBRO_DE_POTASSIO');
+  });
+
+  it('applies deterministic automatic immediate effects and preserves Mosca target points', () => {
     const withMenteLisa = revealMockGambitCard(
       makeMockGambitSession('effectsOnBoard'),
-      16
+      14
     );
-    const withPaoComOque = revealMockGambitCard(
+    const withMoscaJoker = revealMockGambitCard(
       makeMockGambitSession('effectsOnBoard'),
-      19
+      15
     );
 
     expect(
       getGambitSessionGridSnapshot(withMenteLisa)?.Unrevealed.find(
-        (card) => card.Position === 23
+        (card) => card.Position === 20
       )
     ).toMatchObject({
       Locked: true,
       Points: 50,
     });
     expect(
-      getGambitSessionGridSnapshot(withPaoComOque)?.Unrevealed.find(
-        (card) => card.Position === 23
+      getGambitSessionGridSnapshot(withMoscaJoker)?.Unrevealed.find(
+        (card) => card.Position === 0
       )
     ).toMatchObject({
-      Points: -50,
+      Effect: 'DOBRO_DE_POTASSIO',
+      Points: 10,
     });
   });
 
