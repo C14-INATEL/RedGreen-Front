@@ -38,19 +38,13 @@ export const SlotMachine = () => {
   const [IsPaytableCollapsed, SetIsPaytableCollapsed] = useState(false);
 
   return (
-    <div
-      className={`relative flex w-full items-start justify-center ${
-        IsPaytableCollapsed ? 'gap-0' : 'gap-4 xl:gap-6'
-      }`}
-    >
+    <div className="relative flex w-full items-start justify-center">
       <motion.div
         initial={false}
         animate={
           HasEnteredMachineView ? { opacity: 1, x: 0 } : { opacity: 0, x: -120 }
         }
-        className={`mt-3 hidden shrink-0 lg:block ${
-          IsPaytableCollapsed ? 'absolute left-0 z-10' : ''
-        }`}
+        className="absolute -left-64 top-3 z-10 hidden lg:block"
         transition={{
           ...MACHINE_ENTRY_TRANSITION,
           delay: HasEnteredMachineView ? 0.08 : 0,
