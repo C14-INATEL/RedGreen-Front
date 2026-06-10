@@ -32,7 +32,6 @@ type DeactivateConfirmModalProps = {
 
 const DeactivateConfirmModal = ({
   TableName,
-  ActiveSessions,
   OnConfirm,
   OnCancel,
 }: DeactivateConfirmModalProps) => (
@@ -67,13 +66,8 @@ const DeactivateConfirmModal = ({
         className="mb-2 text-center text-[8px] uppercase text-white/70 leading-5"
         style={{ fontFamily: '"Press Start 2P", monospace' }}
       >
-        A mesa <span className="text-[#FFD700]">{TableName}</span> possui{' '}
-        <span className="text-orange-400">
-          {ActiveSessions.length > 0
-            ? `${ActiveSessions.length} ${ActiveSessions.length === 1 ? 'jogador' : 'jogadores'} em andamento`
-            : 'sessões ativas'}
-        </span>
-        .
+        A mesa <span className="text-[#FFD700]">{TableName}</span> possui
+        sessões ativas.
       </p>
 
       <p
