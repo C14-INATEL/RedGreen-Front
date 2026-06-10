@@ -7,6 +7,7 @@ import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
 import { SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
+import { MAX_REROLLS } from './SlotMachineGameConfig';
 import {
   buildRerollAnimationFromSession,
   buildSpinAnimationFromSession,
@@ -82,11 +83,14 @@ const getRerollCounterStates = (
   rerollsMax: number
 ) => {
   const safeRerollsMax = Math.max(0, rerollsMax);
-  const rerollsUsed = Math.max(0, safeRerollsMax - rerollsRemaining);
+  const safeRerollsRemaining = Math.max(
+    0,
+    Math.min(safeRerollsMax, rerollsRemaining)
+  );
 
   return Array.from(
     { length: safeRerollsMax },
-    (_, index) => index >= safeRerollsMax - rerollsUsed
+    (_, index) => index < safeRerollsRemaining
   );
 };
 
@@ -452,6 +456,14 @@ export const SlotMachinePixi = ({
     ? SLOT_MACHINE_ANIMATION_FRAME_SOURCES[machineSpriteFrameIndex]
     : SLOT_MACHINE_BASE_SPRITE;
   const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
+  const visualRerollsMax =
+    slotSession === null
+      ? defaultMaxRerolls > 0
+        ? defaultMaxRerolls
+        : MAX_REROLLS
+      : defaultMaxRerolls;
+  const visualRerollsRemaining =
+    slotSession === null ? visualRerollsMax : rerollsRemaining;
 
   return (
     <div
@@ -497,7 +509,10 @@ export const SlotMachinePixi = ({
 
       <SlotMachineCounters
         machineSize={machineSize}
-        states={getRerollCounterStates(rerollsRemaining, defaultMaxRerolls)}
+        states={getRerollCounterStates(
+          visualRerollsRemaining,
+          visualRerollsMax
+        )}
       />
 
       <SlotMachineAmountDisplay

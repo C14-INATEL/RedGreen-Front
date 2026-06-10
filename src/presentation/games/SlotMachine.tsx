@@ -35,21 +35,25 @@ export const SlotMachine = () => {
   const [HasEnteredMachineView, SetHasEnteredMachineView] = useState(
     RouteState?.SlotMachineIntroCompleted === true
   );
+  const [IsPaytableCollapsed, SetIsPaytableCollapsed] = useState(false);
 
   return (
-    <div className="relative flex w-full items-start justify-center gap-4 xl:gap-6">
+    <div className="relative flex w-full items-start justify-center">
       <motion.div
         initial={false}
         animate={
           HasEnteredMachineView ? { opacity: 1, x: 0 } : { opacity: 0, x: -120 }
         }
-        className="mt-3 hidden shrink-0 lg:block"
+        className="absolute -left-64 top-3 z-10 hidden lg:block"
         transition={{
           ...MACHINE_ENTRY_TRANSITION,
           delay: HasEnteredMachineView ? 0.08 : 0,
         }}
       >
-        <SlotPaytableHUD />
+        <SlotPaytableHUD
+          isCollapsed={IsPaytableCollapsed}
+          onToggleCollapsed={() => SetIsPaytableCollapsed((value) => !value)}
+        />
       </motion.div>
 
       <motion.div
