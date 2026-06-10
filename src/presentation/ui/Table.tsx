@@ -14,7 +14,7 @@ const Table = () => {
     const IsLoggedIn = !!Token;
 
     if (IsLoggedIn) {
-      Navigate('/tables');
+      Navigate(paths.slotmachinetables);
       return;
     }
 
@@ -26,8 +26,16 @@ const Table = () => {
   };
 
   const HandleCardGameClick = () => {
-    Navigate(paths.minefieldRoom);
-  };
+  const Token = localStorage.getItem('token');
+  const IsLoggedIn = !!Token;
+
+  if (IsLoggedIn) {
+    Navigate(paths.minefieldTablesRoom);
+    return;
+  }
+
+  Navigate(paths.minefieldRoom);
+};
 
   return (
     <motion.div
