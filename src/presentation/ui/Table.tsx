@@ -26,16 +26,16 @@ const Table = () => {
   };
 
   const HandleCardGameClick = () => {
-  const Token = localStorage.getItem('token');
-  const IsLoggedIn = !!Token;
+    const Token = localStorage.getItem('token');
+    const IsLoggedIn = !!Token;
 
-  if (IsLoggedIn) {
-    Navigate(paths.minefieldTablesRoom);
-    return;
-  }
+    if (IsLoggedIn) {
+      Navigate(paths.minefieldTablesRoom);
+      return;
+    }
 
-  Navigate(paths.minefieldRoom);
-};
+    Navigate(paths.minefieldRoom);
+  };
 
   return (
     <motion.div
