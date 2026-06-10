@@ -5,6 +5,7 @@ type SlotMachineCardProps = {
   Name: string;
   MinimumSpinValue: number;
   MinimumChipsRequired: number;
+  MinimumRerollValue: number;
   IsLocked: boolean;
   IsAdmin: boolean;
   IsActive: boolean;
@@ -16,6 +17,7 @@ export const SlotMachineCard = ({
   Name,
   MinimumSpinValue,
   MinimumChipsRequired,
+  MinimumRerollValue,
   IsLocked,
   IsAdmin,
   OnClick,
@@ -27,48 +29,69 @@ export const SlotMachineCard = ({
       whileHover={{ scale: IsLocked ? 1 : 1.03 }}
       transition={{ duration: 0.15 }}
       className={`relative w-52 border-[3px] p-4 text-center shadow-[4px_4px_0px_#000] transition-all
-  ${
-    IsLocked && !IsAdmin
-      ? 'cursor-not-allowed border-white/10 bg-card/30 opacity-40'
-      : IsLocked && IsAdmin
-        ? 'cursor-not-allowed border-white/10 bg-card/30'
-        : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
-  }`}
+        ${
+          IsLocked && !IsAdmin
+            ? 'cursor-not-allowed border-white/10 bg-card/30 opacity-40'
+            : (IsLocked && IsAdmin) || !IsActive
+              ? 'cursor-not-allowed border-white/10 bg-card/30'
+              : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
+        }`}
       style={{ imageRendering: 'pixelated' }}
       onClick={OnClick}
     >
       <h2
-        className="mb-3 min-h-[48px] text-[9px] leading-5 uppercase text-foreground break-words line-clamp-2"
+        className="mb-4 min-h-[48px] text-[9px] leading-5 uppercase text-foreground break-words line-clamp-2"
         style={{ fontFamily: '"Press Start 2P", monospace' }}
       >
         {Name}
       </h2>
 
-      <p
-        className="text-[8px] uppercase text-white/70"
-        style={{ fontFamily: '"Press Start 2P", monospace' }}
-      >
-        Aposta
-      </p>
-      <p
-        className="mb-2 text-[10px] text-cassino-gold"
-        style={{ fontFamily: '"Press Start 2P", monospace' }}
-      >
-        {MinimumSpinValue.toLocaleString('pt-BR')}
-      </p>
+      <div className="flex flex-col gap-2 text-left">
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-[7px] uppercase text-white/50 whitespace-nowrap shrink-0"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            Aposta
+          </span>
+          <span
+            className="text-[9px] text-cassino-gold text-right min-w-0 break-all"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            {MinimumSpinValue.toLocaleString('pt-BR')}
+          </span>
+        </div>
 
-      <p
-        className="text-[8px] uppercase text-white/70"
-        style={{ fontFamily: '"Press Start 2P", monospace' }}
-      >
-        Fichas mín.
-      </p>
-      <p
-        className="text-[10px] text-white/90"
-        style={{ fontFamily: '"Press Start 2P", monospace' }}
-      >
-        {MinimumChipsRequired.toLocaleString('pt-BR')}
-      </p>
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-[7px] uppercase text-white/50 whitespace-nowrap shrink-0"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            Reroll
+          </span>
+          <span
+            className="text-[9px] text-cassino-gold text-right min-w-0 break-all"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            {MinimumRerollValue.toLocaleString('pt-BR')}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-[7px] uppercase text-white/50 whitespace-nowrap shrink-0"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            Fichas mín.
+          </span>
+          <span
+            className="text-[9px] text-white/90 text-right min-w-0 break-all"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            {MinimumChipsRequired.toLocaleString('pt-BR')}
+          </span>
+        </div>
+      </div>
 
       {IsLocked && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60">
