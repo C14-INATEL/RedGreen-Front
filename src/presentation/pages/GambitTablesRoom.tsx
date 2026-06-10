@@ -39,11 +39,18 @@ export const GambitTablesRoom = () => {
 
   const [SelectedTableId, SetSelectedTableId] = useState<number | null>(null);
   const [SelectedTableName, SetSelectedTableName] = useState('');
-  const [SelectedTableMinimumChipsRequired, SetSelectedTableMinimumChipsRequired] = useState(0);
+  const [
+    SelectedTableMinimumChipsRequired,
+    SetSelectedTableMinimumChipsRequired,
+  ] = useState(0);
   const [SelectedTableCardPrice, SetSelectedTableCardPrice] = useState(0);
   const [SelectedTableMultiplier, SetSelectedTableMultiplier] = useState(0);
-  const [SelectedTableMinimumCardsPurchased, SetSelectedTableMinimumCardsPurchased] = useState(0);
-  const [SelectedTableMaxCardsPurchased, SetSelectedTableMaxCardsPurchased] = useState(0);
+  const [
+    SelectedTableMinimumCardsPurchased,
+    SetSelectedTableMinimumCardsPurchased,
+  ] = useState(0);
+  const [SelectedTableMaxCardsPurchased, SetSelectedTableMaxCardsPurchased] =
+    useState(0);
   const [SelectedTableActive, SetSelectedTableActive] = useState(true);
 
   const [ShowResultModal, SetShowResultModal] = useState(false);
@@ -158,11 +165,17 @@ export const GambitTablesRoom = () => {
                 OnEdit={() => {
                   SetSelectedTableId(TableItem.GambitTableId);
                   SetSelectedTableName(TableItem.Name);
-                  SetSelectedTableMinimumChipsRequired(TableItem.MinimumChipsRequired);
+                  SetSelectedTableMinimumChipsRequired(
+                    TableItem.MinimumChipsRequired
+                  );
                   SetSelectedTableCardPrice(TableItem.CardPrice);
                   SetSelectedTableMultiplier(TableItem.TableMultiplier);
-                  SetSelectedTableMinimumCardsPurchased(TableItem.MinimumCardsPurchased);
-                  SetSelectedTableMaxCardsPurchased(TableItem.MaxCardsPurchased);
+                  SetSelectedTableMinimumCardsPurchased(
+                    TableItem.MinimumCardsPurchased
+                  );
+                  SetSelectedTableMaxCardsPurchased(
+                    TableItem.MaxCardsPurchased
+                  );
                   SetSelectedTableActive(TableItem.Active);
                   SetShowEditModal(true);
                 }}
