@@ -7,6 +7,7 @@ const DefaultProps = {
   Name: 'Gold Table',
   MinimumSpinValue: 100,
   MinimumChipsRequired: 500,
+  MinimumRerollValue: 50,
   IsLocked: false,
   IsAdmin: false,
   IsActive: true,
@@ -48,12 +49,16 @@ describe('SlotMachineCard', () => {
   });
 
   it('displays locked overlay when IsLocked is true and not admin', () => {
-    render(<SlotMachineCard {...DefaultProps} IsLocked={true} IsAdmin={false} />);
+    render(
+      <SlotMachineCard {...DefaultProps} IsLocked={true} IsAdmin={false} />
+    );
     expect(screen.getByText('Bloqueado')).toBeTruthy();
   });
 
   it('displays deactivated overlay when IsActive is false and IsAdmin is true', () => {
-    render(<SlotMachineCard {...DefaultProps} IsActive={false} IsAdmin={true} />);
+    render(
+      <SlotMachineCard {...DefaultProps} IsActive={false} IsAdmin={true} />
+    );
     expect(screen.getByText('Desativado')).toBeTruthy();
   });
 });
