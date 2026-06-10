@@ -134,6 +134,7 @@ export const SlotMachineTablesRoom = () => {
         ) : (
           Tables.map((TableItem) => {
             const IsLocked =
+              !TableItem.Active ||
               !IsLoggedIn ||
               isLoading ||
               IsLoadingTables ||
@@ -147,6 +148,7 @@ export const SlotMachineTablesRoom = () => {
                 Name={TableItem.Name}
                 MinimumSpinValue={TableItem.MinimumSpinValue}
                 MinimumChipsRequired={TableItem.MinimumChipsRequired}
+                MinimumRerollValue={TableItem.MinimumRerollValue}
                 IsLocked={IsLocked}
                 IsAdmin={IsAdmin}
                 OnClick={async () => {
