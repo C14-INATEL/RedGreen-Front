@@ -7,6 +7,8 @@ type RankingApiItem = {
   ChipBalance: number;
 };
 
+export const RANKING_CACHE_KEY = '/auth/rank';
+
 export type RankingPlayer = {
   Position: number;
   Nickname: string;
@@ -29,7 +31,7 @@ export const useRanking = (Enabled: boolean = true) => {
     isLoading: IsLoading,
     mutate: Mutate,
   } = useSWR<RankingPlayer[]>(
-    Enabled ? '/auth/rank' : null,
+    Enabled ? RANKING_CACHE_KEY : null,
     async (Url) => {
       const Response = await apiClient.get<RankingApiItem[] | RankingApiItem>(
         Url
