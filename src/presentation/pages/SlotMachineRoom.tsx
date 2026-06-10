@@ -19,8 +19,7 @@ type StoredUserSnapshot = {
 export const SlotMachineRoom = () => {
   const Navigate = useNavigate();
 
-  const Token =
-    localStorage.getItem('token')
+  const Token = localStorage.getItem('token');
 
   const IsLoggedIn = !!Token;
 
@@ -264,17 +263,12 @@ export const SlotMachineRoom = () => {
         </div>
       )}
 
-      <div
-        className="relative z-10 flex items-center justify-center"
-        onClick={() => {
-          if (!IsActive && IsLoggedIn) {
-            SetIsActive(true);
-          }
-        }}
-      >
-        {!IsActive && <div className="absolute inset-0 z-20 cursor-pointer" />}
-
-        <SlotMachine />
+      <div className="relative z-10 flex items-center justify-center">
+        <SlotMachine
+          OnEnter={() => {
+            if (IsLoggedIn) SetIsActive(true);
+          }}
+        />
       </div>
     </main>
   );

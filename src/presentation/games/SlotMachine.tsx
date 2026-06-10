@@ -24,7 +24,11 @@ type SlotMachineRouteState = {
   SlotMachineId?: number;
 };
 
-export const SlotMachine = () => {
+type SlotMachineProps = {
+  OnEnter?: () => void;
+};
+
+export const SlotMachine = ({ OnEnter }: SlotMachineProps) => {
   const Location = useLocation();
   const Navigate = useNavigate();
   const RouteState = Location.state as SlotMachineRouteState | null;
@@ -74,6 +78,7 @@ export const SlotMachine = () => {
           className="absolute inset-0 z-20 cursor-zoom-in bg-transparent"
           onClick={() => {
             SetHasEnteredMachineView(true);
+            OnEnter?.();
             Navigate(
               {
                 hash: Location.hash,
