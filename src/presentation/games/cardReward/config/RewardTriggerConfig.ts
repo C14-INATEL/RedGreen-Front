@@ -1,4 +1,4 @@
-import type { RewardTriggerConfig } from '../types/cardReward';
+import type { RewardTriggerConfig } from '../types/CardReward';
 
 export const rewardTriggerConfig: RewardTriggerConfig = {
   carryOverRevealProgress: false,

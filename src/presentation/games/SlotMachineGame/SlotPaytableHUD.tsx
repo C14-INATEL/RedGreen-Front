@@ -1,4 +1,4 @@
-import { SLOT_PAYTABLE_ENTRIES } from './slotPaytable';
+import { SLOT_PAYTABLE_ENTRIES } from './SlotPaytable';
 
 const HUD_ROW_CLASSES =
   'flex min-h-[84px] items-center justify-between gap-5 rounded-[9px] border border-[#d9b453]/18 bg-[rgba(6,20,9,0.88)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,236,173,0.06)]';
@@ -18,12 +18,12 @@ const getSymbolGroup = (symbols: readonly string[]) => {
 export const SlotPaytableHUD = () => (
   <aside
     aria-label="Tabela visual de combinacoes da Slot Machine"
-    className="w-[372px] shrink-0"
+    className="w-[260px] shrink-0 xl:w-[280px] 2xl:w-[300px]"
   >
     <div className="overflow-hidden rounded-[10px] border border-[#d9b453]/45 bg-[linear-gradient(180deg,rgba(24,43,19,0.98)_0%,rgba(8,20,10,0.98)_100%)] p-5 shadow-[0_0_0_1px_rgba(40,64,25,0.6),8px_8px_0_rgba(0,0,0,0.25)]">
       <div className="mb-5 flex items-center gap-2.5">
         <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#f2d680]">
-          Paytable
+          Tabela de Prêmios
         </span>
         <span className="h-px flex-1 bg-[#f2d680]/25" />
       </div>

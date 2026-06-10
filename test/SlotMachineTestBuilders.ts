@@ -1,7 +1,7 @@
 import type {
   SlotMachineApiMachine,
   SlotMachineApiSession,
-} from '../src/presentation/games/SlotMachineGame/slotMachineApi';
+} from '../src/presentation/games/SlotMachineGame/SlotMachineApi';
 
 export const createSlotMachine = (
   overrides: Partial<SlotMachineApiMachine> = {}

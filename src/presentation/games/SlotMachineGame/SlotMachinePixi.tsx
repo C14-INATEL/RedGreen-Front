@@ -19,7 +19,7 @@ import {
   getSlotMachineSessionState,
   rerollActiveSlotSession,
   type SlotMachineApiSession,
-} from './slotMachineApi';
+} from './SlotMachineApi';
 import {
   SlotMachineReels,
   type SlotMachineReelsMode,
@@ -454,7 +454,10 @@ export const SlotMachinePixi = ({
   const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
 
   return (
-    <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
+    <div
+      className="relative w-[min(72vw,1120px)] max-w-[1120px] shrink-0"
+      ref={machineRef}
+    >
       <img
         alt="Caca-niquel de teste"
         className="block w-full select-none"

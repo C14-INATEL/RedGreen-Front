@@ -1,4 +1,4 @@
-import type { SlotMachineSpinResult } from '../src/presentation/games/SlotMachineGame/slotMachineGameConfig';
+import type { SlotMachineSpinResult } from '../src/presentation/games/SlotMachineGame/SlotMachineGameConfig';
 
 export const TEST_SLOT_MACHINE_SPIN_RESULTS: Record<
   string,

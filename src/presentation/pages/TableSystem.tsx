@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchActiveSlotSession } from '../games/SlotMachineGame/slotMachineApi';
+import { fetchActiveSlotSession } from '../games/SlotMachineGame/SlotMachineApi';
 import { paths } from '@/paths';
 import { useUserChips } from '@/application/hooks/useUserChips';
 import { apiClient } from '@/infrastructure/http/client';

@@ -12,7 +12,7 @@ import { SlotMachinePixi } from '../src/presentation/games/SlotMachineGame/SlotM
 import type {
   SlotMachineApiMachine,
   SlotMachineApiSession,
-} from '../src/presentation/games/SlotMachineGame/slotMachineApi';
+} from '../src/presentation/games/SlotMachineGame/SlotMachineApi';
 import {
   createSlotMachine,
   createSlotMachineSession,
