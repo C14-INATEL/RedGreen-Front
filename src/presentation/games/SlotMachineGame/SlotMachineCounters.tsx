@@ -1,5 +1,5 @@
 import { SlotMachineCounter } from './SlotMachineCounter';
-import { MAX_REROLLS } from './slotMachineGameConfig';
+import { MAX_REROLLS } from './SlotMachineGameConfig';
 
 const SLOT_MACHINE_SIZE = 4096;
 const SLOT_COUNTER_SIZE = {

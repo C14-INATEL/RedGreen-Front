@@ -11,7 +11,7 @@ import {
   Texture,
   WRAP_MODES,
 } from 'pixi.js';
-import type { SlotMachineAnimationRerollResult } from './slotMachineApi';
+import type { SlotMachineAnimationRerollResult } from './SlotMachineApi';
 import {
   getSlotMachineTextureIndexBySymbolId,
   getSlotMachineTextureUrls,
@@ -19,7 +19,7 @@ import {
   SLOT_MACHINE_SYMBOLS,
   type SlotMachineSpinDirection,
   type SlotMachineSpinResult,
-} from './slotMachineGameConfig';
+} from './SlotMachineGameConfig';
 
 const REEL_VISIBLE_CELL_COUNT = 1;
 const REEL_BUFFER_CELL_COUNT = 2;

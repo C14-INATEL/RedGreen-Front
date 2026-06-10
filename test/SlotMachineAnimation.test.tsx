@@ -11,7 +11,7 @@ import { createElement, useState } from 'react';
 import { SlotMachineButtons } from '../src/presentation/games/SlotMachineGame/SlotMachineButtons';
 import { SlotMachineCounters } from '../src/presentation/games/SlotMachineGame/SlotMachineCounters';
 import { SlotMachineLever } from '../src/presentation/games/SlotMachineGame/SlotMachineLever';
-import { MAX_REROLLS } from '../src/presentation/games/SlotMachineGame/slotMachineGameConfig';
+import { MAX_REROLLS } from '../src/presentation/games/SlotMachineGame/SlotMachineGameConfig';
 
 const ACTIVE_COUNTER_SPRITE = '/SlotMachine/SpriteCounterOn.png';
 const INACTIVE_COUNTER_SPRITE = '/SlotMachine/SpriteCounterOff.png';

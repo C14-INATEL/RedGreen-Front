@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSWRConfig } from 'swr';
+import { RANKING_CACHE_KEY } from '@application/hooks/useRanking';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
@@ -17,7 +19,7 @@ import {
   getSlotMachineSessionState,
   rerollActiveSlotSession,
   type SlotMachineApiSession,
-} from './slotMachineApi';
+} from './SlotMachineApi';
 import {
   SlotMachineReels,
   type SlotMachineReelsMode,
@@ -92,7 +94,8 @@ export const SlotMachinePixi = ({
   animateMachineSprite = false,
   slotMachineId,
 }: SlotMachinePixiProps) => {
-  const { mutate: mutateUserChips } = useUserChips();
+  const { mutate: MutateUserChips } = useUserChips();
+  const { mutate } = useSWRConfig();
   const machineRef = useRef<HTMLDivElement | null>(null);
   const [machineSize, setMachineSize] = useState<{
     height: number;
@@ -230,6 +233,11 @@ export const SlotMachinePixi = ({
     setRerollsRemaining(safeMaxRerolls);
   };
 
+  const RefreshPlayerProgress = useCallback(() => {
+    void MutateUserChips();
+    void mutate(RANKING_CACHE_KEY);
+  }, [mutate, MutateUserChips]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -347,7 +355,7 @@ export const SlotMachinePixi = ({
         id: (currentValue?.id ?? 0) + 1,
         result: buildSpinAnimationFromSession(session),
       }));
-      void mutateUserChips();
+      RefreshPlayerProgress();
     } catch (error) {
       setPendingAction(null);
       setStatusMessage(
@@ -373,7 +381,7 @@ export const SlotMachinePixi = ({
       await cashOutActiveSlotSession();
       clearSessionState(rerollsMax);
       setIdleRequestId((currentValue) => currentValue + 1);
-      void mutateUserChips();
+      RefreshPlayerProgress();
     } catch (error) {
       setPendingAction(null);
       setStatusMessage(
@@ -404,7 +412,7 @@ export const SlotMachinePixi = ({
         reelIndex,
         result: buildRerollAnimationFromSession(session, reelIndex),
       }));
-      void mutateUserChips();
+      RefreshPlayerProgress();
     } catch (error) {
       setPendingAction(null);
       setStatusMessage(
@@ -446,7 +454,10 @@ export const SlotMachinePixi = ({
   const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
 
   return (
-    <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
+    <div
+      className="relative w-[min(72vw,1120px)] max-w-[1120px] shrink-0"
+      ref={machineRef}
+    >
       <img
         alt="Caca-niquel de teste"
         className="block w-full select-none"

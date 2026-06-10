@@ -14,6 +14,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { paths } from '../src/paths';
 import Home from '../src/presentation/pages/Home';
 import DeleteAccountModal from '../src/presentation/ui/DeleteAccountModal';
 import EditProfileModal from '../src/presentation/ui/EditProfileModal';
@@ -154,7 +155,7 @@ const RenderHome = () =>
     >
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<div>Login page</div>} />
+        <Route path={paths.login} element={<div>Login page</div>} />
       </Routes>
     </MemoryRouter>
   );

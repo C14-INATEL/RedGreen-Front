@@ -1,13 +1,13 @@
 import { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getFloatingCardAnimation } from '../../animations/cardFloating';
+import { getFloatingCardAnimation } from '../../animations/CardFloating';
 import {
   rewardCardEntranceVariants,
   rewardCardHoverAnimation,
   rewardCardTapAnimation,
-} from '../../animations/cardRewardAnimations';
-import { rewardCardSelectionVariants } from '../../animations/cardSelectionAnimations';
-import type { RewardCardOption } from '../../types/cardReward';
+} from '../../animations/CardRewardAnimations';
+import { rewardCardSelectionVariants } from '../../animations/CardSelectionAnimations';
+import type { RewardCardOption } from '../../types/CardReward';
 
 type RewardCardSelectionState = 'idle' | 'dimmed' | 'active' | 'hidden';
 
@@ -22,8 +22,7 @@ type RewardCardProps = {
   onSelect: (optionId: string, buttonElement: HTMLButtonElement | null) => void;
 };
 
-const DEFAULT_IMAGE_FILTER =
-  'drop-shadow(3px 3px 0 rgba(20,12,4,0.42))';
+const DEFAULT_IMAGE_FILTER = 'drop-shadow(3px 3px 0 rgba(20,12,4,0.42))';
 const SELECTED_IMAGE_FILTER =
   'brightness(1.04) drop-shadow(4px 4px 0 rgba(20,12,4,0.5))';
 const HIDDEN_BUTTON_STYLE = {

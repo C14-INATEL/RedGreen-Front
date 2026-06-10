@@ -1,4 +1,4 @@
-import type { RewardTimingsConfig } from '../types/cardReward';
+import type { RewardTimingsConfig } from '../types/CardReward';
 
 export const rewardTimings: RewardTimingsConfig = {
   bannerEntranceDuration: 520,

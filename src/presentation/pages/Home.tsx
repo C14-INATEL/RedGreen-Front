@@ -4,11 +4,13 @@ import Table from '@ui/Table';
 import HUD from '@ui/HUD';
 import RankingPanel from '@ui/RankingPanel';
 import DailyBonusPanel from '@ui/DailyBonusPanel';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Trophy, Gift } from 'lucide-react';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { UseDailyLogin } from '@application/hooks/useDailyLogin';
+import { useRanking } from '@application/hooks/useRanking';
+import { paths } from '../../paths';
 
 type StoredUserSnapshot = {
   ChipBalance?: number;
@@ -48,8 +50,13 @@ const Home = () => {
   const Chips = chips ?? localChips ?? (IsLoggedIn ? 0 : 10000);
 
   const [RankingOpen, SetRankingOpen] = useState(false);
-  const [RankingLayoutOpen, SetRankingLayoutOpen] = useState(false);
+  const [CanShowRankingButton, SetCanShowRankingButton] = useState(true);
   const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
+  const {
+    Players: RankingPlayers,
+    IsLoading: IsRankingLoading,
+    Error: RankingError,
+  } = useRanking(RankingOpen);
   const HasAutoOpenedDailyBonus = useRef(false);
   const {
     DailyState,
@@ -78,7 +85,7 @@ const Home = () => {
   }, [CanClaimToday, DailyState, IsDailyBonusLoading, IsLoggedIn]);
 
   const HandleLogin = () => {
-    Navigate('/Login');
+    Navigate(paths.login);
   };
 
   const HandleLogout = () => {
@@ -89,14 +96,19 @@ const Home = () => {
   };
 
   const HandleOpenRanking = () => {
-    SetRankingLayoutOpen(true);
+    SetCanShowRankingButton(false);
     SetRankingOpen(true);
   };
 
   const HandleCloseRanking = () => {
     SetRankingOpen(false);
-    SetRankingLayoutOpen(false);
   };
+
+  const RankingRows =
+    IsRankingLoading || RankingError || RankingPlayers.length === 0
+      ? 1
+      : RankingPlayers.length;
+  const DailyBonusTop = RankingOpen ? `${10.75 + RankingRows * 3}rem` : '11rem';
 
   return (
     <div className="relative h-screen w-screen overflow-hidden suit-pattern">
@@ -125,7 +137,7 @@ const Home = () => {
             animate={{
               opacity: 1,
               scale: 1,
-              y: RankingLayoutOpen ? 256 : 0,
+              y: 0,
             }}
             transition={{
               duration: 0.22,
@@ -133,32 +145,33 @@ const Home = () => {
             }}
             onClick={() => SetDailyBonusOpen(true)}
             className={`fixed right-6 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)] ${
-              RankingLayoutOpen ? 'z-30' : 'z-50'
+              RankingOpen ? 'z-40' : 'z-50'
             }`}
-            style={{ top: '11rem' }}
+            style={{ top: DailyBonusTop }}
           >
             <Gift className="h-4 w-4" />
           </motion.button>
         )}
       </main>
 
-      <RankingPanel IsOpen={RankingOpen} OnClose={HandleCloseRanking} />
+      <RankingPanel
+        IsOpen={RankingOpen}
+        OnClose={HandleCloseRanking}
+        OnExitComplete={() => SetCanShowRankingButton(true)}
+      />
 
-      <AnimatePresence>
-        {!RankingOpen && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -4 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            onClick={HandleOpenRanking}
-            className="fixed right-6 z-50 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border"
-            style={{ top: '7rem' }}
-          >
-            <Trophy className="h-5 w-5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {!RankingOpen && CanShowRankingButton && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.1, ease: 'easeOut' }}
+          onClick={HandleOpenRanking}
+          className="fixed right-4 z-50 flex h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 sm:right-6 pixel-border"
+          style={{ top: '7rem' }}
+        >
+          <Trophy className="h-5 w-5" />
+        </motion.button>
+      )}
 
       <div
         className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"

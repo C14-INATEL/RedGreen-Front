@@ -6,7 +6,7 @@ import {
   it,
   jest,
 } from '@jest/globals';
-import { buildSpinAnimationFromSession } from '../src/presentation/games/SlotMachineGame/slotMachineApi';
+import { buildSpinAnimationFromSession } from '../src/presentation/games/SlotMachineGame/SlotMachineApi';
 import { createSlotMachineSession } from './SlotMachineTestBuilders';
 
 const mockApiGet = jest.fn();
@@ -57,6 +57,25 @@ describe('SlotMachineApi', () => {
       spinDirection: 'down',
       spinSpeedPxPerMs: 2.9,
       stopDelayMs: 220,
+    });
+  });
+
+  it('maps the backend egg symbol into the frontend visual symbol id', () => {
+    const session = createSlotMachineSession({
+      CurrentSpinResult: {
+        Reels: [
+          { ReelIndex: 0, SymbolId: 'Egg' },
+          { ReelIndex: 1, SymbolId: 'Pig' },
+          { ReelIndex: 2, SymbolId: 'Orange' },
+          { ReelIndex: 3, SymbolId: 'Cheese' },
+        ],
+      },
+    });
+
+    expect(buildSpinAnimationFromSession(session).reels[0]).toEqual({
+      extraSpinSteps: 1,
+      reelIndex: 0,
+      symbolId: 'egg',
     });
   });
 });

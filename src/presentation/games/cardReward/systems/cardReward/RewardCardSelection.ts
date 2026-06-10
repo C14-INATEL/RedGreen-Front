@@ -1,7 +1,7 @@
 import type {
   RewardCardDefinition,
   RewardCardOption,
-} from '../../types/cardReward';
+} from '../../types/CardReward';
 
 const shuffleCards = <T>(items: T[], random: () => number) => {
   const nextItems = [...items];
