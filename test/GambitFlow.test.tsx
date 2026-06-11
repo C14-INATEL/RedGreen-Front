@@ -195,38 +195,54 @@ describe('Gambit visual flow', () => {
   });
 
   it('opens Clarividencia interaction and peeks without revealing the target card', () => {
-    render(
-      createElement(Gambit, {
-        initialSession: makeMockGambitSession('clarividenciaFlow'),
-      })
-    );
+    jest.useFakeTimers();
 
-    revealAndComplete(8);
+    try {
+      render(
+        createElement(Gambit, {
+          initialSession: makeMockGambitSession('clarividenciaFlow'),
+        })
+      );
 
-    expect(screen.getByText('CLARIVIDENCIA')).toBeInTheDocument();
-    expect(screen.getByText('0/1')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'cards:25:revealed:1:previewed:0:locked:false:preview-mode:true'
-      )
-    ).toBeInTheDocument();
+      revealAndComplete(8);
 
-    fireEvent.click(screen.getByText('reveal-0'));
+      expect(screen.getByText('CLARIVIDENCIA')).toBeInTheDocument();
+      expect(screen.getByText('0/1')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'cards:25:revealed:1:previewed:0:locked:true:preview-mode:true'
+        )
+      ).toBeInTheDocument();
 
-    expect(screen.getByText('Carta 0: +10')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'cards:25:revealed:1:previewed:1:locked:true:preview-mode:true'
-      )
-    ).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(1450);
+      });
 
-    fireEvent.click(screen.getByText('Fechar espiada'));
+      expect(
+        screen.getByText(
+          'cards:25:revealed:1:previewed:0:locked:false:preview-mode:true'
+        )
+      ).toBeInTheDocument();
 
-    expect(
-      screen.getByText(
-        'cards:25:revealed:1:previewed:0:locked:false:preview-mode:false'
-      )
-    ).toBeInTheDocument();
+      fireEvent.click(screen.getByText('reveal-0'));
+
+      expect(screen.getByText('Carta 0: +10')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'cards:25:revealed:1:previewed:1:locked:true:preview-mode:true'
+        )
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Fechar espiada'));
+
+      expect(
+        screen.getByText(
+          'cards:25:revealed:1:previewed:0:locked:false:preview-mode:false'
+        )
+      ).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('shows visual PendingEvent cards and resolves it with good and bad choices', () => {
@@ -236,7 +252,7 @@ describe('Gambit visual flow', () => {
       })
     );
 
-    [0, 1, 2, 3, 4].forEach(revealAndComplete);
+    [0, 1, 2, 3, 16].forEach(revealAndComplete);
 
     const eventDialog = screen.getByRole('dialog', {
       name: 'Evento Especial',
@@ -278,51 +294,6 @@ describe('Gambit visual flow', () => {
   });
 
   it('shows prepared effect sprite and clears the slot after the next point uses it', () => {
-    render(
-      createElement(Gambit, {
-        initialSession: makeMockGambitSession('effectsOnBoard'),
-      })
-    );
-
-    expect(screen.getByText('NENHUM')).toBeInTheDocument();
-
-    revealAndComplete(4);
-
-    expect(screen.getAllByText('Dobro de Potassio').length).toBeGreaterThan(0);
-    expect(screen.getAllByAltText('Dobro de Potassio').length).toBeGreaterThan(
-      0
-    );
-    expect(mockGambitBoard).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        cards: expect.arrayContaining([
-          expect.objectContaining({
-            effect: 'dobro-de-potassio',
-            id: 4,
-            points: 20,
-            revealed: true,
-          }),
-        ]),
-      })
-    );
-
-    revealAndComplete(0);
-
-    expect(screen.getByText('40')).toBeInTheDocument();
-    expect(screen.getByText('NENHUM')).toBeInTheDocument();
-    expect(mockGambitBoard).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        cards: expect.arrayContaining([
-          expect.objectContaining({
-            id: 0,
-            points: 10,
-            revealed: true,
-          }),
-        ]),
-      })
-    );
-  });
-
-  it('shows and auto-closes a green reveal cinematic for positive cards', () => {
     jest.useFakeTimers();
 
     try {
@@ -332,12 +303,169 @@ describe('Gambit visual flow', () => {
         })
       );
 
-      fireEvent.click(screen.getByText('reveal-0'));
+      expect(screen.getByText('NENHUM')).toBeInTheDocument();
+
+      revealAndComplete(4);
 
       const cinematic = screen.getByTestId('gambit-reveal-cinematic');
 
       expect(cinematic).toHaveAttribute('data-nature', 'good');
-      expect(screen.getByText('+10')).toBeInTheDocument();
+      expect(
+        within(cinematic).getByAltText('Dobro de Potassio')
+      ).toBeInTheDocument();
+      expect(
+        within(cinematic).getByText('Dobro de Potassio')
+      ).toBeInTheDocument();
+      expect(
+        within(cinematic).getByText(
+          'Dobra os pontos da proxima carta revelada.'
+        )
+      ).toBeInTheDocument();
+      expect(
+        within(cinematic).getByTestId('gambit-reveal-points')
+      ).toHaveTextContent('+20');
+      expect(screen.queryByText('Carta Boa')).not.toBeInTheDocument();
+      expect(screen.queryByText('Carta Ruim')).not.toBeInTheDocument();
+      expect(screen.queryByText('Carta Neutra')).not.toBeInTheDocument();
+      expect(screen.getAllByText('Dobro de Potassio').length).toBeGreaterThan(
+        1
+      );
+      expect(mockGambitBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          cards: expect.arrayContaining([
+            expect.objectContaining({
+              effect: 'dobro-de-potassio',
+              id: 4,
+              points: 20,
+              revealed: true,
+            }),
+          ]),
+          interactionLocked: true,
+        })
+      );
+
+      act(() => {
+        jest.advanceTimersByTime(1450);
+      });
+
+      expect(
+        screen.queryByTestId('gambit-reveal-cinematic')
+      ).not.toBeInTheDocument();
+
+      revealAndComplete(0);
+
+      expect(screen.getByText('40')).toBeInTheDocument();
+      expect(screen.getByText('NENHUM')).toBeInTheDocument();
+      expect(mockGambitBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          cards: expect.arrayContaining([
+            expect.objectContaining({
+              id: 0,
+              points: 10,
+              revealed: true,
+            }),
+          ]),
+        })
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('reveals points-only cards without a screen message', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('effectsOnBoard'),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-0'));
+
+    expect(
+      screen.queryByTestId('gambit-reveal-cinematic')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Carta Boa')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carta Ruim')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carta Neutra')).not.toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'cards:25:revealed:1:previewed:0:locked:true:preview-mode:false'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('complete'));
+
+    expect(
+      screen.getByText(
+        'cards:25:revealed:1:previewed:0:locked:false:preview-mode:false'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows immediate coringas in the screen message without preparing the panel', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('effectsOnBoard'),
+      })
+    );
+
+    revealAndComplete(8);
+
+    const cinematic = screen.getByTestId('gambit-reveal-cinematic');
+
+    expect(cinematic).toHaveAttribute('data-nature', 'good');
+    expect(within(cinematic).getByAltText('Clarividencia')).toBeInTheDocument();
+    expect(within(cinematic).getByText('Clarividencia')).toBeInTheDocument();
+    expect(
+      within(cinematic).getByText('Revela uma pista sobre uma carta fechada.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('NENHUM')).toBeInTheDocument();
+    expect(screen.getByText('0/1')).toBeInTheDocument();
+    expect(screen.queryByText('Carta Boa')).not.toBeInTheDocument();
+  });
+
+  it('uses red styling for bad coringa messages', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('effectsOnBoard'),
+      })
+    );
+
+    revealAndComplete(5);
+
+    const cinematic = screen.getByTestId('gambit-reveal-cinematic');
+
+    expect(cinematic).toHaveAttribute('data-nature', 'bad');
+    expect(within(cinematic).getByText('Melancidio')).toBeInTheDocument();
+    expect(
+      within(cinematic).getByTestId('gambit-reveal-points')
+    ).toHaveTextContent('-20');
+    expect(screen.queryByText('Carta Ruim')).not.toBeInTheDocument();
+  });
+
+  it('waits for the coringa message before opening the pending event', () => {
+    jest.useFakeTimers();
+
+    try {
+      render(
+        createElement(Gambit, {
+          initialSession: makeMockGambitSession('effectsOnBoard'),
+        })
+      );
+
+      [0, 1, 2, 3].forEach(revealAndComplete);
+      revealAndComplete(4);
+
+      expect(screen.getByTestId('gambit-reveal-cinematic')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('dialog', { name: 'Evento Especial' })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'cards:25:revealed:5:previewed:0:locked:true:preview-mode:false'
+        )
+      ).toBeInTheDocument();
 
       act(() => {
         jest.advanceTimersByTime(1100);
@@ -346,26 +474,19 @@ describe('Gambit visual flow', () => {
       expect(
         screen.queryByTestId('gambit-reveal-cinematic')
       ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('dialog', { name: 'Evento Especial' })
+      ).not.toBeInTheDocument();
+
+      act(() => {
+        jest.advanceTimersByTime(350);
+      });
+
+      expect(
+        screen.getByRole('dialog', { name: 'Evento Especial' })
+      ).toBeInTheDocument();
     } finally {
       jest.useRealTimers();
     }
-  });
-
-  it('shows a red reveal cinematic for negative cards', () => {
-    render(
-      createElement(Gambit, {
-        initialSession: makeMockGambitSession('effectsOnBoard'),
-      })
-    );
-
-    fireEvent.click(screen.getByText('reveal-1'));
-
-    expect(screen.getByTestId('gambit-reveal-cinematic')).toHaveAttribute(
-      'data-nature',
-      'bad'
-    );
-    expect(
-      within(screen.getByTestId('gambit-reveal-cinematic')).getByText('-15')
-    ).toBeInTheDocument();
   });
 });

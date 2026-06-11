@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RewardChoiceModal, type RewardCardOption } from './cardReward';
 import { GambitBoard } from './GambitGame/GambitBoard';
 import { GambitRevealCinematic } from './GambitGame/GambitRevealCinematic';
@@ -49,6 +49,8 @@ const emptyPendingEventSelection: PendingEventSelection = {
   GoodIndex: null,
 };
 
+const PENDING_EVENT_PRESENTATION_DELAY_MS = 350;
+
 const formatEffectName = (effect: GambitCardEffect) =>
   getGambitEffectPresentation(effect).title.toUpperCase();
 
@@ -86,8 +88,13 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
     useState<GambitInteractionPeekResult | null>(null);
   const [revealedCinematicCard, setRevealedCinematicCard] =
     useState<GambitVisualCard | null>(null);
+  const [
+    isPendingEventPresentationDelayed,
+    setIsPendingEventPresentationDelayed,
+  ] = useState(false);
   const revealAnimationLockedRef = useRef(false);
   const pendingEventResolutionRef = useRef<PendingEventResolution | null>(null);
+  const pendingEventPresentationDelayTimeoutRef = useRef<number | null>(null);
   const snapshot = getGambitSessionGridSnapshot(session);
   const pendingEvent = snapshot?.PendingEvent ?? null;
   const pendingInteraction = snapshot?.PendingInteraction ?? null;
@@ -105,29 +112,53 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
   const pendingEventRewardSessionId = `gambit-pending-event-${String(
     session.GambitSessionId
   )}-${session.ManualFlipsCount}`;
-  const pendingEventRewardSession = useMemo(
-    () =>
-      pendingEvent
-        ? createRewardChoiceSessionFromPendingEvent(pendingEvent, {
-            hasCompletedGoodTableTransition: hasPendingEventTableSettled,
-            selection: pendingEventSelection,
-            sessionId: pendingEventRewardSessionId,
-          })
-        : null,
-    [
-      hasPendingEventTableSettled,
-      pendingEvent,
-      pendingEventRewardSessionId,
-      pendingEventSelection,
-    ]
-  );
+  const shouldShowPendingEventModal =
+    Boolean(pendingEvent) &&
+    !revealedCinematicCard &&
+    !isPendingEventPresentationDelayed;
+  const pendingEventRewardSession = useMemo(() => {
+    if (!shouldShowPendingEventModal || !pendingEvent) {
+      return null;
+    }
+
+    return createRewardChoiceSessionFromPendingEvent(pendingEvent, {
+      hasCompletedGoodTableTransition: hasPendingEventTableSettled,
+      selection: pendingEventSelection,
+      sessionId: pendingEventRewardSessionId,
+    });
+  }, [
+    hasPendingEventTableSettled,
+    pendingEvent,
+    pendingEventRewardSessionId,
+    pendingEventSelection,
+    shouldShowPendingEventModal,
+  ]);
   const isSelectingInteraction = Boolean(pendingInteraction);
   const isBoardLocked =
     Boolean(pendingEvent) ||
     isRevealAnimationLocked ||
+    revealedCinematicCard !== null ||
     visualState.previewedCardId !== null ||
     session.Status !== 'InProgress' ||
     (!isSelectingInteraction && burnsRemaining <= 0);
+
+  useEffect(
+    () => () => {
+      if (pendingEventPresentationDelayTimeoutRef.current) {
+        window.clearTimeout(pendingEventPresentationDelayTimeoutRef.current);
+      }
+    },
+    []
+  );
+
+  const clearPendingEventPresentationDelay = () => {
+    if (!pendingEventPresentationDelayTimeoutRef.current) {
+      return;
+    }
+
+    window.clearTimeout(pendingEventPresentationDelayTimeoutRef.current);
+    pendingEventPresentationDelayTimeoutRef.current = null;
+  };
 
   const lockRevealAnimation = () => {
     revealAnimationLockedRef.current = true;
@@ -140,7 +171,11 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
   };
 
   const handleCardReveal = (cardId: number) => {
-    if (previewedCardId !== null || revealAnimationLockedRef.current) {
+    if (
+      previewedCardId !== null ||
+      revealedCinematicCard !== null ||
+      revealAnimationLockedRef.current
+    ) {
       return;
     }
 
@@ -177,7 +212,16 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
 
     setLastInteractionResult(null);
     setPendingEventSelection(emptyPendingEventSelection);
-    setRevealedCinematicCard(selectedCard);
+    clearPendingEventPresentationDelay();
+
+    if (selectedCard.effect) {
+      setRevealedCinematicCard(selectedCard);
+      setIsPendingEventPresentationDelayed(true);
+    } else {
+      setRevealedCinematicCard(null);
+      setIsPendingEventPresentationDelayed(false);
+    }
+
     lockRevealAnimation();
     setSession((currentSession) =>
       revealMockGambitCard(currentSession, cardId)
@@ -274,6 +318,12 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
 
   const handleRevealCinematicComplete = () => {
     setRevealedCinematicCard(null);
+    clearPendingEventPresentationDelay();
+
+    pendingEventPresentationDelayTimeoutRef.current = window.setTimeout(() => {
+      setIsPendingEventPresentationDelayed(false);
+      pendingEventPresentationDelayTimeoutRef.current = null;
+    }, PENDING_EVENT_PRESENTATION_DELAY_MS);
   };
 
   return (

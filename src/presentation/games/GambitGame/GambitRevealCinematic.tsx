@@ -15,28 +15,24 @@ const natureStyles: Record<
   GambitRevealNature,
   {
     accentClassName: string;
-    label: string;
     panelClassName: string;
     pointsClassName: string;
   }
 > = {
   bad: {
     accentClassName: 'bg-[#f06a3d]',
-    label: 'Carta Ruim',
     panelClassName:
       'border-[#f06a3d] bg-[rgba(64,14,16,0.92)] shadow-[0_0_38px_rgba(240,106,61,0.42)]',
     pointsClassName: 'text-[#ffb19a]',
   },
   good: {
     accentClassName: 'bg-[#55d879]',
-    label: 'Carta Boa',
     panelClassName:
       'border-[#55d879] bg-[rgba(10,47,28,0.92)] shadow-[0_0_38px_rgba(85,216,121,0.38)]',
     pointsClassName: 'text-[#abffc0]',
   },
   neutral: {
     accentClassName: 'bg-[#e9d79f]',
-    label: 'Carta Neutra',
     panelClassName:
       'border-[#e9d79f] bg-[rgba(34,31,21,0.92)] shadow-[0_0_34px_rgba(233,215,159,0.32)]',
     pointsClassName: 'text-[#fff2c4]',
@@ -65,9 +61,10 @@ export const GambitRevealCinematic = ({
   const effectPresentation = card?.effect
     ? getGambitEffectPresentationFromViewModel(card.effect)
     : null;
+  const isVisible = Boolean(card && effectPresentation);
 
   useEffect(() => {
-    if (!card) {
+    if (!card || !effectPresentation) {
       return undefined;
     }
 
@@ -76,11 +73,11 @@ export const GambitRevealCinematic = ({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [card, durationMs, onComplete]);
+  }, [card, durationMs, effectPresentation, onComplete]);
 
   return (
     <AnimatePresence>
-      {card ? (
+      {isVisible && card && effectPresentation ? (
         <motion.div
           animate={{ opacity: 1, scale: 1 }}
           aria-live="polite"
@@ -93,7 +90,7 @@ export const GambitRevealCinematic = ({
         >
           <motion.div
             animate={{ y: 0, rotate: 0 }}
-            className={`relative w-[min(82vw,320px)] border-4 px-5 py-5 text-center pixel-shadow ${styles.panelClassName}`}
+            className={`relative w-[min(84vw,340px)] border-4 px-5 py-6 text-center pixel-shadow ${styles.panelClassName}`}
             initial={{ y: 16, rotate: -1.5 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
@@ -103,30 +100,29 @@ export const GambitRevealCinematic = ({
             <span
               className={`absolute right-3 top-3 h-3 w-3 ${styles.accentClassName}`}
             />
-
-            <p className="font-display text-xs font-bold uppercase tracking-widest text-[#fff6d8]">
-              {styles.label}
-            </p>
-
-            <strong
-              className={`mt-4 block font-mono text-4xl font-bold leading-none ${styles.pointsClassName}`}
+            <span
+              className={`absolute right-5 top-5 border border-white/20 bg-black/30 px-2 py-1 font-mono text-[10px] font-bold ${styles.pointsClassName}`}
+              data-testid="gambit-reveal-points"
             >
               {formatPoints(card.points)}
-            </strong>
+            </span>
 
-            {effectPresentation ? (
-              <div className="mt-4 flex flex-col items-center gap-2">
-                <img
-                  alt={effectPresentation.title}
-                  className="h-24 w-24 object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)]"
-                  src={effectPresentation.spritePath}
-                  style={{ imageRendering: 'pixelated' }}
-                />
-                <span className="font-display text-sm font-bold uppercase leading-4 text-[#fff6d8]">
-                  {effectPresentation.title}
-                </span>
-              </div>
-            ) : null}
+            <div className="flex flex-col items-center gap-3">
+              <img
+                alt={effectPresentation.title}
+                className="h-36 w-36 object-contain drop-shadow-[5px_5px_0_rgba(0,0,0,0.55)]"
+                src={effectPresentation.spritePath}
+                style={{ imageRendering: 'pixelated' }}
+              />
+
+              <strong className="font-display text-lg font-bold uppercase leading-5 text-[#fff6d8]">
+                {effectPresentation.title}
+              </strong>
+
+              <p className="max-w-[15rem] text-xs leading-5 text-[#f0e4bd]">
+                {effectPresentation.description}
+              </p>
+            </div>
           </motion.div>
         </motion.div>
       ) : null}
