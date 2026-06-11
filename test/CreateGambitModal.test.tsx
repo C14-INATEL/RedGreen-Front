@@ -8,8 +8,6 @@ jest.mock('../src/infrastructure/http/client', () => ({
   },
 }));
 
-import { apiClient } from '../src/infrastructure/http/client';
-
 const DefaultProps = {
   OnClose: jest.fn<() => void>(),
   OnTableCreated: jest.fn<(table: unknown) => void>(),
