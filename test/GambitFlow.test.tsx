@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { Gambit } from '../src/presentation/games/Gambit';
 import { makeMockGambitSession } from '../src/presentation/games/GambitGame/gambitGameMock';
 import type { GambitVisualCard } from '../src/presentation/games/GambitGame/gambitTypes';
+import type { RewardChoiceSession } from '../src/presentation/games/cardReward';
 
-type MotionDivProps = {
+type MotionElementProps = {
   children?: ReactNode;
+  [key: string]: unknown;
 };
 
 type MockGambitBoardProps = {
@@ -17,15 +19,56 @@ type MockGambitBoardProps = {
   onCardRevealAnimationComplete?: (cardId: number) => void;
 };
 
+type MockRewardChoiceModalProps = {
+  isSelectionLocked?: boolean;
+  onCardHover: (card: RewardChoiceSession['normalTableCards'][number]) => void;
+  onCardSelect: (optionId: string) => boolean;
+  onSelectedCardCinematicComplete: (sessionId: string) => void;
+  onTableTransitionComplete: (sessionId: string) => void;
+  session: RewardChoiceSession | null;
+};
+
 const mockGambitBoard = jest.fn();
 
 jest.mock('framer-motion', () => {
   const React = jest.requireActual('react') as typeof import('react');
+  const motionComponent =
+    (tagName: keyof HTMLElementTagNameMap) =>
+    ({ children, ...props }: MotionElementProps) => {
+      const {
+        animate,
+        custom,
+        exit,
+        initial,
+        onHoverEnd,
+        onHoverStart,
+        transition,
+        variants,
+        whileHover,
+        whileTap,
+        ...domProps
+      } = props;
+
+      void animate;
+      void custom;
+      void exit;
+      void initial;
+      void onHoverEnd;
+      void onHoverStart;
+      void transition;
+      void variants;
+      void whileHover;
+      void whileTap;
+
+      return React.createElement(tagName, domProps, children);
+    };
 
   return {
+    AnimatePresence: ({ children }: { children?: ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
     motion: {
-      div: ({ children }: MotionDivProps) =>
-        React.createElement('div', null, children),
+      div: motionComponent('div'),
+      img: motionComponent('img'),
     },
   };
 });
@@ -69,6 +112,72 @@ jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
             type: 'button',
           },
           'complete'
+        )
+      );
+    },
+  };
+});
+
+jest.mock('../src/presentation/games/cardReward', () => {
+  const React = jest.requireActual('react') as typeof import('react');
+
+  return {
+    __esModule: true,
+    RewardChoiceModal: ({
+      isSelectionLocked = false,
+      onCardHover,
+      onCardSelect,
+      onSelectedCardCinematicComplete,
+      onTableTransitionComplete,
+      session,
+    }: MockRewardChoiceModalProps) => {
+      if (!session) {
+        return null;
+      }
+
+      const displayedCards =
+        session.tableState.currentTable === 'bad'
+          ? session.badTableCards
+          : session.normalTableCards;
+
+      return React.createElement(
+        'div',
+        {
+          'aria-label': 'Evento Especial',
+          role: 'dialog',
+        },
+        React.createElement('p', null, 'Evento Especial'),
+        ...displayedCards.map((card) =>
+          React.createElement(
+            'button',
+            {
+              'aria-label': `Escolher ${card.title}`,
+              disabled: isSelectionLocked,
+              key: card.optionId,
+              onClick: () => {
+                onCardHover(card);
+
+                if (!onCardSelect(card.optionId)) {
+                  return;
+                }
+
+                if (session.tableState.currentTable === 'normal') {
+                  onTableTransitionComplete(session.id);
+                  return;
+                }
+
+                onSelectedCardCinematicComplete(session.id);
+              },
+              type: 'button',
+            },
+            React.createElement('img', {
+              alt: card.title,
+              src: card.spritePath,
+            }),
+            React.createElement('span', null, card.title),
+            React.createElement('span', null, card.subtitle),
+            React.createElement('span', null, card.description)
+          )
         )
       );
     },
@@ -120,7 +229,7 @@ describe('Gambit visual flow', () => {
     ).toBeInTheDocument();
   });
 
-  it('blocks the board while PendingEvent is open and resolves it with good and bad choices', () => {
+  it('shows visual PendingEvent cards and resolves it with good and bad choices', () => {
     render(
       createElement(Gambit, {
         initialSession: makeMockGambitSession('effectsOnBoard'),
@@ -129,7 +238,21 @@ describe('Gambit visual flow', () => {
 
     [0, 1, 2, 3, 4].forEach(revealAndComplete);
 
-    expect(screen.getByText('Evento pendente')).toBeInTheDocument();
+    const eventDialog = screen.getByRole('dialog', {
+      name: 'Evento Especial',
+    });
+
+    expect(eventDialog).toBeInTheDocument();
+    expect(screen.queryByText('Boa 1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ruim 1')).not.toBeInTheDocument();
+    expect(
+      within(eventDialog).getByAltText('Dobro de Potassio')
+    ).toBeInTheDocument();
+    expect(
+      within(eventDialog).getByText(
+        'Dobra os pontos da proxima carta revelada.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('5/25')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -137,10 +260,16 @@ describe('Gambit visual flow', () => {
       )
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Boa 1'));
-    fireEvent.click(screen.getByText('Ruim 3'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Escolher Dobro de Potassio' })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Escolher Coringa do Inatel' })
+    );
 
-    expect(screen.queryByText('Evento pendente')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('dialog', { name: 'Evento Especial' })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText(
         'cards:25:revealed:5:previewed:0:locked:false:preview-mode:false'
@@ -155,10 +284,14 @@ describe('Gambit visual flow', () => {
       })
     );
 
+    expect(screen.getByText('NENHUM')).toBeInTheDocument();
+
     revealAndComplete(4);
 
-    expect(screen.getByText('DOBRO DE POTASSIO')).toBeInTheDocument();
-    expect(screen.getByAltText('DOBRO DE POTASSIO')).toBeInTheDocument();
+    expect(screen.getAllByText('Dobro de Potassio').length).toBeGreaterThan(0);
+    expect(screen.getAllByAltText('Dobro de Potassio').length).toBeGreaterThan(
+      0
+    );
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
@@ -175,7 +308,7 @@ describe('Gambit visual flow', () => {
     revealAndComplete(0);
 
     expect(screen.getByText('40')).toBeInTheDocument();
-    expect(screen.getByText('Nenhum')).toBeInTheDocument();
+    expect(screen.getByText('NENHUM')).toBeInTheDocument();
     expect(mockGambitBoard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         cards: expect.arrayContaining([
@@ -187,5 +320,52 @@ describe('Gambit visual flow', () => {
         ]),
       })
     );
+  });
+
+  it('shows and auto-closes a green reveal cinematic for positive cards', () => {
+    jest.useFakeTimers();
+
+    try {
+      render(
+        createElement(Gambit, {
+          initialSession: makeMockGambitSession('effectsOnBoard'),
+        })
+      );
+
+      fireEvent.click(screen.getByText('reveal-0'));
+
+      const cinematic = screen.getByTestId('gambit-reveal-cinematic');
+
+      expect(cinematic).toHaveAttribute('data-nature', 'good');
+      expect(screen.getByText('+10')).toBeInTheDocument();
+
+      act(() => {
+        jest.advanceTimersByTime(1100);
+      });
+
+      expect(
+        screen.queryByTestId('gambit-reveal-cinematic')
+      ).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('shows a red reveal cinematic for negative cards', () => {
+    render(
+      createElement(Gambit, {
+        initialSession: makeMockGambitSession('effectsOnBoard'),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-1'));
+
+    expect(screen.getByTestId('gambit-reveal-cinematic')).toHaveAttribute(
+      'data-nature',
+      'bad'
+    );
+    expect(
+      within(screen.getByTestId('gambit-reveal-cinematic')).getByText('-15')
+    ).toBeInTheDocument();
   });
 });

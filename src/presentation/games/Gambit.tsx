@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { RewardChoiceModal, type RewardCardOption } from './cardReward';
 import { GambitBoard } from './GambitGame/GambitBoard';
-import { getGambitEffectCardSpritePath } from './GambitGame/gambitEffectCardAssets';
+import { GambitRevealCinematic } from './GambitGame/GambitRevealCinematic';
+import { getGambitEffectPresentation } from './GambitGame/gambitEffectPresentation';
 import {
   canRevealMockGambitCard,
   getGambitSessionGridSnapshot,
@@ -10,14 +12,17 @@ import {
   resolveMockPendingEvent,
   selectMockPendingInteractionPosition,
 } from './GambitGame/gambitMockBuilders';
+import { mapGambitSessionToMinefieldCards } from './GambitGame/gambitMapper';
 import {
-  mapBackendGambitCardToViewModel,
-  mapGambitSessionToMinefieldCards,
-} from './GambitGame/gambitMapper';
+  createRewardChoiceSessionFromPendingEvent,
+  parseGambitPendingEventOptionId,
+} from './GambitGame/gambitPendingEventRewardAdapter';
+import { PreparedGambitEffectPanel } from './GambitGame/PreparedGambitEffectPanel';
 import type {
   GambitCardEffect,
   GambitInteractionPeekResult,
   GambitSession,
+  GambitVisualCard,
 } from './GambitGame/gambitTypes';
 
 export type GambitProps = {
@@ -35,22 +40,17 @@ type PendingEventSelection = {
   GoodIndex: number | null;
 };
 
+type PendingEventResolution = PendingEventSelection & {
+  sessionId: string;
+};
+
 const emptyPendingEventSelection: PendingEventSelection = {
   BadIndex: null,
   GoodIndex: null,
 };
 
 const formatEffectName = (effect: GambitCardEffect) =>
-  mapBackendGambitCardToViewModel(effect)?.replaceAll('-', ' ').toUpperCase() ??
-  effect;
-
-const getEffectSpritePath = (effect: GambitCardEffect) => {
-  const effectViewModel = mapBackendGambitCardToViewModel(effect);
-
-  return effectViewModel
-    ? getGambitEffectCardSpritePath(effectViewModel)
-    : null;
-};
+  getGambitEffectPresentation(effect).title.toUpperCase();
 
 const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   if (!peekResult) {
@@ -78,9 +78,16 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
   const [isRevealAnimationLocked, setIsRevealAnimationLocked] = useState(false);
   const [pendingEventSelection, setPendingEventSelection] =
     useState<PendingEventSelection>(emptyPendingEventSelection);
+  const [hasPendingEventTableSettled, setHasPendingEventTableSettled] =
+    useState(false);
+  const [isPendingEventSelectionLocked, setIsPendingEventSelectionLocked] =
+    useState(false);
   const [lastInteractionResult, setLastInteractionResult] =
     useState<GambitInteractionPeekResult | null>(null);
+  const [revealedCinematicCard, setRevealedCinematicCard] =
+    useState<GambitVisualCard | null>(null);
   const revealAnimationLockedRef = useRef(false);
+  const pendingEventResolutionRef = useRef<PendingEventResolution | null>(null);
   const snapshot = getGambitSessionGridSnapshot(session);
   const pendingEvent = snapshot?.PendingEvent ?? null;
   const pendingInteraction = snapshot?.PendingInteraction ?? null;
@@ -95,6 +102,25 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
   };
   const { cards } = visualState;
   const totalScore = session.AccumulatedPoints;
+  const pendingEventRewardSessionId = `gambit-pending-event-${String(
+    session.GambitSessionId
+  )}-${session.ManualFlipsCount}`;
+  const pendingEventRewardSession = useMemo(
+    () =>
+      pendingEvent
+        ? createRewardChoiceSessionFromPendingEvent(pendingEvent, {
+            hasCompletedGoodTableTransition: hasPendingEventTableSettled,
+            selection: pendingEventSelection,
+            sessionId: pendingEventRewardSessionId,
+          })
+        : null,
+    [
+      hasPendingEventTableSettled,
+      pendingEvent,
+      pendingEventRewardSessionId,
+      pendingEventSelection,
+    ]
+  );
   const isSelectingInteraction = Boolean(pendingInteraction);
   const isBoardLocked =
     Boolean(pendingEvent) ||
@@ -151,6 +177,7 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
 
     setLastInteractionResult(null);
     setPendingEventSelection(emptyPendingEventSelection);
+    setRevealedCinematicCard(selectedCard);
     lockRevealAnimation();
     setSession((currentSession) =>
       revealMockGambitCard(currentSession, cardId)
@@ -165,178 +192,199 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
     setPreviewedCardId(null);
   };
 
-  const handlePendingEventSelection = (
-    selectionKey: keyof PendingEventSelection,
-    index: number
-  ) => {
+  const handlePendingEventRewardCardHover = (card: RewardCardOption) => {
+    void card;
+  };
+
+  const handlePendingEventRewardCardSelect = (optionId: string) => {
+    if (
+      !pendingEvent ||
+      !pendingEventRewardSession ||
+      isPendingEventSelectionLocked
+    ) {
+      return false;
+    }
+
+    const parsedOption = parseGambitPendingEventOptionId(optionId);
+
+    if (!parsedOption) {
+      return false;
+    }
+
+    if (
+      parsedOption.side === 'bad' &&
+      pendingEventSelection.GoodIndex === null
+    ) {
+      return false;
+    }
+
+    if (pendingEventSelection[parsedOption.selectionKey] !== null) {
+      return false;
+    }
+
     const nextSelection = {
       ...pendingEventSelection,
-      [selectionKey]: index,
+      [parsedOption.selectionKey]: parsedOption.index,
     };
 
+    setIsPendingEventSelectionLocked(true);
+    setPendingEventSelection(nextSelection);
+
     if (nextSelection.GoodIndex !== null && nextSelection.BadIndex !== null) {
-      setSession((currentSession) =>
-        resolveMockPendingEvent(currentSession, {
-          BadIndex: nextSelection.BadIndex ?? 0,
-          GoodIndex: nextSelection.GoodIndex ?? 0,
-        })
-      );
-      setPendingEventSelection(emptyPendingEventSelection);
+      pendingEventResolutionRef.current = {
+        BadIndex: nextSelection.BadIndex,
+        GoodIndex: nextSelection.GoodIndex,
+        sessionId: pendingEventRewardSession.id,
+      };
+    }
+
+    return true;
+  };
+
+  const handlePendingEventTableTransitionComplete = (sessionId: string) => {
+    if (sessionId !== pendingEventRewardSession?.id) {
       return;
     }
 
-    setPendingEventSelection(nextSelection);
+    setHasPendingEventTableSettled(true);
+    setIsPendingEventSelectionLocked(false);
+  };
+
+  const handlePendingEventSelectedCardCinematicComplete = (
+    sessionId: string
+  ) => {
+    const pendingResolution = pendingEventResolutionRef.current;
+
+    if (!pendingResolution || pendingResolution.sessionId !== sessionId) {
+      setIsPendingEventSelectionLocked(false);
+      return;
+    }
+
+    setSession((currentSession) =>
+      resolveMockPendingEvent(currentSession, {
+        BadIndex: pendingResolution.BadIndex ?? 0,
+        GoodIndex: pendingResolution.GoodIndex ?? 0,
+      })
+    );
+    pendingEventResolutionRef.current = null;
+    setHasPendingEventTableSettled(false);
+    setIsPendingEventSelectionLocked(false);
+    setPendingEventSelection(emptyPendingEventSelection);
+  };
+
+  const handleRevealCinematicComplete = () => {
+    setRevealedCinematicCard(null);
   };
 
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="relative w-[min(86vw,560px)]"
+      className="relative w-[min(94vw,780px)]"
       initial={{ opacity: 0, scale: 0.94, y: 28 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Pontos
-          </span>
+      <div className="grid gap-4 md:grid-cols-[180px_minmax(0,560px)] md:items-start">
+        <PreparedGambitEffectPanel effect={visualState.preparedEffect} />
 
-          <span className="font-mono text-lg font-bold text-foreground">
-            {totalScore.toLocaleString('pt-BR')}
-          </span>
-        </div>
+        <div className="min-w-0">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">
+              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                Pontos
+              </span>
 
-        <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Queimas
-          </span>
-
-          <span className="font-mono text-sm font-bold text-foreground">
-            {session.ManualFlipsCount}/{session.BurnSlotsAvailable}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Efeito
-          </span>
-
-          {visualState.preparedEffect ? (
-            <div className="flex max-w-[10rem] items-center justify-end gap-2 text-right">
-              <img
-                alt={formatEffectName(visualState.preparedEffect)}
-                className="h-8 w-8 shrink-0 object-contain"
-                src={getEffectSpritePath(visualState.preparedEffect) ?? ''}
-                style={{ imageRendering: 'pixelated' }}
-              />
-              <span className="truncate font-mono text-xs font-bold uppercase text-foreground">
-                {formatEffectName(visualState.preparedEffect)}
+              <span className="font-mono text-lg font-bold text-foreground">
+                {totalScore.toLocaleString('pt-BR')}
               </span>
             </div>
-          ) : (
-            <span className="font-mono text-xs font-bold uppercase text-foreground">
-              Nenhum
-            </span>
-          )}
-        </div>
-      </div>
 
-      <div className="bg-card p-4 pixel-border-gold">
-        <GambitBoard
-          cards={cards}
-          className="aspect-square w-full overflow-hidden"
-          clarividenciaPreviewMode={
-            isSelectingInteraction || visualState.previewedCardId !== null
-          }
-          interactionLocked={isBoardLocked}
-          onCardReveal={handleCardReveal}
-          onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
-        />
-      </div>
+            <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">
+              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                Queimas
+              </span>
 
-      {pendingEvent ? (
-        <div className="mt-3 bg-card p-4 pixel-border">
-          <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Evento pendente
-          </p>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="grid gap-2">
-              {pendingEvent.GoodOptions.map((effect, index) => (
-                <button
-                  className="bg-cassino-gold px-3 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-background pixel-border"
-                  key={`good-${effect}-${index}`}
-                  onClick={() =>
-                    handlePendingEventSelection('GoodIndex', index)
-                  }
-                  type="button"
-                >
-                  Boa {index + 1}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid gap-2">
-              {pendingEvent.BadOptions.map((effect, index) => (
-                <button
-                  className="bg-card px-3 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-foreground pixel-border"
-                  key={`bad-${effect}-${index}`}
-                  onClick={() => handlePendingEventSelection('BadIndex', index)}
-                  type="button"
-                >
-                  Ruim {index + 1}
-                </button>
-              ))}
+              <span className="font-mono text-sm font-bold text-foreground">
+                {session.ManualFlipsCount}/{session.BurnSlotsAvailable}
+              </span>
             </div>
           </div>
-        </div>
-      ) : null}
 
-      {pendingInteraction ? (
-        <div className="mt-3 bg-card px-4 py-3 pixel-border">
-          <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            {formatEffectName(pendingInteraction.Effect)}
-          </p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/55">
-            {pendingInteraction.SelectedPositions.length}/
-            {pendingInteraction.RequiredSelections}
-          </p>
-        </div>
-      ) : null}
+          <div className="bg-card p-4 pixel-border-gold">
+            <GambitBoard
+              cards={cards}
+              className="aspect-square w-full overflow-hidden"
+              clarividenciaPreviewMode={
+                isSelectingInteraction || visualState.previewedCardId !== null
+              }
+              interactionLocked={isBoardLocked}
+              onCardReveal={handleCardReveal}
+              onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
+            />
+          </div>
 
-      {lastInteractionResult ? (
-        <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Espiada
-          </span>
-          <span className="font-mono text-xs font-bold uppercase text-foreground">
-            {formatPeekResult(lastInteractionResult)}
-          </span>
-        </div>
-      ) : null}
+          {pendingInteraction ? (
+            <div className="mt-3 bg-card px-4 py-3 pixel-border">
+              <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                {formatEffectName(pendingInteraction.Effect)}
+              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/55">
+                {pendingInteraction.SelectedPositions.length}/
+                {pendingInteraction.RequiredSelections}
+              </p>
+            </div>
+          ) : null}
 
-      {visualState.previewedCardId !== null ? (
-        <div className="mt-3">
-          <button
-            className="w-full bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
-            onClick={handlePreviewClose}
-            type="button"
-          >
-            Fechar espiada
-          </button>
-        </div>
-      ) : null}
+          {lastInteractionResult ? (
+            <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
+              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                Espiada
+              </span>
+              <span className="font-mono text-xs font-bold uppercase text-foreground">
+                {formatPeekResult(lastInteractionResult)}
+              </span>
+            </div>
+          ) : null}
 
-      {session.Status === 'Finished' ? (
-        <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Resultado
-          </span>
-          <span className="font-mono text-sm font-bold text-foreground">
-            {(session.Result ?? 0).toLocaleString('pt-BR')}
-          </span>
+          {visualState.previewedCardId !== null ? (
+            <div className="mt-3">
+              <button
+                className="w-full bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
+                onClick={handlePreviewClose}
+                type="button"
+              >
+                Fechar espiada
+              </button>
+            </div>
+          ) : null}
+
+          {session.Status === 'Finished' ? (
+            <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
+              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                Resultado
+              </span>
+              <span className="font-mono text-sm font-bold text-foreground">
+                {(session.Result ?? 0).toLocaleString('pt-BR')}
+              </span>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
+
+      <RewardChoiceModal
+        isSelectionLocked={isPendingEventSelectionLocked}
+        onCardHover={handlePendingEventRewardCardHover}
+        onCardSelect={handlePendingEventRewardCardSelect}
+        onSelectedCardCinematicComplete={
+          handlePendingEventSelectedCardCinematicComplete
+        }
+        onTableTransitionComplete={handlePendingEventTableTransitionComplete}
+        session={pendingEventRewardSession}
+      />
+
+      <GambitRevealCinematic
+        card={revealedCinematicCard}
+        onComplete={handleRevealCinematicComplete}
+      />
     </motion.div>
   );
 };

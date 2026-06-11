@@ -11,6 +11,11 @@ import {
   resolveMockPendingInteraction,
   sumRevealedGambitCardPoints,
 } from '../src/presentation/games/GambitGame/gambitGameMock';
+import { classifyGambitRevealNature } from '../src/presentation/games/GambitGame/gambitRevealNature';
+import {
+  createRewardChoiceSessionFromPendingEvent,
+  parseGambitPendingEventOptionId,
+} from '../src/presentation/games/GambitGame/gambitPendingEventRewardAdapter';
 import {
   mapBackendGambitCardToViewModel,
   mapBackendGambitGridToViewModel,
@@ -85,6 +90,50 @@ describe('Gambit visual mock mechanics', () => {
       GoodOptions: ['DOBRO_DE_POTASSIO', 'QUANTO_MAIS_MELHOR', 'MENTE_LISA'],
     });
     expect(pendingEvent).not.toHaveProperty('CardsOffered');
+  });
+
+  it('adapts PendingEvent options into visual reward cards', () => {
+    const pendingEvent = getGambitSessionGridSnapshot(
+      makeMockGambitSession('pendingEventChoice')
+    )?.PendingEvent;
+
+    expect(pendingEvent).toBeTruthy();
+
+    const rewardSession = createRewardChoiceSessionFromPendingEvent(
+      pendingEvent!,
+      {
+        sessionId: 'pending-event-test',
+      }
+    );
+
+    expect(rewardSession.normalTableCards[0]).toMatchObject({
+      description: 'Dobra os pontos da proxima carta revelada.',
+      optionId: 'good-0-DOBRO_DE_POTASSIO',
+      spritePath: '/Gambit/DobroDePotassio.png',
+      title: 'Dobro de Potassio',
+    });
+    expect(rewardSession.badTableCards[2]).toMatchObject({
+      optionId: 'bad-2-CORINGA_DO_INATEL',
+      title: 'Coringa do Inatel',
+    });
+  });
+
+  it('parses PendingEvent visual option ids back to backend selection indexes', () => {
+    expect(parseGambitPendingEventOptionId('good-1-ANULACAO_TOTAL')).toEqual({
+      effect: 'ANULACAO_TOTAL',
+      index: 1,
+      selectionKey: 'GoodIndex',
+      side: 'good',
+      tableType: 'normal',
+    });
+    expect(parseGambitPendingEventOptionId('bad-2-MELANCIDIO')).toEqual({
+      effect: 'MELANCIDIO',
+      index: 2,
+      selectionKey: 'BadIndex',
+      side: 'bad',
+      tableType: 'bad',
+    });
+    expect(parseGambitPendingEventOptionId('invalid')).toBeNull();
   });
 
   it('keeps every main mock board card with numeric points', () => {
@@ -408,5 +457,20 @@ describe('Gambit visual mock mechanics', () => {
     expect(applyMockGambitEffect(30, 'INVERSAO_GRAVITACIONAL')).toBe(-30);
     expect(applyMockGambitEffect(30, 'COLORIDINHO')).toBe(0);
     expect(applyMockGambitEffect(30, 'HEADGEAR')).toBe(-30);
+  });
+
+  it('classifies reveal cinematics as good, bad or neutral', () => {
+    expect(classifyGambitRevealNature({ effect: null, points: 15 })).toBe(
+      'good'
+    );
+    expect(
+      classifyGambitRevealNature({ effect: 'mente-lisa', points: 15 })
+    ).toBe('bad');
+    expect(
+      classifyGambitRevealNature({
+        effect: 'inversao-gravitacional',
+        points: 0,
+      })
+    ).toBe('neutral');
   });
 });

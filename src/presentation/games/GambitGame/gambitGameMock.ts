@@ -46,8 +46,8 @@ export const getGambitGridCoordinates = (position: number) => ({
 });
 
 export const sumRevealedGambitCardPoints = (session: GambitSession) =>
-  getGambitSessionGridSnapshot(session)?.Revealed.reduce(
-    (total, card) =>
-      (card.Points ?? null) !== null ? total + card.Points : total,
-    0
-  ) ?? 0;
+  getGambitSessionGridSnapshot(session)?.Revealed.reduce((total, card) => {
+    const points = card.Points;
+
+    return points == null ? total : total + points;
+  }, 0) ?? 0;

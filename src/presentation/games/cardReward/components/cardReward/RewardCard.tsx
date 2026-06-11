@@ -22,8 +22,7 @@ type RewardCardProps = {
   onSelect: (optionId: string, buttonElement: HTMLButtonElement | null) => void;
 };
 
-const DEFAULT_IMAGE_FILTER =
-  'drop-shadow(3px 3px 0 rgba(20,12,4,0.42))';
+const DEFAULT_IMAGE_FILTER = 'drop-shadow(3px 3px 0 rgba(20,12,4,0.42))';
 const SELECTED_IMAGE_FILTER =
   'brightness(1.04) drop-shadow(4px 4px 0 rgba(20,12,4,0.5))';
 const HIDDEN_BUTTON_STYLE = {
@@ -109,7 +108,17 @@ const RewardCardComponent = ({
           />
         </motion.div>
 
-        {/* Label removed: no visible "Escolhida" text when a card is selected */}
+        <div className="mt-2 min-h-[4.75rem] border border-[#e9d79f33] bg-[rgba(4,8,7,0.72)] px-3 py-2 text-center">
+          <span className="block font-display text-sm font-bold uppercase leading-4 text-[#fff6d8]">
+            {card.title}
+          </span>
+          <span className="mt-1 block font-mono text-[8px] uppercase leading-3 text-[#e9d79f]">
+            {card.subtitle}
+          </span>
+          <span className="mt-2 block text-[10px] leading-4 text-[#f0e4bd]">
+            {card.description}
+          </span>
+        </div>
       </motion.div>
     </motion.button>
   );

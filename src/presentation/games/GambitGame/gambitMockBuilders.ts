@@ -437,7 +437,7 @@ export const makeMockGambitSession = (
     GambitTableId: table.GambitTableId,
     Grid: grid,
     ManualFlipsCount: scenario.manualFlipsCount,
-    NextEffect: scenario.nextEffect,
+    NextEffect: scenario.nextEffect ?? null,
     Result: scenario.result ?? null,
     SecondEventFlip: scenario.secondEventFlip,
     Status: scenario.status,

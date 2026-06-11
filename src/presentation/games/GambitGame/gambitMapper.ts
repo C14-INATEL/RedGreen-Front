@@ -245,9 +245,15 @@ export const mapBackendGambitPendingInteractionToViewModel = (
     return null;
   }
 
+  const effect = mapBackendGambitCardToViewModel(pendingInteraction.Effect);
+
+  if (!effect) {
+    throw new Error('Invalid Gambit PendingInteraction.Effect.');
+  }
+
   return {
     action: pendingInteraction.Action,
-    effect: mapBackendGambitCardToViewModel(pendingInteraction.Effect),
+    effect,
     requiredSelections: requireFiniteNumber(
       pendingInteraction.RequiredSelections,
       'PendingInteraction.RequiredSelections'

@@ -1,10 +1,4 @@
-import {
-  AnimatedSprite,
-  Container,
-  Graphics,
-  Text,
-  TextStyle,
-} from 'pixi.js';
+import { AnimatedSprite, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import {
   GAMBIT_CLOSED_CARD_SPRITES,
   GAMBIT_REVEAL_ANIMATION_FRAMES,
