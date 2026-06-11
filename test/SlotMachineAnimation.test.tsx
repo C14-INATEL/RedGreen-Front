@@ -38,21 +38,21 @@ const countInactiveCounters = (container: HTMLElement) =>
   countCounterSprites(container, INACTIVE_COUNTER_SPRITE);
 
 const SlotMachineAnimationHarness = () => {
-  const [redButtonPressCount, setRedButtonPressCount] = useState(0);
+  const [rerollsRemaining, setRerollsRemaining] = useState(MAX_REROLLS);
 
   const handleRerollReel = () => {
-    setRedButtonPressCount((currentCount) =>
-      Math.min(currentCount + 1, MAX_REROLLS)
+    setRerollsRemaining((currentCount) =>
+      Math.max(currentCount - 1, 0)
     );
   };
 
   const handleLeverPull = () => {
-    setRedButtonPressCount(0);
+    setRerollsRemaining(MAX_REROLLS);
   };
 
   const counterStates = Array.from(
     { length: MAX_REROLLS },
-    (_, index) => index >= MAX_REROLLS - redButtonPressCount
+    (_, index) => index < rerollsRemaining
   );
 
   return createElement(
