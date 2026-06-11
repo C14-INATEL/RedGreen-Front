@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy } from 'lucide-react';
+import { getToken } from '@/presentation/ui/Cookies';
 
 import { SlotMachine } from '../games/SlotMachine';
 import { useUserProfile } from '@application/hooks/useUserProfile';
@@ -9,17 +10,12 @@ import { useUserChips } from '@application/hooks/useUserChips';
 
 import RankingPanel from '@ui/RankingPanel';
 
-type StoredUserSnapshot = {
-  ChipBalance?: number;
-  Chips?: number;
-  Nickname?: string;
-  NicknameAlt?: string;
-};
+
 
 export const SlotMachineRoom = () => {
   const Navigate = useNavigate();
 
-  const Token = localStorage.getItem('token');
+  const Token = getToken();
 
   const IsLoggedIn = !!Token;
 
@@ -50,31 +46,14 @@ export const SlotMachineRoom = () => {
     }
   }, [IsLoggedIn]);
 
-  const StoredUserValue = localStorage.getItem('user');
-
-  let StoredUser: StoredUserSnapshot | null = null;
-
-  if (StoredUserValue) {
-    try {
-      StoredUser = JSON.parse(StoredUserValue) as StoredUserSnapshot;
-    } catch {
-      StoredUser = null;
-    }
-  }
-
   const { nickname: Nickname, isLoading: ProfileLoading } =
     useUserProfile(IsLoggedIn);
 
   const { chips: ChipsFromHook } = useUserChips(IsLoggedIn);
 
-  const LocalNickname = StoredUser?.Nickname || StoredUser?.NicknameAlt;
+  const PlayerName = Nickname ?? (ProfileLoading ? 'Carregando...' : 'Jogador');
 
-  const LocalChips = StoredUser?.ChipBalance ?? StoredUser?.Chips;
-
-  const PlayerName =
-    Nickname ?? LocalNickname ?? (ProfileLoading ? 'Carregando...' : 'Jogador');
-
-  const Chips = ChipsFromHook ?? LocalChips ?? (IsLoggedIn ? 0 : 10000);
+  const Chips = ChipsFromHook ?? (IsLoggedIn ? 0 : 10000);
 
   const HandleOpenRanking = () => {
     SetCanShowRankingButton(false);
