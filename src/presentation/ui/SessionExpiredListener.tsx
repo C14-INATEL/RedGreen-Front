@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { SessionExpiredModal } from './SessionExpiredModal';
+import { removeToken } from '@/presentation/ui/Cookies';
 import { paths } from '@/paths';
 
 export const SessionExpiredListener = () => {
@@ -16,8 +17,7 @@ export const SessionExpiredListener = () => {
   }, []);
 
   const HandleClose = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    removeToken();
     SetShowModal(false);
     Navigate(paths.login);
   };

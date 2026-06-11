@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CassinoLogo from '@ui/CassinoLogo';
 import { IsBirthDateFormatValid, IsValidBirthDate } from '../../validators';
 import { apiClient } from '@infrastructure/http/client';
+import { setToken } from '@/presentation/ui/Cookies';
 
 type Step = 'identify' | 'login' | 'signup';
 
@@ -131,14 +132,9 @@ const Login = () => {
       }
 
       const Token = Data?.Token;
-      const User = Data?.User;
 
       if (Token) {
-        localStorage.setItem('token', Token);
-      }
-
-      if (User) {
-        localStorage.setItem('user', JSON.stringify(User));
+        setToken(Token);
       }
 
       SetToastMessage('');
@@ -374,10 +370,6 @@ const Login = () => {
                   className="text-[hsl(120,50%,35%)]/70 hover:text-[hsl(120,50%,35%)] transition-colors flex items-center gap-1"
                 >
                   ← Usar outra conta
-                </button>
-
-                <button className="text-white/50 hover:text-white transition-colors">
-                  Esqueci minha senha
                 </button>
               </div>
             </motion.div>

@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchActiveSlotSession } from '../games/SlotMachineGame/SlotMachineApi';
 import { paths } from '@/paths';
+import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@/application/hooks/useUserChips';
 import { apiClient } from '@/infrastructure/http/client';
+import { getToken } from '@/presentation/ui/Cookies';
 import { CreateTableModal } from '../ui/CreateTableModal';
 import { EditTableModal } from '../ui/EditTableModal';
 import { ResultModal } from '../ui/ResultModal';
@@ -20,13 +22,13 @@ export const SlotMachineTablesRoom = () => {
 
   const Navigate = useNavigate();
 
-  const Token = localStorage.getItem('token');
+  const Token = getToken();
 
   const IsLoggedIn = !!Token;
 
-  const User = JSON.parse(localStorage.getItem('user') ?? '{}');
+  const { isAdmin } = useUserProfile(IsLoggedIn);
 
-  const IsAdmin = User.UserType === 'Admin';
+  const IsAdmin = !!isAdmin;
 
   const { chips: UserChips, isLoading } = useUserChips(IsLoggedIn);
 

@@ -4,13 +4,14 @@ import TableDecorations from '@ui/TableDecorations';
 import GameCard from '@ui/GameCard';
 import SlotMachineIcon from '@ui/SlotMachineIcon';
 import CardGameIcon from '@ui/CardGameIcon';
+import { getToken } from '@/presentation/ui/Cookies';
 import { paths } from '../../paths';
 
 const Table = () => {
   const Navigate = useNavigate();
 
   const HandleStartGame = () => {
-    const Token = localStorage.getItem('token');
+    const Token = getToken();
     const IsLoggedIn = !!Token;
 
     if (IsLoggedIn) {
@@ -26,7 +27,7 @@ const Table = () => {
   };
 
   const HandleCardGameClick = () => {
-    const Token = localStorage.getItem('token');
+    const Token = getToken();
     const IsLoggedIn = !!Token;
 
     if (IsLoggedIn) {

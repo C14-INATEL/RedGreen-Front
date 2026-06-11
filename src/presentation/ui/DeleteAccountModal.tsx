@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { apiClient } from '@infrastructure/http/client';
+import { removeToken } from '@/presentation/ui/Cookies';
 
 const EyeOpenIcon = (
   <svg
@@ -87,9 +88,7 @@ const DeleteAccountModal = ({
     try {
       await apiClient.delete('/user');
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('dailyLoginSnapshot');
+      removeToken();
 
       OnDeleted();
     } catch (Err) {
