@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../../config';
+import { getToken, removeToken } from '../../presentation/ui/Cookies';
 
 export const apiClient = axios.create({
   baseURL: config.apiBaseUrl,
@@ -8,7 +9,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,11 +22,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const IsUnauthorized = error.response?.status === 401;
-    const HasToken = !!localStorage.getItem('token');
+    const HasToken = !!getToken();
 
     if (IsUnauthorized && HasToken) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      removeToken();
       window.dispatchEvent(new CustomEvent('session-expired'));
     }
 
