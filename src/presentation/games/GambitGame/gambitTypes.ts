@@ -49,10 +49,10 @@ export type GambitGridCard = {
 };
 
 export type GambitPendingEvent = {
-  BadOptions: [GambitCard, GambitCard, GambitCard];
-  CardsOffered?: [GambitCard, GambitCard, GambitCard];
+  BadOptions: GambitCard[];
+  CardsOffered?: GambitCard[];
   EventType?: GambitCardNature;
-  GoodOptions: [GambitCard, GambitCard, GambitCard];
+  GoodOptions: GambitCard[];
 };
 
 export type GambitPendingInteractionAction =
@@ -69,7 +69,7 @@ export type GambitPendingInteraction = {
 export type GambitInteractionPeekResult =
   | {
       Effect: GambitCardEffect | null;
-      Locked: boolean;
+      Locked?: boolean;
       Points: number | null;
       Position: number;
     }

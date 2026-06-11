@@ -264,9 +264,8 @@ export const mapBackendGambitPendingInteractionToViewModel = (
   };
 };
 
-const mapBackendGambitGridPositionToViewModel = (
-  position: BackendGambitGridPosition,
-  revealed: boolean
+const mapBackendGambitRevealedPositionToViewModel = (
+  position: BackendGambitGridPosition
 ): GambitGridCardViewModel => {
   const visualPosition = requireGridPosition(position.Position);
 
@@ -276,7 +275,22 @@ const mapBackendGambitGridPositionToViewModel = (
     locked: Boolean(position.Locked),
     points: mapOptionalFiniteNumber(position.Points, 'Points'),
     position: visualPosition,
-    revealed,
+    revealed: true,
+  };
+};
+
+const mapBackendGambitUnrevealedPositionToViewModel = (
+  position: BackendGambitGridPosition
+): GambitGridCardViewModel => {
+  const visualPosition = requireGridPosition(position.Position);
+
+  return {
+    effect: null,
+    id: visualPosition,
+    locked: Boolean(position.Locked),
+    points: null,
+    position: visualPosition,
+    revealed: false,
   };
 };
 
@@ -307,10 +321,8 @@ export const mapBackendGambitGridToViewModel = (
   const seenPositions = new Set<number>();
 
   unrevealedPositions.forEach((unrevealedPosition) => {
-    const unrevealedCard = mapBackendGambitGridPositionToViewModel(
-      unrevealedPosition,
-      false
-    );
+    const unrevealedCard =
+      mapBackendGambitUnrevealedPositionToViewModel(unrevealedPosition);
 
     if (seenPositions.has(unrevealedCard.position)) {
       throw new Error(
@@ -323,10 +335,8 @@ export const mapBackendGambitGridToViewModel = (
   });
 
   revealedPositions.forEach((revealedPosition) => {
-    const revealedCard = mapBackendGambitGridPositionToViewModel(
-      revealedPosition,
-      true
-    );
+    const revealedCard =
+      mapBackendGambitRevealedPositionToViewModel(revealedPosition);
 
     if (seenPositions.has(revealedCard.position)) {
       throw new Error(
@@ -372,7 +382,10 @@ export const mapBackendGambitSessionToViewModel = (
       'AccumulatedPoints'
     ),
     burnSlotsAvailable,
-    burnsRemaining: Math.max(0, burnSlotsAvailable - manualFlipsCount),
+    burnsRemaining: Math.max(
+      0,
+      session.BurnsRemaining ?? burnSlotsAvailable - manualFlipsCount
+    ),
     cardsPurchased: requireFiniteNumber(
       session.CardsPurchased,
       'CardsPurchased'

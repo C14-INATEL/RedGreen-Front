@@ -1,10 +1,21 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { Gambit } from '../src/presentation/games/Gambit';
-import { makeMockGambitSession } from '../src/presentation/games/GambitGame/gambitGameMock';
+import type {
+  GambitResolveEffectResponse,
+  GambitApiSession,
+} from '../src/presentation/games/GambitGame/gambitApi';
 import type { GambitVisualCard } from '../src/presentation/games/GambitGame/gambitTypes';
 import type { RewardChoiceSession } from '../src/presentation/games/cardReward';
+import {
+  createGambitApiGrid,
+  createGambitApiPendingEvent,
+  createGambitApiPendingInteraction,
+  createGambitApiRevealedCard,
+  createGambitApiSession,
+  createGambitApiUnrevealedCard,
+} from './GambitTestBuilders';
 
 type MotionElementProps = {
   children?: ReactNode;
@@ -28,7 +39,26 @@ type MockRewardChoiceModalProps = {
   session: RewardChoiceSession | null;
 };
 
+const mockBurnActiveGambitCard = jest.fn();
+const mockFetchActiveGambitSession = jest.fn();
+const mockResolveActiveGambitEffect = jest.fn();
+const mockResolveActiveGambitEvent = jest.fn();
 const mockGambitBoard = jest.fn();
+
+jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
+  burnActiveGambitCard: (...args: unknown[]) =>
+    mockBurnActiveGambitCard(...args),
+  fetchActiveGambitSession: (...args: unknown[]) =>
+    mockFetchActiveGambitSession(...args),
+  getGambitResolveEffectPeekResult: (response: GambitResolveEffectResponse) =>
+    response.PeekResult ?? null,
+  getGambitResolveEffectSession: (response: GambitResolveEffectResponse) =>
+    'Session' in response ? response.Session : response,
+  resolveActiveGambitEffect: (...args: unknown[]) =>
+    mockResolveActiveGambitEffect(...args),
+  resolveActiveGambitEvent: (...args: unknown[]) =>
+    mockResolveActiveGambitEvent(...args),
+}));
 
 jest.mock('framer-motion', () => {
   const React = jest.requireActual('react') as typeof import('react');
@@ -146,7 +176,6 @@ jest.mock('../src/presentation/games/cardReward', () => {
           'aria-label': 'Evento Especial',
           role: 'dialog',
         },
-        React.createElement('p', null, 'Evento Especial'),
         ...displayedCards.map((card) =>
           React.createElement(
             'button',
@@ -170,13 +199,7 @@ jest.mock('../src/presentation/games/cardReward', () => {
               },
               type: 'button',
             },
-            React.createElement('img', {
-              alt: card.title,
-              src: card.spritePath,
-            }),
-            React.createElement('span', null, card.title),
-            React.createElement('span', null, card.subtitle),
-            React.createElement('span', null, card.description)
+            card.title
           )
         )
       );
@@ -184,309 +207,206 @@ jest.mock('../src/presentation/games/cardReward', () => {
   };
 });
 
-const revealAndComplete = (position: number) => {
-  fireEvent.click(screen.getByText(`reveal-${position}`));
-  fireEvent.click(screen.getByText('complete'));
-};
+const createSessionAfterBurn = (
+  position: number,
+  overrides: Partial<GambitApiSession> = {}
+) =>
+  createGambitApiSession({
+    AccumulatedPoints: 15,
+    BurnsRemaining: 24,
+    ManualFlipsCount: 1,
+    Grid: createGambitApiGrid({
+      Revealed: [
+        createGambitApiRevealedCard({
+          Points: 15,
+          Position: position,
+        }),
+      ],
+      Unrevealed: Array.from({ length: 25 }, (_, index) =>
+        createGambitApiUnrevealedCard({ Position: index })
+      ).filter((card) => card.Position !== position),
+    }),
+    ...overrides,
+  });
 
-describe('Gambit visual flow', () => {
+describe('Gambit backend gameplay flow', () => {
   beforeEach(() => {
+    mockBurnActiveGambitCard.mockReset();
+    mockFetchActiveGambitSession.mockReset();
     mockGambitBoard.mockClear();
+    mockResolveActiveGambitEffect.mockReset();
+    mockResolveActiveGambitEvent.mockReset();
   });
 
-  it('opens Clarividencia interaction and peeks without revealing the target card', () => {
-    jest.useFakeTimers();
+  it('shows an empty active-session message instead of starting a mock game', async () => {
+    mockFetchActiveGambitSession.mockResolvedValueOnce({
+      fallbackReason: 'missing-session',
+      mode: 'backend',
+      session: null,
+      source: 'backend',
+    });
 
-    try {
-      render(
-        createElement(Gambit, {
-          initialSession: makeMockGambitSession('clarividenciaFlow'),
-        })
-      );
+    render(createElement(Gambit));
 
-      revealAndComplete(8);
-
-      expect(screen.getByText('CLARIVIDENCIA')).toBeInTheDocument();
-      expect(screen.getByText('0/1')).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          'cards:25:revealed:1:previewed:0:locked:true:preview-mode:true'
-        )
-      ).toBeInTheDocument();
-
-      act(() => {
-        jest.advanceTimersByTime(1450);
-      });
-
-      expect(
-        screen.getByText(
-          'cards:25:revealed:1:previewed:0:locked:false:preview-mode:true'
-        )
-      ).toBeInTheDocument();
-
-      fireEvent.click(screen.getByText('reveal-0'));
-
-      expect(screen.getByText('Carta 0: +10')).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          'cards:25:revealed:1:previewed:1:locked:true:preview-mode:true'
-        )
-      ).toBeInTheDocument();
-
-      fireEvent.click(screen.getByText('Fechar espiada'));
-
-      expect(
-        screen.getByText(
-          'cards:25:revealed:1:previewed:0:locked:false:preview-mode:false'
-        )
-      ).toBeInTheDocument();
-    } finally {
-      jest.useRealTimers();
-    }
+    expect(
+      await screen.findByText('Nenhuma sessão ativa do Gambit encontrada.')
+    ).toBeInTheDocument();
+    expect(mockGambitBoard).not.toHaveBeenCalled();
+    expect(mockBurnActiveGambitCard).not.toHaveBeenCalled();
   });
 
-  it('shows visual PendingEvent cards and resolves it with good and bad choices', () => {
+  it('shows the board with a sandbox debug note when auto mode falls back to mock', async () => {
+    mockFetchActiveGambitSession.mockResolvedValueOnce({
+      fallbackReason: 'missing-session',
+      mode: 'auto',
+      session: createGambitApiSession(),
+      source: 'mock',
+    });
+
+    render(createElement(Gambit));
+
+    expect(
+      await screen.findByText('Modo sandbox do Gambit ativo')
+    ).toBeInTheDocument();
+    expect(mockGambitBoard).toHaveBeenCalled();
+  });
+
+  it('burns a closed card through the active gameplay endpoint', async () => {
+    mockBurnActiveGambitCard.mockResolvedValueOnce(createSessionAfterBurn(7));
+
     render(
       createElement(Gambit, {
-        initialSession: makeMockGambitSession('effectsOnBoard'),
+        initialSession: createGambitApiSession(),
       })
     );
 
-    [0, 1, 2, 3, 16].forEach(revealAndComplete);
+    fireEvent.click(screen.getByText('reveal-7'));
 
-    const eventDialog = screen.getByRole('dialog', {
-      name: 'Evento Especial',
+    await waitFor(() => {
+      expect(mockBurnActiveGambitCard).toHaveBeenCalledWith(7);
     });
+    expect(await screen.findByText('15')).toBeInTheDocument();
+    expect(mockGambitBoard).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        cards: expect.arrayContaining([
+          expect.objectContaining({
+            id: 7,
+            points: 15,
+            revealed: true,
+          }),
+        ]),
+      })
+    );
+  });
 
-    expect(eventDialog).toBeInTheDocument();
-    expect(screen.queryByText('Boa 1')).not.toBeInTheDocument();
-    expect(screen.queryByText('Ruim 1')).not.toBeInTheDocument();
-    expect(
-      within(eventDialog).getByAltText('Dobro de Potassio')
-    ).toBeInTheDocument();
-    expect(
-      within(eventDialog).getByText(
-        'Dobra os pontos da proxima carta revelada.'
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByText('5/25')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'cards:25:revealed:5:previewed:0:locked:true:preview-mode:false'
-      )
-    ).toBeInTheDocument();
+  it('resolves PendingEvent with GoodIndex and BadIndex from the reward modal', async () => {
+    mockResolveActiveGambitEvent.mockResolvedValueOnce(
+      createGambitApiSession()
+    );
+
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession({
+          Grid: createGambitApiGrid({
+            PendingEvent: createGambitApiPendingEvent(),
+          }),
+          ManualFlipsCount: 5,
+        }),
+      })
+    );
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Escolher Dobro de Potassio' })
     );
+
     fireEvent.click(
-      screen.getByRole('button', { name: 'Escolher Coringa do Inatel' })
+      await screen.findByRole('button', {
+        name: 'Escolher Coringa do Inatel',
+      })
     );
 
-    expect(
-      screen.queryByRole('dialog', { name: 'Evento Especial' })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'cards:25:revealed:5:previewed:0:locked:false:preview-mode:false'
-      )
-    ).toBeInTheDocument();
-  });
-
-  it('shows prepared effect sprite and clears the slot after the next point uses it', () => {
-    jest.useFakeTimers();
-
-    try {
-      render(
-        createElement(Gambit, {
-          initialSession: makeMockGambitSession('effectsOnBoard'),
-        })
-      );
-
-      expect(screen.getByText('NENHUM')).toBeInTheDocument();
-
-      revealAndComplete(4);
-
-      const cinematic = screen.getByTestId('gambit-reveal-cinematic');
-
-      expect(cinematic).toHaveAttribute('data-nature', 'good');
-      expect(
-        within(cinematic).getByAltText('Dobro de Potassio')
-      ).toBeInTheDocument();
-      expect(
-        within(cinematic).getByText('Dobro de Potassio')
-      ).toBeInTheDocument();
-      expect(
-        within(cinematic).getByText(
-          'Dobra os pontos da proxima carta revelada.'
-        )
-      ).toBeInTheDocument();
-      expect(
-        within(cinematic).getByTestId('gambit-reveal-points')
-      ).toHaveTextContent('+20');
-      expect(screen.queryByText('Carta Boa')).not.toBeInTheDocument();
-      expect(screen.queryByText('Carta Ruim')).not.toBeInTheDocument();
-      expect(screen.queryByText('Carta Neutra')).not.toBeInTheDocument();
-      expect(screen.getAllByText('Dobro de Potassio').length).toBeGreaterThan(
-        1
-      );
-      expect(mockGambitBoard).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          cards: expect.arrayContaining([
-            expect.objectContaining({
-              effect: 'dobro-de-potassio',
-              id: 4,
-              points: 20,
-              revealed: true,
-            }),
-          ]),
-          interactionLocked: true,
-        })
-      );
-
-      act(() => {
-        jest.advanceTimersByTime(1450);
+    await waitFor(() => {
+      expect(mockResolveActiveGambitEvent).toHaveBeenCalledWith({
+        BadIndex: 2,
+        GoodIndex: 0,
       });
-
-      expect(
-        screen.queryByTestId('gambit-reveal-cinematic')
-      ).not.toBeInTheDocument();
-
-      revealAndComplete(0);
-
-      expect(screen.getByText('40')).toBeInTheDocument();
-      expect(screen.getByText('NENHUM')).toBeInTheDocument();
-      expect(mockGambitBoard).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          cards: expect.arrayContaining([
-            expect.objectContaining({
-              id: 0,
-              points: 10,
-              revealed: true,
-            }),
-          ]),
-        })
-      );
-    } finally {
-      jest.useRealTimers();
-    }
+    });
   });
 
-  it('reveals points-only cards without a screen message', () => {
+  it('accumulates PendingInteraction selections before resolving the effect', async () => {
+    mockResolveActiveGambitEffect.mockResolvedValueOnce({
+      PeekResult: {
+        AtLeastOneBad: true,
+      },
+      Session: createGambitApiSession(),
+    });
+
     render(
       createElement(Gambit, {
-        initialSession: makeMockGambitSession('effectsOnBoard'),
+        initialSession: createGambitApiSession({
+          Grid: createGambitApiGrid({
+            PendingInteraction: createGambitApiPendingInteraction({
+              Action: 'SELECT_MULTIPLE_CARDS',
+              Effect: 'CABECINHA',
+              RequiredSelections: 3,
+            }),
+          }),
+        }),
       })
     );
 
     fireEvent.click(screen.getByText('reveal-0'));
+    expect(screen.getByText('1/3')).toBeInTheDocument();
 
-    expect(
-      screen.queryByTestId('gambit-reveal-cinematic')
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText('Carta Boa')).not.toBeInTheDocument();
-    expect(screen.queryByText('Carta Ruim')).not.toBeInTheDocument();
-    expect(screen.queryByText('Carta Neutra')).not.toBeInTheDocument();
-    expect(screen.getByText('10')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'cards:25:revealed:1:previewed:0:locked:true:preview-mode:false'
-      )
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText('reveal-1'));
+    expect(screen.getByText('2/3')).toBeInTheDocument();
+    expect(mockResolveActiveGambitEffect).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText('complete'));
+    fireEvent.click(screen.getByText('reveal-2'));
 
-    expect(
-      screen.getByText(
-        'cards:25:revealed:1:previewed:0:locked:false:preview-mode:false'
-      )
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockResolveActiveGambitEffect).toHaveBeenCalledWith([0, 1, 2]);
+    });
+    expect(await screen.findByText('Ha carta ruim')).toBeInTheDocument();
   });
 
-  it('shows immediate coringas in the screen message without preparing the panel', () => {
+  it('shows Clarividencia PeekResult without revealing the card locally', async () => {
+    mockResolveActiveGambitEffect.mockResolvedValueOnce({
+      PeekResult: {
+        Effect: null,
+        Points: 40,
+        Position: 4,
+      },
+      Session: createGambitApiSession(),
+    });
+
     render(
       createElement(Gambit, {
-        initialSession: makeMockGambitSession('effectsOnBoard'),
+        initialSession: createGambitApiSession({
+          Grid: createGambitApiGrid({
+            PendingInteraction: createGambitApiPendingInteraction(),
+          }),
+        }),
       })
     );
 
-    revealAndComplete(8);
+    fireEvent.click(screen.getByText('reveal-4'));
 
-    const cinematic = screen.getByTestId('gambit-reveal-cinematic');
-
-    expect(cinematic).toHaveAttribute('data-nature', 'good');
-    expect(within(cinematic).getByAltText('Clarividencia')).toBeInTheDocument();
-    expect(within(cinematic).getByText('Clarividencia')).toBeInTheDocument();
-    expect(
-      within(cinematic).getByText('Revela uma pista sobre uma carta fechada.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('NENHUM')).toBeInTheDocument();
-    expect(screen.getByText('0/1')).toBeInTheDocument();
-    expect(screen.queryByText('Carta Boa')).not.toBeInTheDocument();
-  });
-
-  it('uses red styling for bad coringa messages', () => {
-    render(
-      createElement(Gambit, {
-        initialSession: makeMockGambitSession('effectsOnBoard'),
+    await waitFor(() => {
+      expect(mockResolveActiveGambitEffect).toHaveBeenCalledWith([4]);
+    });
+    expect(await screen.findByText('Carta 4: +40')).toBeInTheDocument();
+    expect(mockGambitBoard).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        cards: expect.arrayContaining([
+          expect.objectContaining({
+            id: 4,
+            points: 40,
+            previewed: true,
+            revealed: false,
+          }),
+        ]),
       })
     );
-
-    revealAndComplete(5);
-
-    const cinematic = screen.getByTestId('gambit-reveal-cinematic');
-
-    expect(cinematic).toHaveAttribute('data-nature', 'bad');
-    expect(within(cinematic).getByText('Melancidio')).toBeInTheDocument();
-    expect(
-      within(cinematic).getByTestId('gambit-reveal-points')
-    ).toHaveTextContent('-20');
-    expect(screen.queryByText('Carta Ruim')).not.toBeInTheDocument();
-  });
-
-  it('waits for the coringa message before opening the pending event', () => {
-    jest.useFakeTimers();
-
-    try {
-      render(
-        createElement(Gambit, {
-          initialSession: makeMockGambitSession('effectsOnBoard'),
-        })
-      );
-
-      [0, 1, 2, 3].forEach(revealAndComplete);
-      revealAndComplete(4);
-
-      expect(screen.getByTestId('gambit-reveal-cinematic')).toBeInTheDocument();
-      expect(
-        screen.queryByRole('dialog', { name: 'Evento Especial' })
-      ).not.toBeInTheDocument();
-      expect(
-        screen.getByText(
-          'cards:25:revealed:5:previewed:0:locked:true:preview-mode:false'
-        )
-      ).toBeInTheDocument();
-
-      act(() => {
-        jest.advanceTimersByTime(1100);
-      });
-
-      expect(
-        screen.queryByTestId('gambit-reveal-cinematic')
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('dialog', { name: 'Evento Especial' })
-      ).not.toBeInTheDocument();
-
-      act(() => {
-        jest.advanceTimersByTime(350);
-      });
-
-      expect(
-        screen.getByRole('dialog', { name: 'Evento Especial' })
-      ).toBeInTheDocument();
-    } finally {
-      jest.useRealTimers();
-    }
   });
 });

@@ -11,6 +11,11 @@ import {
   resolveMockPendingInteraction,
   sumRevealedGambitCardPoints,
 } from '../src/presentation/games/GambitGame/gambitGameMock';
+import {
+  getTestGambitGameSession,
+  resetTestGambitGameSessionSequence,
+  TEST_GAMBIT_GAME_SESSIONS,
+} from './GambitGame.mock';
 import { classifyGambitRevealNature } from '../src/presentation/games/GambitGame/gambitRevealNature';
 import {
   createRewardChoiceSessionFromPendingEvent,
@@ -472,5 +477,31 @@ describe('Gambit visual mock mechanics', () => {
         points: 0,
       })
     ).toBe('neutral');
+  });
+
+  it('keeps API-shaped test Gambit sessions isolated from external mutation', () => {
+    resetTestGambitGameSessionSequence();
+
+    const firstSession = getTestGambitGameSession();
+    const secondSession = getTestGambitGameSession();
+
+    firstSession.Grid.Unrevealed[0].Locked = true;
+    secondSession.Grid.PendingEvent!.GoodOptions[0] = 'JACKPOT';
+
+    const thirdSession = getTestGambitGameSession();
+    const fourthSession = getTestGambitGameSession();
+    const fifthSession = getTestGambitGameSession();
+
+    expect(thirdSession.Grid.PendingInteraction).toBeTruthy();
+    expect(fourthSession.Grid.Unrevealed[0].Locked).toBe(false);
+    expect(fifthSession.Grid.PendingEvent!.GoodOptions[0]).toBe(
+      'DOBRO_DE_POTASSIO'
+    );
+    expect(TEST_GAMBIT_GAME_SESSIONS.active.Grid.Unrevealed[0].Locked).toBe(
+      false
+    );
+    expect(
+      TEST_GAMBIT_GAME_SESSIONS.pendingEvent.Grid.PendingEvent!.GoodOptions[0]
+    ).toBe('DOBRO_DE_POTASSIO');
   });
 });
