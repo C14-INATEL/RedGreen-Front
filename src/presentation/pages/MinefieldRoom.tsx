@@ -19,7 +19,6 @@ type MinefieldRoomState = {
   MaxCardsPurchased?: number;
 };
 
-
 export const MinefieldRoom = () => {
   const Navigate = useNavigate();
 

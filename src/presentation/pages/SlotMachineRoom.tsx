@@ -10,8 +10,6 @@ import { useUserChips } from '@application/hooks/useUserChips';
 
 import RankingPanel from '@ui/RankingPanel';
 
-
-
 export const SlotMachineRoom = () => {
   const Navigate = useNavigate();
 

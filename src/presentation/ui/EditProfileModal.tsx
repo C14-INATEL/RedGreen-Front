@@ -76,10 +76,7 @@ const EditProfileModal = ({
   OnClose,
   OnSuccess,
 }: EditProfileModalProps) => {
-const {
-  user: StoredUser,
-  mutate: mutateUser,
-} = useUserProfile(IsOpen);
+  const { user: StoredUser, mutate: mutateUser } = useUserProfile(IsOpen);
   const [Name, SetName] = useState<string>('');
   const [BirthDate, SetBirthDate] = useState<string>('');
   const [NewPassword, SetNewPassword] = useState('');

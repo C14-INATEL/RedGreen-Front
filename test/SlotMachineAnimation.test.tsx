@@ -41,9 +41,7 @@ const SlotMachineAnimationHarness = () => {
   const [rerollsRemaining, setRerollsRemaining] = useState(MAX_REROLLS);
 
   const handleRerollReel = () => {
-    setRerollsRemaining((currentCount) =>
-      Math.max(currentCount - 1, 0)
-    );
+    setRerollsRemaining((currentCount) => Math.max(currentCount - 1, 0));
   };
 
   const handleLeverPull = () => {
