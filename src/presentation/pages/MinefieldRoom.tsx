@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy } from 'lucide-react';
+import { getToken } from '@/presentation/ui/Cookies';
 
 import { Minefield } from '../games/Minefield';
 import { useUserProfile } from '@application/hooks/useUserProfile';
@@ -18,17 +19,11 @@ type MinefieldRoomState = {
   MaxCardsPurchased?: number;
 };
 
-type StoredUserSnapshot = {
-  ChipBalance?: number;
-  Chips?: number;
-  Nickname?: string;
-  NicknameAlt?: string;
-};
 
 export const MinefieldRoom = () => {
   const Navigate = useNavigate();
 
-  const Token = localStorage.getItem('token');
+  const Token = getToken();
 
   const IsLoggedIn = !!Token;
 
@@ -57,31 +52,14 @@ export const MinefieldRoom = () => {
     }
   }, [IsLoggedIn]);
 
-  const StoredUserValue = localStorage.getItem('user');
-
-  let StoredUser: StoredUserSnapshot | null = null;
-
-  if (StoredUserValue) {
-    try {
-      StoredUser = JSON.parse(StoredUserValue) as StoredUserSnapshot;
-    } catch {
-      StoredUser = null;
-    }
-  }
-
   const { nickname: Nickname, isLoading: ProfileLoading } =
     useUserProfile(IsLoggedIn);
 
   const { chips: ChipsFromHook } = useUserChips(IsLoggedIn);
 
-  const LocalNickname = StoredUser?.Nickname || StoredUser?.NicknameAlt;
+  const PlayerName = Nickname ?? (ProfileLoading ? 'Carregando...' : 'Jogador');
 
-  const LocalChips = StoredUser?.ChipBalance ?? StoredUser?.Chips;
-
-  const PlayerName =
-    Nickname ?? LocalNickname ?? (ProfileLoading ? 'Carregando...' : 'Jogador');
-
-  const Chips = ChipsFromHook ?? LocalChips ?? (IsLoggedIn ? 0 : 10000);
+  const Chips = ChipsFromHook ?? (IsLoggedIn ? 0 : 10000);
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden suit-pattern px-6 py-20">
