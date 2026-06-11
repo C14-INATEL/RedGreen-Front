@@ -39,6 +39,7 @@ export const SlotMachine = ({ OnEnter }: SlotMachineProps) => {
   const [HasEnteredMachineView, SetHasEnteredMachineView] = useState(
     RouteState?.SlotMachineIntroCompleted === true
   );
+  const [IsPaytableCollapsed, SetIsPaytableCollapsed] = useState(false);
 
   return (
     <div className="relative flex w-full items-start justify-center">
@@ -53,7 +54,10 @@ export const SlotMachine = ({ OnEnter }: SlotMachineProps) => {
           delay: HasEnteredMachineView ? 0.08 : 0,
         }}
       >
-        <SlotPaytableHUD/>
+        <SlotPaytableHUD
+          isCollapsed={IsPaytableCollapsed}
+          onToggleCollapsed={() => SetIsPaytableCollapsed((value) => !value)}
+        />
       </motion.div>
 
       <motion.div

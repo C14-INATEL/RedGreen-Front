@@ -20,52 +20,52 @@ const SLOT_SYMBOL_SOURCES = {
 export const SLOT_PAYTABLE_ENTRIES: readonly SlotPaytableEntry[] = [
   {
     id: 'orange-3',
-    prize: '3 Laranjas: ganha 5 fichas',
+    prize: '3x Laranja: +5',
     symbols: Array.from({ length: 3 }, () => SLOT_SYMBOL_SOURCES.orange),
   },
   {
     id: 'orange-4',
-    prize: '4 Laranjas: ganha 8 fichas',
+    prize: '4x Laranja: +8',
     symbols: Array.from({ length: 4 }, () => SLOT_SYMBOL_SOURCES.orange),
   },
   {
     id: 'oranges-3',
-    prize: '3 Laranjas Duplas: ganha 10 fichas',
+    prize: '3x Dupla: +10',
     symbols: Array.from({ length: 3 }, () => SLOT_SYMBOL_SOURCES.oranges),
   },
   {
     id: 'oranges-4',
-    prize: '4 Laranjas Duplas: ganha 15 fichas',
+    prize: '4x Dupla: +15',
     symbols: Array.from({ length: 4 }, () => SLOT_SYMBOL_SOURCES.oranges),
   },
   {
     id: 'pig',
-    prize: 'Porquinho: +20 fichas por símbolo',
+    prize: 'Porco: +20 cada',
     symbols: [SLOT_SYMBOL_SOURCES.pig],
   },
   {
     id: 'multiplier',
-    prize: '2X: dobra o prêmio da rodada',
+    prize: '2X: dobra prêmio',
     symbols: [SLOT_SYMBOL_SOURCES.multiplier],
   },
   {
     id: 'rat',
-    prize: 'Rato sozinho: perde o prêmio da rodada',
+    prize: 'Rato: zera prêmio',
     symbols: [SLOT_SYMBOL_SOURCES.rat],
   },
   {
     id: 'cheese',
-    prize: 'Queijo protege do rato e dá +10 por rato',
+    prize: 'Queijo + Rato: protege e dá +10 por rato',
     symbols: [SLOT_SYMBOL_SOURCES.cheese, SLOT_SYMBOL_SOURCES.rat],
   },
   {
     id: 'egg',
-    prize: 'Ovo: símbolo neutro, não altera o prêmio',
+    prize: 'Ovo: neutro',
     symbols: [SLOT_SYMBOL_SOURCES.egg],
   },
   {
     id: 'watermelon-4',
-    prize: '4 Melancias: ganha 100 fichas',
+    prize: '4x Melancia: +100',
     symbols: Array.from({ length: 4 }, () => SLOT_SYMBOL_SOURCES.watermelon),
   },
 ] as const;
