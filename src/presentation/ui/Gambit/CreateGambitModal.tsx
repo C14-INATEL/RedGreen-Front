@@ -1,83 +1,87 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { apiClient } from '@infrastructure/http/client';
-
-type SlotMachineFromApi = {
-  SlotMachineId: number;
-  Name: string;
-  Description: string;
-  MinimumSpinValue: number;
-  MinimumChipsRequired: number;
-  MinimumRerollValue: number;
-  Active: boolean;
-};
-
-type CreateTableModalProps = {
+import type { GambitTableFromApi } from '../../pages/GambitTablesRoom';
+type CreateGambitTableModalProps = {
   OnClose: () => void;
-  OnTableCreated: (NewTable: SlotMachineFromApi) => void;
+  OnTableCreated: (NewTable: GambitTableFromApi) => void;
   OnError: (Message: string) => void;
   OnSuccess: (Message: string) => void;
 };
 
-export const CreateTableModal = ({
+export const CreateGambitTableModal = ({
   OnClose,
   OnTableCreated,
   OnError,
   OnSuccess,
-}: CreateTableModalProps) => {
+}: CreateGambitTableModalProps) => {
   const [TableName, SetTableName] = useState('');
-  const [MinimumBet, SetMinimumBet] = useState('');
   const [MinimumChips, SetMinimumChips] = useState('');
-  const [MinimumRerollValue, SetMinimumRerollValue] = useState('');
+  const [CardPrice, SetCardPrice] = useState('');
+  const [TableMultiplier, SetTableMultiplier] = useState('');
+  const [MinimumCardsPurchased, SetMinimumCardsPurchased] = useState('');
+  const [MaxCardsPurchased, SetMaxCardsPurchased] = useState('');
 
   const HandleCreate = async () => {
     if (!TableName.trim()) {
       OnError('O nome da mesa é obrigatório.');
       return;
     }
-    if (!MinimumBet || !MinimumChips || !MinimumRerollValue) {
+    if (
+      !MinimumChips ||
+      !CardPrice ||
+      !TableMultiplier ||
+      !MinimumCardsPurchased ||
+      !MaxCardsPurchased
+    ) {
       OnError('Preencha todos os campos.');
       return;
     }
     if (
-      Number(MinimumBet) <= 0 ||
-      Number(MinimumRerollValue) <= 0 ||
-      Number(MinimumChips) < 0
+      Number(MinimumChips) < 0 ||
+      Number(CardPrice) <= 0 ||
+      Number(TableMultiplier) <= 0
     ) {
-      OnError(
-        'A aposta mínima e o valor do reroll devem ser maiores que zero.'
-      );
+      OnError('Os valores devem ser maiores que zero.');
+      return;
+    }
+    if (Number(MaxCardsPurchased) > 25) {
+      OnError('O máximo de cartas não pode ultrapassar 25.');
+      return;
+    }
+    if (Number(MinimumCardsPurchased) >= Number(MaxCardsPurchased)) {
+      OnError('O máximo de cartas deve ser maior que o mínimo.');
       return;
     }
     if (
-      !Number.isInteger(Number(MinimumBet)) ||
       !Number.isInteger(Number(MinimumChips)) ||
-      !Number.isInteger(Number(MinimumRerollValue))
+      !Number.isInteger(Number(CardPrice)) ||
+      !Number.isInteger(Number(MinimumCardsPurchased)) ||
+      !Number.isInteger(Number(MaxCardsPurchased))
     ) {
-      OnError(
-        'A aposta mínima, fichas mínimas e valor do reroll devem ser números inteiros.'
-      );
+      OnError('Os valores devem ser números inteiros.');
       return;
     }
 
     try {
-      const Response = await apiClient.post('/slot/machine', {
+      const Response = await apiClient.post('/gambit-table', {
         Name: TableName,
         Description: 'Mesa criada pelo sistema',
-        MinimumSpinValue: Number(MinimumBet),
         MinimumChipsRequired: Number(MinimumChips),
-        MinimumRerollValue: Number(MinimumRerollValue),
+        CardPrice: Number(CardPrice),
+        TableMultiplier: Number(TableMultiplier),
+        MinimumCardsPurchased: Number(MinimumCardsPurchased),
+        MaxCardsPurchased: Number(MaxCardsPurchased),
       });
 
-      const NewTable = Response.data;
-      OnTableCreated(NewTable);
+      OnTableCreated(Response.data);
       OnSuccess('Mesa criada com sucesso!');
       OnClose();
-    } catch (Err) {
+    } catch (err) {
       const ErrorMessage =
-        (Err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? (Err instanceof Error ? Err.message : null);
-      OnError(ErrorMessage ?? 'Erro ao criar mesa');
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? (err instanceof Error ? err.message : null);
+      OnError(ErrorMessage ?? 'Erro ao criar mesa.');
     }
   };
 
@@ -131,19 +135,29 @@ export const CreateTableModal = ({
 
           {[
             {
-              Placeholder: 'Aposta mínima',
-              Value: MinimumBet,
-              Setter: SetMinimumBet,
-            },
-            {
               Placeholder: 'Fichas mínimas',
               Value: MinimumChips,
               Setter: SetMinimumChips,
             },
             {
-              Placeholder: 'Valor do reroll',
-              Value: MinimumRerollValue,
-              Setter: SetMinimumRerollValue,
+              Placeholder: 'Preço por carta',
+              Value: CardPrice,
+              Setter: SetCardPrice,
+            },
+            {
+              Placeholder: 'Multiplicador da mesa',
+              Value: TableMultiplier,
+              Setter: SetTableMultiplier,
+            },
+            {
+              Placeholder: 'Mínimo de cartas',
+              Value: MinimumCardsPurchased,
+              Setter: SetMinimumCardsPurchased,
+            },
+            {
+              Placeholder: 'Máximo de cartas',
+              Value: MaxCardsPurchased,
+              Setter: SetMaxCardsPurchased,
             },
           ].map(({ Placeholder, Value, Setter }) => (
             <input

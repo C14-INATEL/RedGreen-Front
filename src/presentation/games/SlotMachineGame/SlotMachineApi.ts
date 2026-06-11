@@ -50,7 +50,7 @@ export type SlotMachineApiSession = {
   SlotMachineId: number;
   SlotSessionId: number;
   StartedAt?: string;
-  Status: 'Active' | 'Ended' | 'Interrupted' | 'Expired';
+  Status: 'InProgress' | 'CashedOut';
 };
 
 export type SlotMachineSessionMutationResponse = {
@@ -220,7 +220,13 @@ export const fetchActiveSlotSession = async () => {
     '/sessions/active'
   );
 
-  return response.data;
+  const session = response.data;
+
+  if (!session || session.Status !== 'InProgress') {
+    return null;
+  }
+
+  return session;
 };
 
 export const createSlotSession = async (slotMachineId: number) => {

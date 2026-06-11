@@ -88,7 +88,6 @@ const DeleteAccountModal = ({
       await apiClient.delete('/user');
 
       localStorage.removeItem('token');
-      localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('dailyLoginSnapshot');
 

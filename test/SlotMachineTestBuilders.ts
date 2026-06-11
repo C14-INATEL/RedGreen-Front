@@ -40,6 +40,6 @@ export const createSlotMachineSession = (
   SlotMachineId: 7,
   SlotSessionId: 101,
   StartedAt: '2026-04-24T12:00:00.000Z',
-  Status: 'Active',
+  Status: 'InProgress',
   ...overrides,
 });

@@ -170,7 +170,6 @@ const EditProfileModal = ({
         const Token = PasswordCheckResponse.data?.Token;
         if (Token) {
           localStorage.setItem('token', Token);
-          localStorage.setItem('authToken', Token);
         }
       } catch (Err) {
         const Status = (Err as { response?: { status?: number } })?.response

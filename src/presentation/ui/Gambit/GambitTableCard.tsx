@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
 
-type SlotMachineCardProps = {
-  SlotMachineId: number;
+type GambitTableCardProps = {
+  GambitTableId: number;
   Name: string;
-  MinimumSpinValue: number;
   MinimumChipsRequired: number;
-  MinimumRerollValue: number;
+  CardPrice: number;
+  TableMultiplier: number;
+  MinimumCardsPurchased: number;
+  MaxCardsPurchased: number;
   IsLocked: boolean;
   IsAdmin: boolean;
   IsActive: boolean;
@@ -13,17 +15,19 @@ type SlotMachineCardProps = {
   OnEdit: () => void;
 };
 
-export const SlotMachineCard = ({
+export const GambitTableCard = ({
   Name,
-  MinimumSpinValue,
   MinimumChipsRequired,
-  MinimumRerollValue,
+  CardPrice,
+  TableMultiplier,
+  MinimumCardsPurchased,
+  MaxCardsPurchased,
   IsLocked,
   IsAdmin,
+  IsActive,
   OnClick,
   OnEdit,
-  IsActive,
-}: SlotMachineCardProps) => {
+}: GambitTableCardProps) => {
   return (
     <motion.div
       whileHover={{ scale: IsLocked ? 1 : 1.03 }}
@@ -52,13 +56,13 @@ export const SlotMachineCard = ({
             className="text-[7px] uppercase text-white/50 whitespace-nowrap shrink-0"
             style={{ fontFamily: '"Press Start 2P", monospace' }}
           >
-            Aposta
+            Preço/carta
           </span>
           <span
             className="text-[9px] text-cassino-gold text-right min-w-0 break-all"
             style={{ fontFamily: '"Press Start 2P", monospace' }}
           >
-            {MinimumSpinValue.toLocaleString('pt-BR')}
+            {CardPrice.toLocaleString('pt-BR')}
           </span>
         </div>
 
@@ -67,13 +71,28 @@ export const SlotMachineCard = ({
             className="text-[7px] uppercase text-white/50 whitespace-nowrap shrink-0"
             style={{ fontFamily: '"Press Start 2P", monospace' }}
           >
-            Reroll
+            Multiplicador
           </span>
           <span
             className="text-[9px] text-cassino-gold text-right min-w-0 break-all"
             style={{ fontFamily: '"Press Start 2P", monospace' }}
           >
-            {MinimumRerollValue.toLocaleString('pt-BR')}
+            {TableMultiplier}×
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-[7px] uppercase text-white/50 whitespace-nowrap shrink-0"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            Cartas
+          </span>
+          <span
+            className="text-[9px] text-white/90 text-right min-w-0 break-all"
+            style={{ fontFamily: '"Press Start 2P", monospace' }}
+          >
+            {MinimumCardsPurchased} – {MaxCardsPurchased}
           </span>
         </div>
 
