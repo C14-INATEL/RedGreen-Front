@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { IsBirthDateFormatValid, IsValidBirthDate } from '../../validators';
 import { apiClient } from '@infrastructure/http/client';
+import { setToken } from '@/presentation/ui/Cookies';
+import { useUserProfile } from '@application/hooks/useUserProfile';
 
 const EyeOpenIcon = (
   <svg
@@ -74,18 +76,12 @@ const EditProfileModal = ({
   OnClose,
   OnSuccess,
 }: EditProfileModalProps) => {
-  const StoredUser = (() => {
-    try {
-      return JSON.parse(localStorage.getItem('user') ?? '{}');
-    } catch {
-      return {};
-    }
-  })();
-
-  const [Name, SetName] = useState<string>(StoredUser.Name ?? '');
-  const [BirthDate, SetBirthDate] = useState<string>(
-    FormatDateToBR(StoredUser.BirthDate ?? '')
-  );
+const {
+  user: StoredUser,
+  mutate: mutateUser,
+} = useUserProfile(IsOpen);
+  const [Name, SetName] = useState<string>('');
+  const [BirthDate, SetBirthDate] = useState<string>('');
   const [NewPassword, SetNewPassword] = useState('');
   const [ConfirmNewPassword, SetConfirmNewPassword] = useState('');
   const [CurrentPassword, SetCurrentPassword] = useState('');
@@ -95,9 +91,18 @@ const EditProfileModal = ({
   const [IsLoading, SetIsLoading] = useState(false);
   const [ToastMessage, SetToastMessage] = useState('');
   const [SuccessMessage, SetSuccessMessage] = useState('');
-  const UserEmail = String(StoredUser.Email ?? StoredUser.email ?? '')
+  const UserEmail = String(StoredUser?.Email ?? StoredUser?.email ?? '')
     .trim()
     .toLowerCase();
+
+  useEffect(() => {
+    if (!StoredUser) return;
+
+    SetName(String(StoredUser.Name ?? StoredUser.name ?? ''));
+    SetBirthDate(
+      FormatDateToBR(String(StoredUser.BirthDate ?? StoredUser.birthDate ?? ''))
+    );
+  }, [StoredUser]);
 
   const CloseToast = () => SetToastMessage('');
 
@@ -169,7 +174,7 @@ const EditProfileModal = ({
 
         const Token = PasswordCheckResponse.data?.Token;
         if (Token) {
-          localStorage.setItem('token', Token);
+          setToken(Token);
         }
       } catch (Err) {
         const Status = (Err as { response?: { status?: number } })?.response
@@ -193,10 +198,11 @@ const EditProfileModal = ({
         Payload.Password = NewPassword;
       }
 
-      const Response = await apiClient.patch('/user', Payload);
+      await apiClient.patch('/user', Payload);
 
-      const UpdatedUser = { ...StoredUser, ...Response.data };
-      localStorage.setItem('user', JSON.stringify(UpdatedUser));
+      if (mutateUser) {
+        mutateUser();
+      }
 
       SetSuccessMessage('PERFIL ATUALIZADO COM SUCESSO!');
       SetNewPassword('');
@@ -257,7 +263,7 @@ const EditProfileModal = ({
                   <input
                     type="text"
                     placeholder="Apelido"
-                    value={StoredUser.Nickname ?? ''}
+                    value={StoredUser?.Nickname ?? ''}
                     disabled
                     className="auth-input !mb-0 opacity-40 cursor-not-allowed"
                   />
