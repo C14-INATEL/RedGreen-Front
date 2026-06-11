@@ -70,8 +70,8 @@ const Table = () => {
               onClick={HandleStartGame}
             />
             <GameCard
-              title="Cartas"
-              subtitle="Em breve"
+              title="Gambit"
+              subtitle="Queimar"
               icon={<CardGameIcon />}
               delay={0.18}
               onClick={HandleCardGameClick}
