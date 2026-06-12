@@ -126,3 +126,39 @@ describe('handleLogin - wrong password', () => {
     expect(mockSetToken).not.toHaveBeenCalled();
   });
 });
+
+describe('handleLogin - deleted account', () => {
+  it('warns that the email can no longer be used to access the deleted account', async () => {
+    await GoToLoginStep();
+
+    MockApiPost.mockRejectedValueOnce({
+      response: {
+        status: 401,
+        data: {
+          message: 'User is not active',
+          error: 'Unauthorized',
+          statusCode: 401,
+        },
+      },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Senha'), {
+      target: { value: 'senhaCorreta123' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          /NÃO É MAIS POSSÍVEL ACESSAR UMA CONTA COM O E-MAIL INFORMADO/i
+        )
+      ).toBeTruthy();
+    });
+
+    expect(
+      screen.getByText(/CRIE UMA NOVA CONTA COM OUTRO E-MAIL/i)
+    ).toBeTruthy();
+    expect(mockSetToken).not.toHaveBeenCalled();
+  });
+});
