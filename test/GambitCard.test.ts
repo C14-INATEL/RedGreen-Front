@@ -1,7 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import {
-  getGambitCardVisibilityState,
-} from '../src/presentation/games/GambitGame/GambitCard';
+import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGame/GambitCard';
 import {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,

@@ -22,6 +22,13 @@ pipeline {
       }
     }
 
+    stage('Lint e Format') {
+      steps {
+        sh 'npm run lint'
+        sh 'npm run format'
+      }
+    }
+
     stage('Build') {
       steps {
         sh 'npm run build'
@@ -40,7 +47,11 @@ pipeline {
       echo 'Deploy realizado com sucesso!'
     }
     failure {
-      echo 'Falha ao realizar o deploy.'
+      echo 'Falha no pipeline.'
+    }
+    always {
+      cleanWs()
     }
   }
+
 }
