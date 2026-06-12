@@ -13,10 +13,26 @@ export type GambitEffectPresentation = {
   viewModel: GambitCardEffectViewModel;
 };
 
+export type GambitEffectDisplayOptions = {
+  position?: number | null;
+  revealed?: boolean;
+  salt?: string | null;
+  sessionId?: number | string | null;
+};
+
 type GambitEffectCopy = Pick<
   GambitEffectPresentation,
   'description' | 'subtitle' | 'title'
 >;
+
+export const BUMIS_DISGUISE_EFFECTS = [
+  'dobro-de-potassio',
+  'anulacao-total',
+  'clarividencia',
+  'cabecinha',
+  'jackpot',
+  'quanto-mais-melhor',
+] as const satisfies readonly GambitCardEffectViewModel[];
 
 const GAMBIT_EFFECT_COPY: Record<GambitCardEffectViewModel, GambitEffectCopy> =
   {
@@ -131,6 +147,43 @@ const getFallbackCopy = (
   title: formatTitleFromViewModel(effect),
 });
 
+const hashStableString = (value: string) => {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+};
+
+export const getBumisDisguisedEffect = ({
+  position = null,
+  salt = null,
+  sessionId = null,
+}: GambitEffectDisplayOptions = {}): GambitCardEffectViewModel => {
+  const seed = [
+    sessionId ?? 'sessionless',
+    position ?? 'positionless',
+    salt ?? 'bumis-disguise',
+  ].join(':');
+  const effectIndex = hashStableString(seed) % BUMIS_DISGUISE_EFFECTS.length;
+
+  return BUMIS_DISGUISE_EFFECTS[effectIndex];
+};
+
+export const getDisplayedGambitEffectViewModel = (
+  effect: GambitCardEffectViewModel,
+  options: GambitEffectDisplayOptions = {}
+): GambitCardEffectViewModel => {
+  if (effect !== 'bumis-infiltrados' || options.revealed) {
+    return effect;
+  }
+
+  return getBumisDisguisedEffect(options);
+};
+
 export const getGambitEffectPresentationFromViewModel = (
   effect: GambitCardEffectViewModel
 ): GambitEffectPresentation => {
@@ -153,4 +206,25 @@ export const getGambitEffectPresentation = (
   }
 
   return getGambitEffectPresentationFromViewModel(viewModel);
+};
+
+export const getGambitEffectPresentationFromViewModelForDisplay = (
+  effect: GambitCardEffectViewModel,
+  options: GambitEffectDisplayOptions = {}
+): GambitEffectPresentation =>
+  getGambitEffectPresentationFromViewModel(
+    getDisplayedGambitEffectViewModel(effect, options)
+  );
+
+export const getGambitEffectPresentationForDisplay = (
+  effect: GambitCardEffect,
+  options: GambitEffectDisplayOptions = {}
+): GambitEffectPresentation => {
+  const viewModel = mapBackendGambitCardToViewModel(effect);
+
+  if (!viewModel) {
+    throw new Error(`Unknown Gambit effect "${effect}".`);
+  }
+
+  return getGambitEffectPresentationFromViewModelForDisplay(viewModel, options);
 };

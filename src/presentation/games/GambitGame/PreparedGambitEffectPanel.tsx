@@ -1,16 +1,41 @@
-import { getGambitEffectPresentation } from './gambitEffectPresentation';
-import type { GambitCardEffect } from './gambitTypes';
+import {
+  getGambitEffectPresentationForDisplay,
+  getGambitEffectPresentationFromViewModel,
+} from './gambitEffectPresentation';
+import type {
+  GambitCardEffect,
+  GambitCardEffectViewModel,
+} from './gambitTypes';
 
 type PreparedGambitEffectPanelProps = {
+  displayEffect?: GambitCardEffectViewModel | null;
+  displayPosition?: number | null;
+  displayRevealed?: boolean;
+  displaySalt?: string | null;
+  displaySeed?: number | string | null;
   effect: GambitCardEffect | null;
   onInspect?: () => void;
 };
 
 export const PreparedGambitEffectPanel = ({
+  displayEffect = null,
+  displayPosition = null,
+  displayRevealed = false,
+  displaySalt = 'prepared-effect',
+  displaySeed = null,
   effect,
   onInspect,
 }: PreparedGambitEffectPanelProps) => {
-  const presentation = effect ? getGambitEffectPresentation(effect) : null;
+  const presentation = displayEffect
+    ? getGambitEffectPresentationFromViewModel(displayEffect)
+    : effect
+      ? getGambitEffectPresentationForDisplay(effect, {
+          position: displayPosition,
+          revealed: displayRevealed,
+          salt: displaySalt,
+          sessionId: displaySeed,
+        })
+      : null;
   const isInspectable = Boolean(presentation && onInspect);
   const panelContent = presentation ? (
     <>
