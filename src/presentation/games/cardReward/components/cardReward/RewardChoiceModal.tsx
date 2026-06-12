@@ -556,9 +556,11 @@ export const RewardChoiceModal = ({
     const overlayWidth = sourceWidth * overlaySizeScale;
     const overlayHeight = sourceHeight * overlaySizeScale;
     const overlayLeft =
-      selectedCenterCardOverlay.cardRect.left + (sourceWidth - overlayWidth) / 2;
+      selectedCenterCardOverlay.cardRect.left +
+      (sourceWidth - overlayWidth) / 2;
     const overlayTop =
-      selectedCenterCardOverlay.cardRect.top + (sourceHeight - overlayHeight) / 2;
+      selectedCenterCardOverlay.cardRect.top +
+      (sourceHeight - overlayHeight) / 2;
     const targetX =
       selectedCenterCardOverlay.modalRect.left +
       selectedCenterCardOverlay.modalRect.width / 2 -
