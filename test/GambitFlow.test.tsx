@@ -328,6 +328,43 @@ describe('Gambit backend gameplay flow', () => {
     });
   });
 
+  it('opens the current effect panel in the same cinematic overlay when clicked', async () => {
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession({
+          NextEffect: 'JACKPOT',
+        }),
+      })
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Ver efeito atual Jackpot',
+      })
+    );
+
+    expect(
+      await screen.findByTestId('gambit-reveal-cinematic')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('gambit-reveal-cinematic')
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('resolves PendingEvent with GoodIndex and BadIndex from the reward modal', async () => {
     mockResolveActiveGambitEvent.mockResolvedValueOnce(
       createGambitApiSession()

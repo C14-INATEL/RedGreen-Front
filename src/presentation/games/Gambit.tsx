@@ -165,6 +165,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     useState<GambitInteractionPeekResult | null>(null);
   const [revealedCinematicCard, setRevealedCinematicCard] =
     useState<GambitVisualCard | null>(null);
+  const [isPreparedEffectPreviewOpen, setIsPreparedEffectPreviewOpen] =
+    useState(false);
   const [
     isPendingEventPresentationDelayed,
     setIsPendingEventPresentationDelayed,
@@ -199,6 +201,29 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     preparedEffect: session?.NextEffect ?? null,
     previewedCardId,
   };
+  const preparedEffectPreviewCard = useMemo(() => {
+    if (!isPreparedEffectPreviewOpen || !visualState.preparedEffect) {
+      return null;
+    }
+
+    const effectViewModel = mapBackendGambitCardToViewModel(
+      visualState.preparedEffect
+    );
+
+    if (!effectViewModel) {
+      return null;
+    }
+
+    return {
+      effect: effectViewModel,
+      id: -1,
+      locked: false,
+      points: null,
+      position: -1,
+      previewed: false,
+      revealed: true,
+    } satisfies GambitVisualCard;
+  }, [isPreparedEffectPreviewOpen, visualState.preparedEffect]);
   const totalScore = session?.AccumulatedPoints ?? 0;
   const pendingEventRewardSessionId = session
     ? `gambit-pending-event-${String(session.GambitSessionId)}-${
@@ -241,6 +266,12 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
   useEffect(() => {
     setSession(initialSession ?? null);
   }, [initialSession]);
+
+  useEffect(() => {
+    if (!visualState.preparedEffect) {
+      setIsPreparedEffectPreviewOpen(false);
+    }
+  }, [visualState.preparedEffect]);
 
   useEffect(() => {
     if (
@@ -464,6 +495,18 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     void card;
   };
 
+  const handlePreparedEffectInspect = () => {
+    if (!visualState.preparedEffect) {
+      return;
+    }
+
+    setIsPreparedEffectPreviewOpen(true);
+  };
+
+  const handlePreparedEffectPreviewClose = () => {
+    setIsPreparedEffectPreviewOpen(false);
+  };
+
   const handlePendingEventRewardCardSelect = (optionId: string) => {
     if (
       !pendingEvent ||
@@ -596,9 +639,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
       initial={{ opacity: 0, scale: 0.94, y: 28 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="grid gap-4 md:grid-cols-[180px_minmax(0,560px)] md:items-start">
-        <PreparedGambitEffectPanel effect={visualState.preparedEffect} />
-
+      <div className="grid gap-4 md:grid-cols-[minmax(0,560px)_180px] md:items-start">
         <div className="min-w-0">
           <div className="mb-4 grid gap-3 sm:grid-cols-2">
             <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">
@@ -711,6 +752,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
             </div>
           ) : null}
         </div>
+
+        <PreparedGambitEffectPanel
+          effect={visualState.preparedEffect}
+          onInspect={handlePreparedEffectInspect}
+        />
       </div>
 
       <RewardChoiceModal
@@ -727,6 +773,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
       <GambitRevealCinematic
         card={revealedCinematicCard}
         onComplete={handleRevealCinematicComplete}
+      />
+
+      <GambitRevealCinematic
+        card={preparedEffectPreviewCard}
+        onComplete={handlePreparedEffectPreviewClose}
       />
     </motion.div>
   );
