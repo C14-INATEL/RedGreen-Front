@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { IsBirthDateFormatValid, IsValidBirthDate } from '../../validators';
 import { apiClient } from '@infrastructure/http/client';
-import { setToken } from '@/presentation/ui/Cookies';
+import { setToken } from '@/infrastructure/Cookies';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 
 const EyeOpenIcon = (

@@ -4,7 +4,7 @@ import TableDecorations from '@ui/TableDecorations';
 import GameCard from '@ui/GameCard';
 import SlotMachineIcon from '@ui/SlotMachineIcon';
 import CardGameIcon from '@ui/CardGameIcon';
-import { getToken } from '@/presentation/ui/Cookies';
+import { getToken } from '@/infrastructure/Cookies';
 import { paths } from '../../paths';
 
 const Table = () => {

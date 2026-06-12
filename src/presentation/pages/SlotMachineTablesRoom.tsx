@@ -5,7 +5,7 @@ import { paths } from '@/paths';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@/application/hooks/useUserChips';
 import { apiClient } from '@/infrastructure/http/client';
-import { getToken } from '@/presentation/ui/Cookies';
+import { getToken } from '@/infrastructure/Cookies';
 import { CreateTableModal } from '../ui/CreateTableModal';
 import { EditTableModal } from '../ui/EditTableModal';
 import { ResultModal } from '../ui/ResultModal';

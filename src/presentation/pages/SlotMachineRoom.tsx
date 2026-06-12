@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy } from 'lucide-react';
-import { getToken } from '@/presentation/ui/Cookies';
+import { getToken } from '@/infrastructure/Cookies';
 
 import { SlotMachine } from '../games/SlotMachine';
 import { useUserProfile } from '@application/hooks/useUserProfile';

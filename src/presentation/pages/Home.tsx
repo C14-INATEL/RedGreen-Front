@@ -10,7 +10,7 @@ import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { UseDailyLogin } from '@application/hooks/useDailyLogin';
 import { useRanking } from '@application/hooks/useRanking';
-import { getToken, removeToken } from '@/presentation/ui/Cookies';
+import { getToken, removeToken } from '@/infrastructure/Cookies';
 import { paths } from '../../paths';
 
 const Home = () => {

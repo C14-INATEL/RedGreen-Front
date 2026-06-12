@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '../../config';
-import { getToken, removeToken } from '../../presentation/ui/Cookies';
+import { getToken, removeToken } from '../Cookies';
 
 export const apiClient = axios.create({
   baseURL: config.apiBaseUrl,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { apiClient } from '@infrastructure/http/client';
-import { removeToken } from '@/presentation/ui/Cookies';
+import { removeToken } from '@/infrastructure/Cookies';
 
 const EyeOpenIcon = (
   <svg

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { SessionExpiredModal } from './SessionExpiredModal';
-import { removeToken } from '@/presentation/ui/Cookies';
+import { removeToken } from '@/infrastructure/Cookies';
 import { paths } from '@/paths';
 
 export const SessionExpiredListener = () => {
