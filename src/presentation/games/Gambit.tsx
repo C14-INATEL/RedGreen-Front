@@ -40,6 +40,7 @@ import type {
 export type GambitProps = {
   initialSession?: GambitSession;
   onNewGame?: () => void;
+  onSessionEnd?: () => void;
 };
 
 type GambitVisualState = {
@@ -152,7 +153,11 @@ const applyPeekResultToVisualCards = (
   );
 };
 
-export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
+export const Gambit = ({
+  initialSession,
+  onNewGame,
+  onSessionEnd,
+}: GambitProps = {}) => {
   const [session, setSession] = useState<GambitSession | null>(
     () => initialSession ?? null
   );
@@ -181,9 +186,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     setIsPendingEventPresentationDelayed,
   ] = useState(false);
   const [isAutoCashOutPending, setIsAutoCashOutPending] = useState(false);
-  const [scoreFeedback, setScoreFeedback] = useState<GambitScoreFeedback | null>(
-    null
-  );
+  const [scoreFeedback, setScoreFeedback] =
+    useState<GambitScoreFeedback | null>(null);
   const revealAnimationLockedRef = useRef(false);
   const autoCashOutSessionIdRef = useRef<string | null>(null);
   const isAutoCashOutPendingRef = useRef(false);
@@ -204,7 +208,15 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
   const burnsRemaining = session ? getGambitBurnsRemaining(session) : 0;
   const cards = useMemo(() => {
     if (!session) {
-      return [];
+      return Array.from({ length: 25 }, (_, position) => ({
+        effect: null,
+        id: position,
+        locked: false,
+        points: null,
+        position,
+        previewed: false,
+        revealed: false,
+      }));
     }
 
     return applyPeekResultToVisualCards(
@@ -338,7 +350,9 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     scoreFeedbackTimeoutRef.current = window.setTimeout(() => {
       setScoreFeedback((currentFeedback) =>
-        currentFeedback?.id === scoreFeedbackIdRef.current ? null : currentFeedback
+        currentFeedback?.id === scoreFeedbackIdRef.current
+          ? null
+          : currentFeedback
       );
       scoreFeedbackTimeoutRef.current = null;
     }, SCORE_FEEDBACK_DURATION_MS);
@@ -384,6 +398,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
           return applyGambitCashOutResponseToSession(currentSession, response);
         });
+        onSessionEnd?.();
       })
       .catch((error) => {
         setActionErrorMessage(
@@ -397,7 +412,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
         isAutoCashOutPendingRef.current = false;
         setIsAutoCashOutPending(false);
       });
-  }, [isGameActionPending, revealedCinematicCard, session]);
+  }, [isGameActionPending, onSessionEnd, revealedCinematicCard, session]);
 
   useEffect(
     () => () => {
@@ -696,23 +711,6 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     }, PENDING_EVENT_PRESENTATION_DELAY_MS);
   };
 
-  if (!session) {
-    return (
-      <motion.div
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-[min(94vw,780px)]"
-        initial={{ opacity: 0, scale: 0.94, y: 28 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="bg-card px-5 py-4 text-center pixel-border-gold">
-          <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Nenhuma sessão ativa do Gambit encontrada.
-          </p>
-        </div>
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -791,7 +789,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
               </span>
 
               <span className="font-mono text-sm font-bold text-foreground">
-                {session.ManualFlipsCount}/{session.BurnSlotsAvailable}
+                {session?.ManualFlipsCount ?? 0}/
+                {session?.BurnSlotsAvailable ?? 0}
               </span>
             </div>
           </div>
@@ -860,16 +859,18 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
             </div>
           ) : null}
 
-          {isFinalGambitSessionStatus(session.Status) ? (
+          {session && isFinalGambitSessionStatus(session.Status) ? (
             <div className="mt-3 grid gap-3 bg-card px-4 py-3 pixel-border">
               <div className="flex items-center justify-between">
                 <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
                   Resultado
                 </span>
                 <span className="font-mono text-sm font-bold text-foreground">
-                  {(session.Result ?? session.AccumulatedPoints).toLocaleString(
-                    'pt-BR'
-                  )}
+                  {(
+                    session?.Result ??
+                    session?.AccumulatedPoints ??
+                    0
+                  ).toLocaleString('pt-BR')}
                 </span>
               </div>
 
