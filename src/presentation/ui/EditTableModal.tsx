@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '@infrastructure/http/client';
+import { COLOR_OPTIONS, type TableColor } from '../ui/TableColor';
+import type { SlotMachineFromApi } from '../games/SlotMachine';
 
 type EditTableModalProps = {
   TableId: number | null;
@@ -9,18 +11,12 @@ type EditTableModalProps = {
   TableMinimumChipsRequired: number;
   TableMinimumRerollValue: number;
   TableActive: boolean;
+  TableColor?: TableColor;
   OnClose: () => void;
   OnSuccess: (Message: string) => void;
   OnError: (Message: string) => void;
   OnTableDeleted: (TableId: number) => void;
-  OnTableUpdated: (UpdatedTable: {
-    SlotMachineId: number;
-    Name: string;
-    MinimumSpinValue: number;
-    MinimumChipsRequired: number;
-    MinimumRerollValue: number;
-    Active: boolean;
-  }) => void;
+  OnTableUpdated: (UpdatedTable: SlotMachineFromApi) => void;
 };
 
 type DeactivateConfirmModalProps = {
@@ -104,6 +100,7 @@ export const EditTableModal = ({
   TableMinimumChipsRequired,
   TableMinimumRerollValue,
   TableActive,
+  TableColor,
   OnClose,
   OnSuccess,
   OnError,
@@ -120,12 +117,17 @@ export const EditTableModal = ({
   const [MinimumRerollValue, SetMinimumRerollValue] = useState(
     String(TableMinimumRerollValue)
   );
+  const [SelectedColor, SetSelectedColor] = useState<TableColor>(
+    TableColor ?? 'White'
+  );
 
   const [ShowDeactivateConfirm, SetShowDeactivateConfirm] = useState(false);
   const [ActiveSessions, SetActiveSessions] = useState<
     { SlotSessionId: number }[]
   >([]);
   const [IsTogglingActive, SetIsTogglingActive] = useState(false);
+
+  const ActiveColor = COLOR_OPTIONS.find((C) => C.Value === SelectedColor)!;
 
   const HandleSave = async () => {
     if (TableId === null) {
@@ -166,6 +168,7 @@ export const EditTableModal = ({
         MinimumSpinValue: Number(MinimumSpinValue),
         MinimumChipsRequired: Number(MinimumChipsRequired),
         MinimumRerollValue: Number(MinimumRerollValue),
+        TableColor: SelectedColor,
       });
 
       OnTableUpdated(Response.data);
@@ -193,9 +196,7 @@ export const EditTableModal = ({
         { SlotSessionId: number; Status: string }[]
       >(`/slot-machines/${TableId}/sessions`);
       const InProgress = Response.data.filter((S) => S.Status === 'InProgress');
-
       SetActiveSessions(InProgress);
-
       if (InProgress.length > 0) {
         SetShowDeactivateConfirm(true);
         SetIsTogglingActive(false);
@@ -213,7 +214,6 @@ export const EditTableModal = ({
     SessionsToCashOut: { SlotSessionId: number }[]
   ) => {
     if (TableId === null) return;
-
     SetIsTogglingActive(true);
     try {
       if (SessionsToCashOut.length > 0) {
@@ -225,18 +225,17 @@ export const EditTableModal = ({
           )
         );
       }
-
       await apiClient.patch(`/slot/machine/${TableId}/deactivate`);
-
       OnTableUpdated({
         SlotMachineId: TableId,
         Name,
+        Description: 'Mesa criada pelo sistema',
         MinimumSpinValue: Number(MinimumSpinValue),
         MinimumChipsRequired: Number(MinimumChipsRequired),
         MinimumRerollValue: Number(MinimumRerollValue),
         Active: !TableActive,
+        TableColor: SelectedColor,
       });
-
       OnSuccess(
         TableActive
           ? 'Mesa desativada com sucesso!'
@@ -257,7 +256,6 @@ export const EditTableModal = ({
       OnError('Mesa inválida.');
       return;
     }
-
     try {
       await apiClient.delete(`/slot/machine/${TableId}`);
       OnTableDeleted(TableId);
@@ -281,12 +279,15 @@ export const EditTableModal = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.97 }}
           transition={{ duration: 0.3 }}
-          className="w-full max-w-md border-[4px] border-[#FFD700] bg-[#1a1500] p-6 text-white shadow-[8px_8px_0px_#000]"
-          style={{ imageRendering: 'pixelated' }}
+          className="w-full max-w-md border-[4px] bg-[#1a1500] p-6 text-white shadow-[8px_8px_0px_#000] transition-colors duration-300"
+          style={{ imageRendering: 'pixelated', borderColor: ActiveColor.Hex }}
         >
           <h2
-            className="mb-1 text-center text-[12px] uppercase text-[#FFD700]"
-            style={{ fontFamily: '"Press Start 2P", monospace' }}
+            className="mb-1 text-center text-[12px] uppercase transition-colors duration-300"
+            style={{
+              fontFamily: '"Press Start 2P", monospace',
+              color: ActiveColor.Hex,
+            }}
           >
             Editar Mesa
           </h2>
@@ -298,6 +299,7 @@ export const EditTableModal = ({
           </p>
 
           <div className="space-y-3 mb-6">
+            {/* Nome */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label
@@ -321,6 +323,7 @@ export const EditTableModal = ({
               />
             </div>
 
+            {/* Numéricos */}
             {[
               {
                 Label: 'Aposta mínima',
@@ -352,13 +355,77 @@ export const EditTableModal = ({
                 />
               </div>
             ))}
+
+            {/* Cor da mesa */}
+            <div>
+              <label
+                className="block text-[8px] uppercase text-white/50 mb-3"
+                style={{ fontFamily: '"Press Start 2P", monospace' }}
+              >
+                Cor da mesa
+              </label>
+
+              <div className="flex items-center gap-3">
+                {COLOR_OPTIONS.map((C) => {
+                  const IsSelected = SelectedColor === C.Value;
+                  return (
+                    <button
+                      key={C.Value}
+                      title={C.Label}
+                      onClick={() => SetSelectedColor(C.Value)}
+                      className="relative flex-1 h-8 border-2 transition-all duration-200"
+                      style={{
+                        background: C.Hex,
+                        borderColor: IsSelected ? '#fff' : 'transparent',
+                        boxShadow: IsSelected
+                          ? `0 0 10px 3px ${C.Hex}88, 0 0 0 1px #fff`
+                          : `0 0 6px 1px ${C.Hex}44`,
+                        opacity: IsSelected ? 1 : 0.45,
+                      }}
+                    >
+                      {IsSelected && (
+                        <span
+                          className="absolute inset-0 flex items-center justify-center text-black text-[8px]"
+                          style={{ fontFamily: '"Press Start 2P", monospace' }}
+                        >
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p
+                className="mt-2 text-center text-[7px] uppercase transition-colors duration-200"
+                style={{
+                  fontFamily: '"Press Start 2P", monospace',
+                  color: ActiveColor.Hex,
+                }}
+              >
+                {ActiveColor.Label}
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">
             <button
               onClick={HandleSave}
-              className="w-full border-2 border-[#FFD700] bg-[#FFD700]/20 py-3 text-[10px] uppercase text-[#FFD700] hover:bg-[#FFD700]/30 transition-colors"
-              style={{ fontFamily: '"Press Start 2P", monospace' }}
+              className="w-full border-2 py-3 text-[10px] uppercase transition-colors"
+              style={{
+                fontFamily: '"Press Start 2P", monospace',
+                borderColor: ActiveColor.Hex,
+                color: ActiveColor.Hex,
+                background: `${ActiveColor.Hex}22`,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background =
+                  `${ActiveColor.Hex}44`;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background =
+                  `${ActiveColor.Hex}22`;
+              }}
             >
               Salvar
             </button>

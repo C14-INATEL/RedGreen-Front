@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { type TableColor, TABLE_COLOR_MAP } from '../ui/TableColor';
 
 type SlotMachineCardProps = {
   SlotMachineId: number;
@@ -9,9 +10,12 @@ type SlotMachineCardProps = {
   IsLocked: boolean;
   IsAdmin: boolean;
   IsActive: boolean;
+  TableColor?: TableColor;
   OnClick: () => void;
   OnEdit: () => void;
 };
+
+const DEFAULT_COLOR = TABLE_COLOR_MAP.White;
 
 export const SlotMachineCard = ({
   Name,
@@ -23,20 +27,45 @@ export const SlotMachineCard = ({
   OnClick,
   OnEdit,
   IsActive,
+  TableColor,
 }: SlotMachineCardProps) => {
+  const color =
+    TableColor && TABLE_COLOR_MAP[TableColor]
+      ? TABLE_COLOR_MAP[TableColor]
+      : DEFAULT_COLOR;
+
+  const isInteractive = !IsLocked && IsActive;
+
   return (
     <motion.div
-      whileHover={{ scale: IsLocked ? 1 : 1.03 }}
+      whileHover={isInteractive ? { scale: 1.03 } : {}}
       transition={{ duration: 0.15 }}
-      className={`relative w-52 border-[3px] p-4 text-center shadow-[4px_4px_0px_#000] transition-all
-        ${
-          IsLocked && !IsAdmin
-            ? 'cursor-not-allowed border-white/10 bg-card/30 opacity-40'
-            : (IsLocked && IsAdmin) || !IsActive
-              ? 'cursor-not-allowed border-white/10 bg-card/30'
-              : 'cursor-pointer border-[#FFD700] bg-card/60 backdrop-blur-sm hover:shadow-[6px_6px_0px_#000]'
-        }`}
-      style={{ imageRendering: 'pixelated' }}
+      className="relative w-52 border-[3px] p-4 text-center shadow-[4px_4px_0px_#000] transition-all duration-200"
+      style={{
+        imageRendering: 'pixelated',
+        cursor: isInteractive ? 'pointer' : 'not-allowed',
+        borderColor: isInteractive ? color.border : 'rgba(255,255,255,0.10)',
+        background: isInteractive
+          ? 'rgba(20,20,30,0.60)'
+          : 'rgba(20,20,30,0.30)',
+        opacity: IsLocked && !IsAdmin ? 0.4 : 1,
+        backdropFilter: 'blur(4px)',
+      }}
+      whileFocus={{}}
+      onMouseEnter={(e) => {
+        if (!isInteractive) return;
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = color.hex;
+        el.style.boxShadow = `0 0 18px 4px ${color.glow}, 6px 6px 0px #000`;
+        el.style.background = color.bg;
+      }}
+      onMouseLeave={(e) => {
+        if (!isInteractive) return;
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = color.border;
+        el.style.boxShadow = '4px 4px 0px #000';
+        el.style.background = 'rgba(20,20,30,0.60)';
+      }}
       onClick={OnClick}
     >
       <h2
@@ -117,8 +146,19 @@ export const SlotMachineCard = ({
 
       {IsAdmin && (
         <button
-          className="relative z-10 mt-4 w-full border border-[#FFD700] px-2 py-2 text-[8px] uppercase text-[#FFD700] hover:bg-[#FFD700]/20 transition-colors opacity-90"
-          style={{ fontFamily: '"Press Start 2P", monospace' }}
+          className="relative z-10 mt-4 w-full border px-2 py-2 text-[8px] uppercase transition-colors opacity-90"
+          style={{
+            fontFamily: '"Press Start 2P", monospace',
+            borderColor: color.hex,
+            color: color.hex,
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background =
+              `${color.hex}33`;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = 'transparent';
+          }}
           onClick={(e) => {
             e.stopPropagation();
             OnEdit();

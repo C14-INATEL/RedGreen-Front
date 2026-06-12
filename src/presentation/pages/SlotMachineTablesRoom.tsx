@@ -12,6 +12,7 @@ import { ResultModal } from '../ui/ResultModal';
 import { SessionWarningModal } from '../ui/SessionWarningModal';
 import { SlotMachineCard } from '../ui/SlotMachineCard';
 import type { SlotMachineFromApi } from '../games/SlotMachine';
+import type { TableColor } from '../ui/TableColor';
 
 import CassinoLogo from '../ui/CassinoLogo';
 
@@ -60,6 +61,10 @@ export const SlotMachineTablesRoom = () => {
   const [ModalMessage, SetModalMessage] = useState('');
 
   const [ModalType, SetModalType] = useState<'success' | 'error'>('success');
+
+  const [SelectedTableColor, SetSelectedTableColor] = useState<
+    TableColor | undefined
+  >();
 
   useEffect(() => {
     const FetchTables = async () => {
@@ -151,6 +156,7 @@ export const SlotMachineTablesRoom = () => {
                 MinimumSpinValue={TableItem.MinimumSpinValue}
                 MinimumChipsRequired={TableItem.MinimumChipsRequired}
                 MinimumRerollValue={TableItem.MinimumRerollValue}
+                TableColor={TableItem.TableColor}
                 IsLocked={IsLocked}
                 IsAdmin={IsAdmin}
                 OnClick={async () => {
@@ -185,6 +191,7 @@ export const SlotMachineTablesRoom = () => {
                   SetSelectedTableId(TableItem.SlotMachineId);
                   SetSelectedTableName(TableItem.Name);
                   SetSelectedTableMinimumSpinValue(TableItem.MinimumSpinValue);
+                  SetSelectedTableColor(TableItem.TableColor);
                   SetSelectedTableMinimumChipsRequired(
                     TableItem.MinimumChipsRequired
                   );
@@ -235,6 +242,7 @@ export const SlotMachineTablesRoom = () => {
           TableMinimumSpinValue={SelectedTableMinimumSpinValue}
           TableMinimumChipsRequired={SelectedTableMinimumChipsRequired}
           TableMinimumRerollValue={SelectedTableMinimumRerollValue}
+          TableColor={SelectedTableColor}
           TableActive={SelectedTableActive}
           OnClose={() => SetShowEditModal(false)}
           OnTableDeleted={(TableId) =>
