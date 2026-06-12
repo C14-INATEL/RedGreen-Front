@@ -12,7 +12,7 @@ import Login from '../src/presentation/pages/Login';
 
 const mockSetToken = jest.fn();
 
-jest.mock('@ui/Cookies', () => ({
+jest.mock('@/infrastructure/Cookies', () => ({
   setToken: (token: string) => mockSetToken(token),
 }));
 
