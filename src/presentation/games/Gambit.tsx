@@ -108,11 +108,20 @@ const mergeSelectedPositions = (
   return [...selectedPositions];
 };
 
+const getEffectTitle = (effect: GambitCardEffect) =>
+  getGambitEffectPresentation(effect).title;
+
 const formatEffectName = (effect: GambitCardEffect) =>
-  getGambitEffectPresentation(effect).title.toUpperCase();
+  getEffectTitle(effect).toUpperCase();
 
 const formatScoreFeedbackDelta = (delta: number) =>
   `${delta > 0 ? '+' : ''}${delta.toLocaleString('pt-BR')}`;
+
+const formatPeekPoints = (points: number) =>
+  `${points > 0 ? '+' : ''}${points}`;
+
+const formatPeekScore = (points: number | null) =>
+  formatPeekPoints(points ?? 0);
 
 const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   if (!peekResult) {
@@ -124,12 +133,15 @@ const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   }
 
   if (peekResult.Effect) {
-    return `Carta ${peekResult.Position}: ${formatEffectName(peekResult.Effect)}`;
+    const pointsLabel =
+      peekResult.Points == null ? null : formatPeekPoints(peekResult.Points);
+
+    return `Carta ${peekResult.Position}: ${getEffectTitle(
+      peekResult.Effect
+    )}${pointsLabel ? ` (${pointsLabel})` : ''}`;
   }
 
-  const points = peekResult.Points ?? 0;
-
-  return `Carta ${peekResult.Position}: ${points > 0 ? '+' : ''}${points}`;
+  return `Carta ${peekResult.Position}: ${formatPeekScore(peekResult.Points)}`;
 };
 
 const applyPeekResultToVisualCards = (
@@ -181,9 +193,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     setIsPendingEventPresentationDelayed,
   ] = useState(false);
   const [isAutoCashOutPending, setIsAutoCashOutPending] = useState(false);
-  const [scoreFeedback, setScoreFeedback] = useState<GambitScoreFeedback | null>(
-    null
-  );
+  const [scoreFeedback, setScoreFeedback] =
+    useState<GambitScoreFeedback | null>(null);
   const revealAnimationLockedRef = useRef(false);
   const autoCashOutSessionIdRef = useRef<string | null>(null);
   const isAutoCashOutPendingRef = useRef(false);
@@ -275,7 +286,6 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     Boolean(pendingEvent) ||
     isRevealAnimationLocked ||
     revealedCinematicCard !== null ||
-    visualState.previewedCardId !== null ||
     session.Status !== 'InProgress' ||
     (!isSelectingInteraction && burnsRemaining <= 0);
 
@@ -338,7 +348,9 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     scoreFeedbackTimeoutRef.current = window.setTimeout(() => {
       setScoreFeedback((currentFeedback) =>
-        currentFeedback?.id === scoreFeedbackIdRef.current ? null : currentFeedback
+        currentFeedback?.id === scoreFeedbackIdRef.current
+          ? null
+          : currentFeedback
       );
       scoreFeedbackTimeoutRef.current = null;
     }, SCORE_FEEDBACK_DURATION_MS);
@@ -503,7 +515,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     if (
       !session ||
       isGameActionPending ||
-      previewedCardId !== null ||
+      (previewedCardId !== null && previewedCardId !== cardId) ||
       revealedCinematicCard !== null ||
       revealAnimationLockedRef.current ||
       pendingEvent ||
@@ -522,6 +534,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     setActionErrorMessage(null);
     setLastInteractionResult(null);
+    setPreviewedCardId(null);
     setPendingEventSelection(emptyPendingEventSelection);
     clearPendingEventPresentationDelay();
     lockRevealAnimation();
@@ -544,6 +557,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
         setIsPendingEventPresentationDelayed(false);
       }
     } catch (error) {
+      unlockRevealAnimation();
       setActionErrorMessage(
         getGambitActionErrorMessage(
           error,
@@ -570,6 +584,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
   const handlePreviewClose = () => {
     setPreviewedCardId(null);
+    setLastInteractionResult(null);
   };
 
   const handlePendingEventRewardCardHover = (card: RewardCardOption) => {

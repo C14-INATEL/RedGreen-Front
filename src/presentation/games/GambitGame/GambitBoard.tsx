@@ -196,6 +196,7 @@ export const GambitBoard = ({
       }
 
       const activeIds = new Set<number>();
+      const hasPreviewedCard = cardsRef.current.some((card) => card.previewed);
 
       cardsRef.current.forEach((card, cardIndex) => {
         const row = Math.floor(cardIndex / GAMBIT_GRID_SIZE);
@@ -205,8 +206,11 @@ export const GambitBoard = ({
 
         activeIds.add(card.id);
 
+        const disabledByPreview = hasPreviewedCard && !card.previewed;
+
         const nextProps = {
-          disabled: interactionLockedRef.current || card.locked,
+          disabled:
+            interactionLockedRef.current || card.locked || disabledByPreview,
           effect: card.effect,
           locked: card.locked,
           onClick: () => {
