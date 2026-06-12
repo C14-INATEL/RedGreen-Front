@@ -6,12 +6,19 @@ import { GambitBoard } from './GambitGame/GambitBoard';
 import { GambitRevealCinematic } from './GambitGame/GambitRevealCinematic';
 import {
   burnActiveGambitCard,
+  cashOutActiveGambitSession,
   getGambitResolveEffectPeekResult,
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
   type GambitGameplaySource,
 } from './GambitGame/gambitGameplayClient';
+import {
+  applyGambitCashOutResponseToSession,
+  getGambitBurnsRemaining,
+  isFinalGambitSessionStatus,
+  shouldAutoCashOutGambitSession,
+} from './GambitGame/gambitAutoCashOut';
 import { getGambitEffectPresentation } from './GambitGame/gambitEffectPresentation';
 import {
   mapBackendGambitCardToViewModel,
@@ -34,6 +41,7 @@ import type {
 export type GambitProps = {
   initialSession?: GambitSession;
   gameplaySource?: GambitGameplaySource;
+  onNewGame?: () => void;
 };
 
 type GambitVisualState = {
@@ -59,8 +67,7 @@ const emptyPendingEventSelection: PendingEventSelection = {
 const PENDING_EVENT_PRESENTATION_DELAY_MS = 350;
 const GAMBIT_GAMEPLAY_ROUTES_NOT_FOUND_MESSAGE =
   'Rotas de gameplay do Gambit não encontradas. Verifique se o backend está na branch feat/gambit-game-logic.';
-const GAMBIT_SESSION_EXPIRED_MESSAGE =
-  'Sessão expirada. Faça login novamente.';
+const GAMBIT_SESSION_EXPIRED_MESSAGE = 'Sessão expirada. Faça login novamente.';
 
 const getGambitActionErrorMessage = (
   error: unknown,
@@ -81,13 +88,6 @@ const getGambitSessionGridSnapshot = (
   session: GambitSession | null
 ): GambitGridSnapshot | null =>
   session?.Grid ?? session?.CurrentGridSnapshot ?? null;
-
-const getBurnsRemaining = (session: GambitSession) =>
-  Math.max(
-    0,
-    session.BurnsRemaining ??
-      session.BurnSlotsAvailable - session.ManualFlipsCount
-  );
 
 const mergeSelectedPositions = (
   pendingInteraction: GambitPendingInteraction | null,
@@ -148,6 +148,7 @@ const applyPeekResultToVisualCards = (
 export const Gambit = ({
   gameplaySource = 'backend',
   initialSession,
+  onNewGame,
 }: GambitProps = {}) => {
   const [session, setSession] = useState<GambitSession | null>(
     () => initialSession ?? null
@@ -174,7 +175,10 @@ export const Gambit = ({
     isPendingEventPresentationDelayed,
     setIsPendingEventPresentationDelayed,
   ] = useState(false);
+  const [isAutoCashOutPending, setIsAutoCashOutPending] = useState(false);
   const revealAnimationLockedRef = useRef(false);
+  const autoCashOutSessionIdRef = useRef<string | null>(null);
+  const isAutoCashOutPendingRef = useRef(false);
   const pendingEventResolutionRef = useRef<PendingEventResolution | null>(null);
   const pendingEventPresentationDelayTimeoutRef = useRef<number | null>(null);
   const snapshot = getGambitSessionGridSnapshot(session);
@@ -185,7 +189,7 @@ export const Gambit = ({
       mergeSelectedPositions(pendingInteraction, pendingInteractionSelections),
     [pendingInteraction, pendingInteractionSelections]
   );
-  const burnsRemaining = session ? getBurnsRemaining(session) : 0;
+  const burnsRemaining = session ? getGambitBurnsRemaining(session) : 0;
   const cards = useMemo(() => {
     if (!session) {
       return [];
@@ -232,6 +236,7 @@ export const Gambit = ({
   const isBoardLocked =
     !session ||
     isGameActionPending ||
+    isAutoCashOutPending ||
     Boolean(pendingEvent) ||
     isRevealAnimationLocked ||
     revealedCinematicCard !== null ||
@@ -242,6 +247,55 @@ export const Gambit = ({
   useEffect(() => {
     setSession(initialSession ?? null);
   }, [initialSession]);
+
+  useEffect(() => {
+    if (
+      !session ||
+      isGameActionPending ||
+      isAutoCashOutPendingRef.current ||
+      revealedCinematicCard ||
+      !shouldAutoCashOutGambitSession(session)
+    ) {
+      return;
+    }
+
+    const sessionId = String(session.GambitSessionId);
+
+    if (autoCashOutSessionIdRef.current === sessionId) {
+      return;
+    }
+
+    autoCashOutSessionIdRef.current = sessionId;
+    isAutoCashOutPendingRef.current = true;
+    setIsAutoCashOutPending(true);
+    setActionErrorMessage(null);
+
+    cashOutActiveGambitSession()
+      .then((response) => {
+        setSession((currentSession) => {
+          if (
+            !currentSession ||
+            String(currentSession.GambitSessionId) !== sessionId
+          ) {
+            return currentSession;
+          }
+
+          return applyGambitCashOutResponseToSession(currentSession, response);
+        });
+      })
+      .catch((error) => {
+        setActionErrorMessage(
+          getGambitActionErrorMessage(
+            error,
+            'Nao foi possivel finalizar a partida do Gambit.'
+          )
+        );
+      })
+      .finally(() => {
+        isAutoCashOutPendingRef.current = false;
+        setIsAutoCashOutPending(false);
+      });
+  }, [isGameActionPending, revealedCinematicCard, session]);
 
   useEffect(
     () => () => {
@@ -626,6 +680,14 @@ export const Gambit = ({
             </div>
           ) : null}
 
+          {isAutoCashOutPending ? (
+            <div className="mt-3 bg-card px-4 py-3 text-center pixel-border">
+              <span className="font-mono text-xs font-bold uppercase text-cassino-gold">
+                Finalizando partida...
+              </span>
+            </div>
+          ) : null}
+
           {visualState.previewedCardId !== null ? (
             <div className="mt-3">
               <button
@@ -638,14 +700,28 @@ export const Gambit = ({
             </div>
           ) : null}
 
-          {session.Status === 'Finished' ? (
-            <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
-              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-                Resultado
-              </span>
-              <span className="font-mono text-sm font-bold text-foreground">
-                {(session.Result ?? 0).toLocaleString('pt-BR')}
-              </span>
+          {isFinalGambitSessionStatus(session.Status) ? (
+            <div className="mt-3 grid gap-3 bg-card px-4 py-3 pixel-border">
+              <div className="flex items-center justify-between">
+                <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                  Resultado
+                </span>
+                <span className="font-mono text-sm font-bold text-foreground">
+                  {(session.Result ?? session.AccumulatedPoints).toLocaleString(
+                    'pt-BR'
+                  )}
+                </span>
+              </div>
+
+              {onNewGame ? (
+                <button
+                  className="w-full bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
+                  onClick={onNewGame}
+                  type="button"
+                >
+                  Nova partida
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>

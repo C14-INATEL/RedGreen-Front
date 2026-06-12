@@ -1,6 +1,6 @@
 import { readEnv } from '@infrastructure/env';
 import * as backendApi from './gambitApi';
-import * as mockApi from './gambitSandboxApi';
+import * as visualMockApi from './gambitVisualMockApi';
 import type {
   CreateGambitSessionParams,
   GambitCashOutResponse,
@@ -53,11 +53,11 @@ export const getActiveGambitGameplaySource = () => activeGameplaySource;
 
 export const resetGambitGameplayClient = () => {
   activeGameplaySource = null;
-  mockApi.resetGambitSandboxSession();
+  visualMockApi.resetGambitVisualMockSession();
 };
 
 const getActiveApi = () =>
-  activeGameplaySource === 'mock' ? mockApi : backendApi;
+  activeGameplaySource === 'mock' ? visualMockApi : backendApi;
 
 export const fetchActiveGambitSession = async () => {
   const mode = getConfiguredGambitGameplayMode();
@@ -67,7 +67,7 @@ export const fetchActiveGambitSession = async () => {
 
     return {
       mode,
-      session: await mockApi.fetchActiveGambitSession(),
+      session: await visualMockApi.fetchActiveGambitSession(),
       source: 'mock' as const,
     };
   }

@@ -50,6 +50,7 @@ const GAMBIT_CARD_EFFECT_MAP: Record<
 
 const GAMBIT_STATUS_MAP: Record<BackendGambitStatus, GambitStatusViewModel> = {
   CashedOut: 'cashed-out',
+  Completed: 'completed',
   Finished: 'finished',
   InProgress: 'in-progress',
 };

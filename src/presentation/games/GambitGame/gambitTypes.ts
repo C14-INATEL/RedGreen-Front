@@ -1,6 +1,10 @@
 export type GambitId = number | string;
 
-export type GambitSessionStatus = 'InProgress' | 'Finished' | 'CashedOut';
+export type GambitSessionStatus =
+  | 'InProgress'
+  | 'Finished'
+  | 'CashedOut'
+  | 'Completed';
 
 export type GambitCardEffect =
   | 'DOBRO_DE_POTASSIO'
@@ -134,7 +138,11 @@ export type BackendGambitPendingInteraction = GambitPendingInteraction;
 export type BackendGambitCurrentGridSnapshot = GambitGridSnapshot;
 export type BackendGambitSession = GambitSession;
 
-export type GambitStatusViewModel = 'in-progress' | 'finished' | 'cashed-out';
+export type GambitStatusViewModel =
+  | 'in-progress'
+  | 'finished'
+  | 'cashed-out'
+  | 'completed';
 
 export type GambitCardEffectViewModel =
   | 'dobro-de-potassio'

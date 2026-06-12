@@ -48,11 +48,11 @@ jest.mock('../src/presentation/games/GambitGame/gambitApi', () => ({
     mockBackendResolveEvent(...args),
 }));
 
-jest.mock('../src/presentation/games/GambitGame/gambitSandboxApi', () => ({
+jest.mock('../src/presentation/games/GambitGame/gambitVisualMockApi', () => ({
   burnActiveGambitCard: (...args: unknown[]) => mockMockBurn(...args),
   cashOutActiveGambitSession: (...args: unknown[]) => mockMockCashOut(...args),
   fetchActiveGambitSession: (...args: unknown[]) => mockMockFetch(...args),
-  resetGambitSandboxSession: (...args: unknown[]) => mockMockReset(...args),
+  resetGambitVisualMockSession: (...args: unknown[]) => mockMockReset(...args),
   resolveActiveGambitEffect: (...args: unknown[]) =>
     mockMockResolveEffect(...args),
   resolveActiveGambitEvent: (...args: unknown[]) =>
@@ -147,7 +147,7 @@ describe('GambitGameplayClient', () => {
     expect(mockMockResolveEffect).not.toHaveBeenCalled();
   });
 
-  it('uses gambitSandboxApi only in explicit mock mode', async () => {
+  it('uses the visual mock API only in explicit mock mode', async () => {
     const mockSession = createGambitApiSession({
       GambitSessionId: 'mock-session',
     });

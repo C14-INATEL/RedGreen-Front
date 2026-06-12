@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { readEnv } from '@infrastructure/env';
 import { paths } from '../../paths';
 import { Gambit } from '../games/Gambit';
 import {
+  cashOutActiveGambitSession,
   createGambitSession,
   fetchActiveGambitSession,
   fetchGambitTables,
@@ -14,6 +15,8 @@ import type { GambitApiSession } from '../games/GambitGame/gambitApi';
 import type { GambitTable } from '../games/GambitGame/gambitTypes';
 
 const DEFAULT_GAMBIT_CARDS_PURCHASED = 5;
+const GAMBIT_OPEN_SESSION_CONFLICT_MESSAGE =
+  'Já existe uma sessão Gambit aberta. Continue ou finalize a sessão atual.';
 
 const readDefaultTableId = () => {
   const value = Number(readEnv('VITE_GAMBIT_DEFAULT_TABLE_ID'));
@@ -50,8 +53,15 @@ const getRoomErrorMessage = (error: unknown) => {
     return 'Rotas de gameplay do Gambit não encontradas. Verifique se o backend está na branch feat/gambit-game-logic.';
   }
 
+  if (isAxiosStatus(error, 409)) {
+    return GAMBIT_OPEN_SESSION_CONFLICT_MESSAGE;
+  }
+
   return 'Não foi possível carregar o Gambit agora.';
 };
+
+const isLoadableActiveSession = (session: GambitApiSession) =>
+  session.Status === 'InProgress' || session.Status === 'Finished';
 
 const chooseDefaultTable = (tables: GambitTable[]) => {
   const defaultTableId = readDefaultTableId();
@@ -94,7 +104,70 @@ export const GambitRoom = () => {
     [selectedTableId, tables]
   );
 
-  const loadRoom = async () => {
+  const applyTablesToStartPanel = useCallback((gambitTables: GambitTable[]) => {
+    const defaultTable = chooseDefaultTable(gambitTables);
+
+    setTables(gambitTables);
+    setSelectedTableId(
+      defaultTable ? Number(defaultTable.GambitTableId) : null
+    );
+
+    if (defaultTable) {
+      setCardsPurchased(
+        Math.max(
+          defaultTable.MinimumCardsPurchased ?? 1,
+          Math.min(
+            DEFAULT_GAMBIT_CARDS_PURCHASED,
+            defaultTable.MaxCardsPurchased
+          )
+        )
+      );
+    }
+  }, []);
+
+  const loadActiveSessionIntoGame = useCallback(
+    (activeSession: GambitApiSession, source: GambitGameplaySource) => {
+      setGameplaySource(source);
+      setSession(activeSession);
+      setTables([]);
+    },
+    []
+  );
+
+  const createSessionAndLoadActive = useCallback(
+    async (params: { CardsPurchased: number; GambitTableId: number }) => {
+      await createGambitSession(params);
+
+      const activeSessionResult = await fetchActiveGambitSession();
+
+      setGameplaySource(activeSessionResult.source);
+      setSession(activeSessionResult.session);
+    },
+    []
+  );
+
+  const resolveOpenSessionBeforeCreate = useCallback(
+    async (params: { CardsPurchased: number; GambitTableId: number }) => {
+      const activeSessionResult = await fetchActiveGambitSession();
+      const activeSession = activeSessionResult.session;
+
+      if (activeSession?.Status === 'InProgress') {
+        loadActiveSessionIntoGame(activeSession, activeSessionResult.source);
+        return true;
+      }
+
+      if (activeSession?.Status === 'Finished') {
+        await cashOutActiveGambitSession();
+        await createSessionAndLoadActive(params);
+        return true;
+      }
+
+      return false;
+    },
+    [createSessionAndLoadActive, loadActiveSessionIntoGame]
+  );
+
+  const loadRoom = useCallback(async () => {
     const token = getAuthToken();
 
     setHasToken(Boolean(token));
@@ -112,44 +185,31 @@ export const GambitRoom = () => {
 
       setGameplaySource(activeSessionResult.source);
 
-      if (activeSessionResult.session) {
-        setSession(activeSessionResult.session);
-        setTables([]);
+      if (
+        activeSessionResult.session &&
+        isLoadableActiveSession(activeSessionResult.session)
+      ) {
+        loadActiveSessionIntoGame(
+          activeSessionResult.session,
+          activeSessionResult.source
+        );
         setIsLoading(false);
         return;
       }
 
-      const gambitTables = await fetchGambitTables();
-      const defaultTable = chooseDefaultTable(gambitTables);
-
       setSession(null);
-      setTables(gambitTables);
-      setSelectedTableId(
-        defaultTable ? Number(defaultTable.GambitTableId) : null
-      );
-
-      if (defaultTable) {
-        setCardsPurchased(
-          Math.max(
-            defaultTable.MinimumCardsPurchased ?? 1,
-            Math.min(
-              DEFAULT_GAMBIT_CARDS_PURCHASED,
-              defaultTable.MaxCardsPurchased
-            )
-          )
-        );
-      }
+      applyTablesToStartPanel(await fetchGambitTables());
     } catch (error) {
       setErrorMessage(getRoomErrorMessage(error));
       setSession(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [applyTablesToStartPanel, loadActiveSessionIntoGame]);
 
   useEffect(() => {
     void loadRoom();
-  }, []);
+  }, [loadRoom]);
 
   const handleCreateSession = async () => {
     if (selectedTableId == null) {
@@ -160,20 +220,61 @@ export const GambitRoom = () => {
     setIsCreatingSession(true);
     setErrorMessage(null);
 
+    const createParams = {
+      CardsPurchased: cardsPurchased,
+      GambitTableId: selectedTableId,
+    };
+
     try {
-      await createGambitSession({
-        CardsPurchased: cardsPurchased,
-        GambitTableId: selectedTableId,
-      });
+      const handledOpenSession =
+        await resolveOpenSessionBeforeCreate(createParams);
 
-      const activeSessionResult = await fetchActiveGambitSession();
+      if (handledOpenSession) {
+        return;
+      }
 
-      setGameplaySource(activeSessionResult.source);
-      setSession(activeSessionResult.session);
+      await createSessionAndLoadActive(createParams);
     } catch (error) {
+      if (isAxiosStatus(error, 409)) {
+        try {
+          const handledOpenSession =
+            await resolveOpenSessionBeforeCreate(createParams);
+
+          if (handledOpenSession) {
+            return;
+          }
+
+          await createSessionAndLoadActive(createParams);
+          return;
+        } catch {
+          setErrorMessage(GAMBIT_OPEN_SESSION_CONFLICT_MESSAGE);
+          return;
+        }
+      }
+
       setErrorMessage(getRoomErrorMessage(error));
     } finally {
       setIsCreatingSession(false);
+    }
+  };
+
+  const handleNewGame = async () => {
+    setSession(null);
+    setErrorMessage(null);
+
+    if (tables.length) {
+      applyTablesToStartPanel(tables);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      applyTablesToStartPanel(await fetchGambitTables());
+    } catch (error) {
+      setErrorMessage(getRoomErrorMessage(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -216,7 +317,13 @@ export const GambitRoom = () => {
             </p>
           </div>
         ) : session ? (
-          <Gambit gameplaySource={gameplaySource} initialSession={session} />
+          <Gambit
+            gameplaySource={gameplaySource}
+            initialSession={session}
+            onNewGame={() => {
+              void handleNewGame();
+            }}
+          />
         ) : (
           <div className="w-[min(94vw,520px)] bg-card px-6 py-5 pixel-border-gold">
             <h1 className="font-display text-sm font-bold uppercase tracking-widest text-cassino-gold">

@@ -40,6 +40,7 @@ type MockRewardChoiceModalProps = {
 };
 
 const mockBurnActiveGambitCard = jest.fn();
+const mockCashOutActiveGambitSession = jest.fn();
 const mockFetchActiveGambitSession = jest.fn();
 const mockResolveActiveGambitEffect = jest.fn();
 const mockResolveActiveGambitEvent = jest.fn();
@@ -48,6 +49,8 @@ const mockGambitBoard = jest.fn();
 jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
   burnActiveGambitCard: (...args: unknown[]) =>
     mockBurnActiveGambitCard(...args),
+  cashOutActiveGambitSession: (...args: unknown[]) =>
+    mockCashOutActiveGambitSession(...args),
   fetchActiveGambitSession: (...args: unknown[]) =>
     mockFetchActiveGambitSession(...args),
   getGambitResolveEffectPeekResult: (response: GambitResolveEffectResponse) =>
@@ -232,6 +235,7 @@ const createSessionAfterBurn = (
 describe('Gambit backend gameplay flow', () => {
   beforeEach(() => {
     mockBurnActiveGambitCard.mockReset();
+    mockCashOutActiveGambitSession.mockReset();
     mockFetchActiveGambitSession.mockReset();
     mockGambitBoard.mockClear();
     mockResolveActiveGambitEffect.mockReset();
@@ -399,5 +403,40 @@ describe('Gambit backend gameplay flow', () => {
         ]),
       })
     );
+  });
+
+  it('auto cashes out once when the backend marks the session as finished', async () => {
+    const onNewGame = jest.fn();
+    const exhaustedSession = createGambitApiSession({
+      AccumulatedPoints: 80,
+      BurnSlotsAvailable: 25,
+      BurnsRemaining: 0,
+      ManualFlipsCount: 25,
+      Status: 'Finished',
+    });
+
+    mockCashOutActiveGambitSession.mockResolvedValue({
+      Message: 'ok',
+      Result: 80,
+    });
+
+    render(
+      createElement(Gambit, {
+        initialSession: exhaustedSession,
+        onNewGame,
+      })
+    );
+
+    await waitFor(() => {
+      expect(mockCashOutActiveGambitSession).toHaveBeenCalledTimes(1);
+    });
+
+    expect(await screen.findByText('Resultado')).toBeInTheDocument();
+    expect(screen.getAllByText('80')).toHaveLength(2);
+    expect(mockCashOutActiveGambitSession).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nova partida' }));
+
+    expect(onNewGame).toHaveBeenCalledTimes(1);
   });
 });

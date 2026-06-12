@@ -93,6 +93,7 @@ export type GambitCashOutResponse = {
   Session?: GambitApiSession;
   finalBalance?: number;
   message?: string;
+  reward?: number;
 };
 
 export type ResolveActiveGambitEventSelection = {
