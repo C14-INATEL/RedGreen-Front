@@ -1,5 +1,5 @@
-import { getGambitEffectPresentation } from './gambitEffectPresentation';
-import type { GambitCardEffect } from './gambitTypes';
+import { getGambitEffectPresentation } from './GambitEffectPresentation';
+import type { GambitCardEffect } from './GambitTypes';
 
 type PreparedGambitEffectPanelProps = {
   effect: GambitCardEffect | null;

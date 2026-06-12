@@ -11,8 +11,8 @@ import {
   GAMBIT_CLOSED_CARD_SPRITES,
   GAMBIT_LOCKED_CARD_SPRITE,
   GAMBIT_REVEAL_ANIMATION_FRAMES,
-} from './gambitTextures';
-import type { GambitCardEffectViewModel } from './gambitTypes';
+} from './GambitTextures';
+import type { GambitCardEffectViewModel } from './GambitTypes';
 
 export type GambitCardProps = {
   disabled: boolean;
@@ -216,13 +216,7 @@ const drawSelectedCardHighlight = (graphics: Graphics, size: number) => {
 
   graphics.clear();
   graphics.beginFill(CARD_SELECTION_FILL_COLOR, 0.18);
-  graphics.drawRoundedRect(
-    0,
-    0,
-    size,
-    size,
-    cardRadius
-  );
+  graphics.drawRoundedRect(0, 0, size, size, cardRadius);
   graphics.endFill();
 
   graphics.beginFill(CARD_SELECTION_GLOW_COLOR, 0.08);
@@ -236,13 +230,7 @@ const drawSelectedCardHighlight = (graphics: Graphics, size: number) => {
   graphics.endFill();
 
   graphics.lineStyle(borderWidth, CARD_SELECTION_BORDER_COLOR, 0.78);
-  graphics.drawRoundedRect(
-    1,
-    1,
-    size - 2,
-    size - 2,
-    cardRadius
-  );
+  graphics.drawRoundedRect(1, 1, size - 2, size - 2, cardRadius);
 
   graphics.lineStyle(1, CARD_SELECTION_GLOW_COLOR, 0.3);
 

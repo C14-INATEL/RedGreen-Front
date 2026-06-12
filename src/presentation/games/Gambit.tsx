@@ -11,22 +11,22 @@ import {
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-} from './GambitGame/gambitGameplayClient';
+} from './GambitGame/GambitGameplayClient';
 import {
   applyGambitCashOutResponseToSession,
   getGambitBurnsRemaining,
   isFinalGambitSessionStatus,
   shouldAutoCashOutGambitSession,
-} from './GambitGame/gambitAutoCashOut';
-import { getGambitEffectPresentation } from './GambitGame/gambitEffectPresentation';
+} from './GambitGame/GambitAutoCashOut';
+import { getGambitEffectPresentation } from './GambitGame/GambitEffectPresentation';
 import {
   mapBackendGambitCardToViewModel,
   mapGambitSessionToVisualCards,
-} from './GambitGame/gambitMapper';
+} from './GambitGame/GambitMapper';
 import {
   createRewardChoiceSessionFromPendingEvent,
   parseGambitPendingEventOptionId,
-} from './GambitGame/gambitPendingEventRewardAdapter';
+} from './GambitGame/GambitPendingEventRewardAdapter';
 import { PreparedGambitEffectPanel } from './GambitGame/PreparedGambitEffectPanel';
 import type {
   GambitCardEffect,
@@ -35,7 +35,7 @@ import type {
   GambitPendingInteraction,
   GambitSession,
   GambitVisualCard,
-} from './GambitGame/gambitTypes';
+} from './GambitGame/GambitTypes';
 
 export type GambitProps = {
   initialSession?: GambitSession;
@@ -166,8 +166,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     useState<PendingEventSelection>(emptyPendingEventSelection);
   const [pendingInteractionSelections, setPendingInteractionSelections] =
     useState<number[]>([]);
-  const [pendingInteractionFeedbackCardIds, setPendingInteractionFeedbackCardIds] =
-    useState<number[]>([]);
+  const [
+    pendingInteractionFeedbackCardIds,
+    setPendingInteractionFeedbackCardIds,
+  ] = useState<number[]>([]);
   const [hasPendingEventTableSettled, setHasPendingEventTableSettled] =
     useState(false);
   const [isPendingEventSelectionLocked, setIsPendingEventSelectionLocked] =
@@ -274,8 +276,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
   const isSelectingInteraction = Boolean(pendingInteraction);
   const canDismissPendingInteractionFeedback = Boolean(
     lastInteractionResult &&
-      'AtLeastOneBad' in lastInteractionResult &&
-      pendingInteractionFeedbackCardIds.length
+    'AtLeastOneBad' in lastInteractionResult &&
+    pendingInteractionFeedbackCardIds.length
   );
   const isBoardLocked =
     !session ||

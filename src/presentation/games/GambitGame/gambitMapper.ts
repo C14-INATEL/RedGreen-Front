@@ -1,4 +1,4 @@
-import { GAMBIT_CELL_COUNT } from './gambitGameConfig';
+import { GAMBIT_CELL_COUNT } from './GambitGameConfig';
 import type {
   BackendGambitCard,
   BackendGambitCurrentGridSnapshot,
@@ -21,7 +21,7 @@ import type {
   GambitStatusViewModel,
   GambitTableViewModel,
   GambitVisualCard,
-} from './gambitTypes';
+} from './GambitTypes';
 
 const GAMBIT_CARD_EFFECT_MAP: Record<
   BackendGambitCard,

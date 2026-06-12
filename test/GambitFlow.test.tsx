@@ -5,8 +5,8 @@ import { Gambit } from '../src/presentation/games/Gambit';
 import type {
   GambitResolveEffectResponse,
   GambitApiSession,
-} from '../src/presentation/games/GambitGame/gambitApi';
-import type { GambitVisualCard } from '../src/presentation/games/GambitGame/gambitTypes';
+} from '../src/presentation/games/GambitGame/GambitApi';
+import type { GambitVisualCard } from '../src/presentation/games/GambitGame/GambitTypes';
 import type { RewardChoiceSession } from '../src/presentation/games/cardReward';
 import {
   createGambitApiGrid,
@@ -47,7 +47,7 @@ const mockResolveActiveGambitEffect = jest.fn();
 const mockResolveActiveGambitEvent = jest.fn();
 const mockGambitBoard = jest.fn();
 
-jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
+jest.mock('../src/presentation/games/GambitGame/GambitGameplayClient', () => ({
   burnActiveGambitCard: (...args: unknown[]) =>
     mockBurnActiveGambitCard(...args),
   cashOutActiveGambitSession: (...args: unknown[]) =>

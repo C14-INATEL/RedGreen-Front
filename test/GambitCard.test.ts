@@ -3,9 +3,9 @@ import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGa
 import {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
-} from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
-import { GAMBIT_LOCKED_CARD_SPRITE } from '../src/presentation/games/GambitGame/gambitTextures';
-import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/gambitTypes';
+} from '../src/presentation/games/GambitGame/GambitEffectCardAssets';
+import { GAMBIT_LOCKED_CARD_SPRITE } from '../src/presentation/games/GambitGame/GambitTextures';
+import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/GambitTypes';
 import { rewardCardPool } from '../src/presentation/games/cardReward/config/RewardCardPool';
 
 const EFFECT_TEXT_FALLBACKS = ['CLAR', 'MEL', '2X', 'INV'];

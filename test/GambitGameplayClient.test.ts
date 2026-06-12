@@ -8,8 +8,8 @@ import {
   fetchGambitTables,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-} from '../src/presentation/games/GambitGame/gambitGameplayClient';
-import type { GambitTable } from '../src/presentation/games/GambitGame/gambitTypes';
+} from '../src/presentation/games/GambitGame/GambitGameplayClient';
+import type { GambitTable } from '../src/presentation/games/GambitGame/GambitTypes';
 import { createGambitApiSession } from './GambitTestBuilders';
 
 const mockBackendBurn = jest.fn();
@@ -21,7 +21,7 @@ const mockBackendFetchTables = jest.fn();
 const mockBackendResolveEffect = jest.fn();
 const mockBackendResolveEvent = jest.fn();
 
-jest.mock('../src/presentation/games/GambitGame/gambitApi', () => ({
+jest.mock('../src/presentation/games/GambitGame/GambitApi', () => ({
   burnActiveGambitCard: (...args: unknown[]) => mockBackendBurn(...args),
   cashOutActiveGambitSession: (...args: unknown[]) =>
     mockBackendCashOut(...args),

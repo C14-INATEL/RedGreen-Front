@@ -5,9 +5,9 @@ import {
   createGambitSession,
   fetchActiveGambitSession,
   fetchGambitTables,
-} from '../games/GambitGame/gambitGameplayClient';
-import type { GambitApiSession } from '../games/GambitGame/gambitApi';
-import type { GambitTable } from '../games/GambitGame/gambitTypes';
+} from '../games/GambitGame/GambitGameplayClient';
+import type { GambitApiSession } from '../games/GambitGame/GambitApi';
+import type { GambitTable } from '../games/GambitGame/GambitTypes';
 import { GambitBetPanel } from '../ui/GambitBetPanel';
 
 type GambitRoomState = {

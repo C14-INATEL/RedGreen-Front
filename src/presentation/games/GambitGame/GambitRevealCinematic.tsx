@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { getGambitEffectPresentationFromViewModel } from './gambitEffectPresentation';
-import { classifyGambitRevealNature } from './gambitRevealNature';
-import type { GambitVisualCard } from './gambitTypes';
+import { getGambitEffectPresentationFromViewModel } from './GambitEffectPresentation';
+import { classifyGambitRevealNature } from './GambitRevealNature';
+import type { GambitVisualCard } from './GambitTypes';
 
 type GambitRevealCinematicProps = {
   card: GambitVisualCard | null;

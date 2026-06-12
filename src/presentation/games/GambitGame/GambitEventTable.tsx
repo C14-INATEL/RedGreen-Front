@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
-import { type GambitTableType, getGambitTableTheme } from './gambitTableConfig';
+import { type GambitTableType, getGambitTableTheme } from './GambitTableConfig';
 import {
   getGambitTableTexture,
   preloadGambitTableTextures,
-} from './gambitTextures';
+} from './GambitTextures';
 import type { RewardTableState } from '../cardReward/types/CardReward';
 
 type GambitEventTableViewport = {

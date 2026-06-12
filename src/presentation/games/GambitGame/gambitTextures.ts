@@ -1,11 +1,11 @@
 import { Assets, SCALE_MODES, Texture } from 'pixi.js';
-import { GAMBIT_EFFECT_CARD_SPRITES } from './gambitEffectCardAssets';
-import { type GambitTableType, gambitTableThemes } from './gambitTableConfig';
+import { GAMBIT_EFFECT_CARD_SPRITES } from './GambitEffectCardAssets';
+import { type GambitTableType, gambitTableThemes } from './GambitTableConfig';
 
 export {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
-} from './gambitEffectCardAssets';
+} from './GambitEffectCardAssets';
 
 const CLOSED_CARD_SPRITE_TOTAL = 7;
 const PARTICLE_FRAME_TOTAL = 8;

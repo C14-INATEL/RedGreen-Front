@@ -1,4 +1,4 @@
-import type { GambitCardEffectViewModel } from './gambitTypes';
+import type { GambitCardEffectViewModel } from './GambitTypes';
 
 export const FALLBACK_GAMBIT_EFFECT_CARD_SPRITE = '/Gambit/Clarividencia.png';
 
