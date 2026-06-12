@@ -1,274 +1,111 @@
-import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { readEnv } from '@infrastructure/env';
-import { paths } from '../../paths';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Gambit } from '../games/Gambit';
 import {
-  cashOutActiveGambitSession,
   createGambitSession,
   fetchActiveGambitSession,
   fetchGambitTables,
 } from '../games/GambitGame/gambitGameplayClient';
 import type { GambitApiSession } from '../games/GambitGame/gambitApi';
 import type { GambitTable } from '../games/GambitGame/gambitTypes';
+import { GambitBetPanel } from '../ui/GambitBetPanel';
 
-const DEFAULT_GAMBIT_CARDS_PURCHASED = 5;
-const GAMBIT_OPEN_SESSION_CONFLICT_MESSAGE =
-  'Já existe uma sessão Gambit aberta. Continue ou finalize a sessão atual.';
-
-const readDefaultTableId = () => {
-  const value = Number(readEnv('VITE_GAMBIT_DEFAULT_TABLE_ID'));
-
-  return Number.isInteger(value) && value > 0 ? value : null;
-};
-
-const getAuthToken = () => {
-  try {
-    return window.localStorage.getItem('token');
-  } catch {
-    return null;
-  }
-};
-
-const clearAuthToken = () => {
-  try {
-    window.localStorage.removeItem('token');
-  } catch {
-    return;
-  }
-};
-
-const isAxiosStatus = (error: unknown, status: number) =>
-  axios.isAxiosError(error) && error.response?.status === status;
-
-const getRoomErrorMessage = (error: unknown) => {
-  if (isAxiosStatus(error, 401)) {
-    clearAuthToken();
-    return 'Sessão expirada. Faça login novamente.';
-  }
-
-  if (isAxiosStatus(error, 404)) {
-    return 'Rotas de gameplay do Gambit não encontradas. Verifique se o backend está na branch feat/gambit-game-logic.';
-  }
-
-  if (isAxiosStatus(error, 409)) {
-    return GAMBIT_OPEN_SESSION_CONFLICT_MESSAGE;
-  }
-
-  return 'Não foi possível carregar o Gambit agora.';
-};
-
-const isLoadableActiveSession = (session: GambitApiSession) =>
-  session.Status === 'InProgress' || session.Status === 'Finished';
-
-const chooseDefaultTable = (tables: GambitTable[]) => {
-  const defaultTableId = readDefaultTableId();
-
-  if (defaultTableId != null) {
-    const configuredTable = tables.find(
-      (table) => Number(table.GambitTableId) === defaultTableId
-    );
-
-    if (configuredTable) {
-      return configuredTable;
-    }
-  }
-
-  return tables.find((table) => table.Active !== false) ?? tables[0] ?? null;
+type GambitRoomState = {
+  GambitTableId?: number;
+  CardPrice?: number;
+  TableMultiplier?: number;
+  MinimumCardsPurchased?: number;
+  MaxCardsPurchased?: number;
 };
 
 export const GambitRoom = () => {
-  const navigate = useNavigate();
-  const [session, setSession] = useState<GambitApiSession | null>(null);
-  const [tables, setTables] = useState<GambitTable[]>([]);
-  const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
-  const [cardsPurchased, setCardsPurchased] = useState(
-    DEFAULT_GAMBIT_CARDS_PURCHASED
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreatingSession, setIsCreatingSession] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasToken, setHasToken] = useState(() => Boolean(getAuthToken()));
+  const Navigate = useNavigate();
+  const [IsActive, SetIsActive] = useState(true);
+  const [Session, SetSession] = useState<GambitApiSession | null>(null);
+  const [Tables, SetTables] = useState<GambitTable[]>([]);
+  const [IsCreatingSession, SetIsCreatingSession] = useState(false);
 
-  const selectedTable = useMemo(
+  const Location = useLocation();
+  const RouteState = Location.state as GambitRoomState | null;
+  const FallbackTable = useMemo(
+    () => Tables.find((Table) => Table.Active !== false) ?? Tables[0] ?? null,
+    [Tables]
+  );
+  const SelectedTable = useMemo(
     () =>
-      selectedTableId == null
-        ? null
-        : (tables.find(
-            (table) => Number(table.GambitTableId) === selectedTableId
-          ) ?? null),
-    [selectedTableId, tables]
+      RouteState?.GambitTableId == null
+        ? FallbackTable
+        : (Tables.find(
+            (Table) => Number(Table.GambitTableId) === RouteState.GambitTableId
+          ) ?? FallbackTable),
+    [FallbackTable, RouteState?.GambitTableId, Tables]
   );
+  const GambitTableId =
+    RouteState?.GambitTableId ??
+    (SelectedTable ? Number(SelectedTable.GambitTableId) : null);
 
-  const applyTablesToStartPanel = useCallback((gambitTables: GambitTable[]) => {
-    const defaultTable = chooseDefaultTable(gambitTables);
-
-    setTables(gambitTables);
-    setSelectedTableId(
-      defaultTable ? Number(defaultTable.GambitTableId) : null
-    );
-
-    if (defaultTable) {
-      setCardsPurchased(
-        Math.max(
-          defaultTable.MinimumCardsPurchased ?? 1,
-          Math.min(
-            DEFAULT_GAMBIT_CARDS_PURCHASED,
-            defaultTable.MaxCardsPurchased
-          )
-        )
-      );
-    }
+  const LoadTables = useCallback(async () => {
+    SetTables(await fetchGambitTables());
   }, []);
 
-  const loadActiveSessionIntoGame = useCallback(
-    (activeSession: GambitApiSession) => {
-      setSession(activeSession);
-      setTables([]);
-    },
-    []
-  );
-
-  const createSessionAndLoadActive = useCallback(
-    async (params: { CardsPurchased: number; GambitTableId: number }) => {
-      await createGambitSession(params);
-
-      setSession(await fetchActiveGambitSession());
-    },
-    []
-  );
-
-  const resolveOpenSessionBeforeCreate = useCallback(
-    async (params: { CardsPurchased: number; GambitTableId: number }) => {
-      const activeSession = await fetchActiveGambitSession();
-
-      if (activeSession?.Status === 'InProgress') {
-        loadActiveSessionIntoGame(activeSession);
-        return true;
-      }
-
-      if (activeSession?.Status === 'Finished') {
-        await cashOutActiveGambitSession();
-        await createSessionAndLoadActive(params);
-        return true;
-      }
-
-      return false;
-    },
-    [createSessionAndLoadActive, loadActiveSessionIntoGame]
-  );
-
-  const loadRoom = useCallback(async () => {
-    const token = getAuthToken();
-
-    setHasToken(Boolean(token));
-    setErrorMessage(null);
-
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
+  const LoadRoom = useCallback(async () => {
     try {
-      const activeSession = await fetchActiveGambitSession();
+      const ActiveSession = await fetchActiveGambitSession();
 
-      if (activeSession && isLoadableActiveSession(activeSession)) {
-        loadActiveSessionIntoGame(activeSession);
-        setIsLoading(false);
+      if (ActiveSession?.Status === 'InProgress') {
+        SetSession(ActiveSession);
         return;
       }
 
-      setSession(null);
-      applyTablesToStartPanel(await fetchGambitTables());
-    } catch (error) {
-      setErrorMessage(getRoomErrorMessage(error));
-      setSession(null);
-    } finally {
-      setIsLoading(false);
+      SetSession((CurrentSession) => CurrentSession ?? null);
+      await LoadTables();
+    } catch {
+      SetSession((CurrentSession) => CurrentSession ?? null);
     }
-  }, [applyTablesToStartPanel, loadActiveSessionIntoGame]);
+  }, [LoadTables]);
 
   useEffect(() => {
-    void loadRoom();
-  }, [loadRoom]);
+    void LoadRoom();
+  }, [LoadRoom]);
 
-  const handleCreateSession = async () => {
-    if (selectedTableId == null) {
-      setErrorMessage('Nenhuma mesa Gambit disponível para iniciar partida.');
+  const HandleConfirmBet = async (CardsPurchased: number) => {
+    if (GambitTableId == null || IsCreatingSession) {
       return;
     }
 
-    setIsCreatingSession(true);
-    setErrorMessage(null);
-
-    const createParams = {
-      CardsPurchased: cardsPurchased,
-      GambitTableId: selectedTableId,
-    };
+    SetIsCreatingSession(true);
 
     try {
-      const handledOpenSession =
-        await resolveOpenSessionBeforeCreate(createParams);
+      await createGambitSession({
+        CardsPurchased,
+        GambitTableId,
+      });
 
-      if (handledOpenSession) {
-        return;
-      }
+      const ActiveSession = await fetchActiveGambitSession();
 
-      await createSessionAndLoadActive(createParams);
-    } catch (error) {
-      if (isAxiosStatus(error, 409)) {
-        try {
-          const handledOpenSession =
-            await resolveOpenSessionBeforeCreate(createParams);
-
-          if (handledOpenSession) {
-            return;
-          }
-
-          await createSessionAndLoadActive(createParams);
-          return;
-        } catch {
-          setErrorMessage(GAMBIT_OPEN_SESSION_CONFLICT_MESSAGE);
-          return;
-        }
-      }
-
-      setErrorMessage(getRoomErrorMessage(error));
+      SetSession(ActiveSession?.Status === 'InProgress' ? ActiveSession : null);
+    } catch {
+      SetSession(null);
     } finally {
-      setIsCreatingSession(false);
+      SetIsCreatingSession(false);
     }
   };
 
-  const handleNewGame = async () => {
-    setSession(null);
-    setErrorMessage(null);
+  const HandleNewGame = async () => {
+    SetSession(null);
 
-    if (tables.length) {
-      applyTablesToStartPanel(tables);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      applyTablesToStartPanel(await fetchGambitTables());
-    } catch (error) {
-      setErrorMessage(getRoomErrorMessage(error));
-    } finally {
-      setIsLoading(false);
+    if (!Tables.length) {
+      try {
+        await LoadTables();
+      } catch {
+        return;
+      }
     }
   };
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden suit-pattern px-6 py-20">
-      <button
-        className="back-button"
-        onClick={() => navigate(paths.home)}
-        type="button"
-      >
+      <button onClick={() => Navigate('/')} className="back-button">
         ←
       </button>
 
@@ -280,99 +117,41 @@ export const GambitRoom = () => {
         }}
       />
 
-      <div className="relative z-10 flex w-full max-w-4xl items-center justify-center">
-        {!hasToken ? (
-          <div className="w-[min(94vw,520px)] bg-card px-6 py-5 text-center pixel-border-gold">
-            <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-              Faça login para jogar Gambit
-            </p>
-            <button
-              className="mt-4 bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
-              onClick={() => navigate(paths.login)}
-              type="button"
-            >
-              Entrar
-            </button>
-          </div>
-        ) : isLoading ? (
-          <div className="w-[min(94vw,520px)] bg-card px-6 py-5 text-center pixel-border-gold">
-            <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-              Carregando Gambit...
-            </p>
-          </div>
-        ) : session ? (
-          <Gambit
-            initialSession={session}
-            onNewGame={() => {
-              void handleNewGame();
+      <div className="relative z-10 flex items-center justify-center">
+        <div className="absolute right-full mr-4 top-0 z-20">
+          <GambitBetPanel
+            IsActive={IsActive}
+            CardPrice={RouteState?.CardPrice ?? SelectedTable?.CardPrice ?? 5}
+            TableMultiplier={
+              RouteState?.TableMultiplier ?? SelectedTable?.TableMultiplier ?? 1
+            }
+            MinimumCardsPurchased={
+              RouteState?.MinimumCardsPurchased ??
+              SelectedTable?.MinimumCardsPurchased ??
+              1
+            }
+            MaxCardsPurchased={
+              RouteState?.MaxCardsPurchased ??
+              SelectedTable?.MaxCardsPurchased ??
+              20
+            }
+            OnConfirm={(CardsPurchased) => {
+              void HandleConfirmBet(CardsPurchased);
             }}
           />
-        ) : (
-          <div className="w-[min(94vw,520px)] bg-card px-6 py-5 pixel-border-gold">
-            <h1 className="font-display text-sm font-bold uppercase tracking-widest text-cassino-gold">
-              Iniciar partida Gambit
-            </h1>
+        </div>
 
-            <div className="mt-5 grid gap-4">
-              <label className="grid gap-2">
-                <span className="font-display text-[10px] font-bold uppercase tracking-widest text-white/60">
-                  Mesa
-                </span>
-                <select
-                  className="bg-background px-3 py-3 font-mono text-sm text-foreground pixel-border"
-                  disabled={!tables.length || isCreatingSession}
-                  onChange={(event) =>
-                    setSelectedTableId(Number(event.target.value))
-                  }
-                  value={selectedTableId ?? ''}
-                >
-                  {tables.map((table) => (
-                    <option
-                      key={String(table.GambitTableId)}
-                      value={Number(table.GambitTableId)}
-                    >
-                      {table.Name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-2">
-                <span className="font-display text-[10px] font-bold uppercase tracking-widest text-white/60">
-                  Cards Purchased
-                </span>
-                <input
-                  className="bg-background px-3 py-3 font-mono text-sm text-foreground pixel-border"
-                  disabled={isCreatingSession}
-                  max={selectedTable?.MaxCardsPurchased ?? 25}
-                  min={selectedTable?.MinimumCardsPurchased ?? 1}
-                  onChange={(event) =>
-                    setCardsPurchased(Number(event.target.value))
-                  }
-                  type="number"
-                  value={cardsPurchased}
-                />
-              </label>
-
-              {errorMessage ? (
-                <p className="font-mono text-xs font-bold uppercase text-red-200">
-                  {errorMessage}
-                </p>
-              ) : null}
-
-              <button
-                className="bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={
-                  isCreatingSession || selectedTableId == null || !tables.length
-                }
-                onClick={handleCreateSession}
-                type="button"
-              >
-                {isCreatingSession ? 'Iniciando...' : 'Iniciar'}
-              </button>
-            </div>
-          </div>
-        )}
+        <div
+          onClick={() => {
+            if (!IsActive) {
+              SetIsActive(true);
+            }
+          }}
+        >
+          {Session ? (
+            <Gambit initialSession={Session} onNewGame={HandleNewGame} />
+          ) : null}
+        </div>
       </div>
     </main>
   );
