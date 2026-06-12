@@ -188,6 +188,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     useState<GambitVisualCard | null>(null);
   const [isPreparedEffectPreviewOpen, setIsPreparedEffectPreviewOpen] =
     useState(false);
+  const [isPeekEffectPreviewOpen, setIsPeekEffectPreviewOpen] = useState(false);
   const [
     isPendingEventPresentationDelayed,
     setIsPendingEventPresentationDelayed,
@@ -228,6 +229,40 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     preparedEffect: session?.NextEffect ?? null,
     previewedCardId,
   };
+  const lastPeekEffectPreview = useMemo(() => {
+    if (
+      !lastInteractionResult ||
+      !('Position' in lastInteractionResult) ||
+      !lastInteractionResult.Effect
+    ) {
+      return null;
+    }
+
+    return {
+      points: lastInteractionResult.Points,
+      pointsLabel:
+        lastInteractionResult.Points == null
+          ? null
+          : formatPeekPoints(lastInteractionResult.Points),
+      position: lastInteractionResult.Position,
+      presentation: getGambitEffectPresentation(lastInteractionResult.Effect),
+    };
+  }, [lastInteractionResult]);
+  const peekEffectPreviewCard = useMemo(() => {
+    if (!isPeekEffectPreviewOpen || !lastPeekEffectPreview) {
+      return null;
+    }
+
+    return {
+      effect: lastPeekEffectPreview.presentation.viewModel,
+      id: -2,
+      locked: false,
+      points: lastPeekEffectPreview.points,
+      position: lastPeekEffectPreview.position,
+      previewed: false,
+      revealed: true,
+    } satisfies GambitVisualCard;
+  }, [isPeekEffectPreviewOpen, lastPeekEffectPreview]);
   const preparedEffectPreviewCard = useMemo(() => {
     if (!isPreparedEffectPreviewOpen || !visualState.preparedEffect) {
       return null;
@@ -361,6 +396,12 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
       setIsPreparedEffectPreviewOpen(false);
     }
   }, [visualState.preparedEffect]);
+
+  useEffect(() => {
+    if (!lastPeekEffectPreview) {
+      setIsPeekEffectPreviewOpen(false);
+    }
+  }, [lastPeekEffectPreview]);
 
   useEffect(() => {
     if (
@@ -603,6 +644,18 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     setIsPreparedEffectPreviewOpen(false);
   };
 
+  const handlePeekEffectPreviewInspect = () => {
+    if (!lastPeekEffectPreview) {
+      return;
+    }
+
+    setIsPeekEffectPreviewOpen(true);
+  };
+
+  const handlePeekEffectPreviewClose = () => {
+    setIsPeekEffectPreviewOpen(false);
+  };
+
   const handlePendingEventRewardCardSelect = (optionId: string) => {
     if (
       !pendingEvent ||
@@ -837,13 +890,48 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
           ) : null}
 
           {lastInteractionResult ? (
-            <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
-              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-                Espiada
-              </span>
-              <span className="font-mono text-xs font-bold uppercase text-foreground">
-                {formatPeekResult(lastInteractionResult)}
-              </span>
+            <div className="mt-3 bg-card px-4 py-3 pixel-border">
+              {lastPeekEffectPreview ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    aria-label={`Ver carta espiada ${lastPeekEffectPreview.presentation.title}`}
+                    className="shrink-0 border border-cassino-gold/55 bg-black/25 p-1 transition hover:-translate-y-0.5 hover:border-cassino-gold hover:brightness-110"
+                    onClick={handlePeekEffectPreviewInspect}
+                    type="button"
+                  >
+                    <img
+                      alt=""
+                      className="h-16 w-11 object-contain [image-rendering:pixelated]"
+                      src={lastPeekEffectPreview.presentation.spritePath}
+                    />
+                  </button>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-[11px] font-bold uppercase tracking-widest text-cassino-gold">
+                      Espiada
+                    </p>
+                    <p className="mt-1 truncate font-display text-xs font-bold uppercase tracking-widest text-foreground sm:text-sm">
+                      {lastPeekEffectPreview.presentation.title}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {lastPeekEffectPreview.pointsLabel ? (
+                        <span className="bg-cassino-gold px-2 py-1 font-mono text-[10px] font-bold uppercase text-background">
+                          Pontos: {lastPeekEffectPreview.pointsLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                    Espiada
+                  </span>
+                  <span className="font-mono text-xs font-bold uppercase text-foreground">
+                    {formatPeekResult(lastInteractionResult)}
+                  </span>
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -926,6 +1014,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
       <GambitRevealCinematic
         card={preparedEffectPreviewCard}
         onComplete={handlePreparedEffectPreviewClose}
+      />
+
+      <GambitRevealCinematic
+        card={peekEffectPreviewCard}
+        onComplete={handlePeekEffectPreviewClose}
       />
     </motion.div>
   );
