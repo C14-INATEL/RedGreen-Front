@@ -44,8 +44,7 @@ export const applyGambitCashOutResponseToSession = (
     ...session,
     Result:
       response.Result ??
-      response.reward ??
-      response.finalBalance ??
+      response.Reward ??
       response.FinalBalance ??
       session.Result ??
       session.AccumulatedPoints,

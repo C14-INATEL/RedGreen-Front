@@ -9,7 +9,6 @@ import {
   createGambitSession,
   fetchActiveGambitSession,
   fetchGambitTables,
-  type GambitGameplaySource,
 } from '../games/GambitGame/gambitGameplayClient';
 import type { GambitApiSession } from '../games/GambitGame/gambitApi';
 import type { GambitTable } from '../games/GambitGame/gambitTypes';
@@ -82,8 +81,6 @@ const chooseDefaultTable = (tables: GambitTable[]) => {
 export const GambitRoom = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<GambitApiSession | null>(null);
-  const [gameplaySource, setGameplaySource] =
-    useState<GambitGameplaySource>('backend');
   const [tables, setTables] = useState<GambitTable[]>([]);
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [cardsPurchased, setCardsPurchased] = useState(
@@ -126,8 +123,7 @@ export const GambitRoom = () => {
   }, []);
 
   const loadActiveSessionIntoGame = useCallback(
-    (activeSession: GambitApiSession, source: GambitGameplaySource) => {
-      setGameplaySource(source);
+    (activeSession: GambitApiSession) => {
       setSession(activeSession);
       setTables([]);
     },
@@ -138,21 +134,17 @@ export const GambitRoom = () => {
     async (params: { CardsPurchased: number; GambitTableId: number }) => {
       await createGambitSession(params);
 
-      const activeSessionResult = await fetchActiveGambitSession();
-
-      setGameplaySource(activeSessionResult.source);
-      setSession(activeSessionResult.session);
+      setSession(await fetchActiveGambitSession());
     },
     []
   );
 
   const resolveOpenSessionBeforeCreate = useCallback(
     async (params: { CardsPurchased: number; GambitTableId: number }) => {
-      const activeSessionResult = await fetchActiveGambitSession();
-      const activeSession = activeSessionResult.session;
+      const activeSession = await fetchActiveGambitSession();
 
       if (activeSession?.Status === 'InProgress') {
-        loadActiveSessionIntoGame(activeSession, activeSessionResult.source);
+        loadActiveSessionIntoGame(activeSession);
         return true;
       }
 
@@ -181,18 +173,10 @@ export const GambitRoom = () => {
     setIsLoading(true);
 
     try {
-      const activeSessionResult = await fetchActiveGambitSession();
+      const activeSession = await fetchActiveGambitSession();
 
-      setGameplaySource(activeSessionResult.source);
-
-      if (
-        activeSessionResult.session &&
-        isLoadableActiveSession(activeSessionResult.session)
-      ) {
-        loadActiveSessionIntoGame(
-          activeSessionResult.session,
-          activeSessionResult.source
-        );
+      if (activeSession && isLoadableActiveSession(activeSession)) {
+        loadActiveSessionIntoGame(activeSession);
         setIsLoading(false);
         return;
       }
@@ -318,7 +302,6 @@ export const GambitRoom = () => {
           </div>
         ) : session ? (
           <Gambit
-            gameplaySource={gameplaySource}
             initialSession={session}
             onNewGame={() => {
               void handleNewGame();

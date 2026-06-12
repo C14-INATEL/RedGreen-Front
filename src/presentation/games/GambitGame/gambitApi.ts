@@ -89,8 +89,12 @@ export type GambitResolveEffectResponse =
 export type GambitCashOutResponse = {
   FinalBalance?: number;
   Message?: string;
+  Reward?: number;
   Result?: number | null;
   Session?: GambitApiSession;
+};
+
+export type RawGambitCashOutResponse = GambitCashOutResponse & {
   finalBalance?: number;
   message?: string;
   reward?: number;
@@ -122,6 +126,16 @@ export const getGambitResolveEffectSession = (
 export const getGambitResolveEffectPeekResult = (
   response: GambitResolveEffectResponse
 ): GambitPeekResult | null => response.PeekResult ?? null;
+
+export const normalizeGambitCashOutResponse = (
+  response: RawGambitCashOutResponse
+): GambitCashOutResponse => ({
+  FinalBalance: response.FinalBalance ?? response.finalBalance,
+  Message: response.Message ?? response.message,
+  Reward: response.Reward ?? response.reward,
+  Result: response.Result,
+  Session: response.Session,
+});
 
 export const fetchActiveGambitSession =
   async (): Promise<GambitApiSession | null> => {
@@ -204,9 +218,9 @@ export const resolveActiveGambitEffect = async (
 
 export const cashOutActiveGambitSession =
   async (): Promise<GambitCashOutResponse> => {
-    const response = await apiClient.post<GambitCashOutResponse>(
+    const response = await apiClient.post<RawGambitCashOutResponse>(
       '/gambit/sessions/active/cash-out'
     );
 
-    return response.data;
+    return normalizeGambitCashOutResponse(response.data);
   };

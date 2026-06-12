@@ -252,20 +252,6 @@ describe('Gambit backend gameplay flow', () => {
     expect(mockBurnActiveGambitCard).not.toHaveBeenCalled();
   });
 
-  it('shows the explicit visual mock banner only when mock gameplay is selected', async () => {
-    render(
-      createElement(Gambit, {
-        gameplaySource: 'mock',
-        initialSession: createGambitApiSession(),
-      })
-    );
-
-    expect(
-      await screen.findByText('Modo mock visual do Gambit ativo')
-    ).toBeInTheDocument();
-    expect(mockGambitBoard).toHaveBeenCalled();
-  });
-
   it('burns a closed card through the active gameplay endpoint', async () => {
     mockBurnActiveGambitCard.mockResolvedValueOnce(createSessionAfterBurn(7));
 

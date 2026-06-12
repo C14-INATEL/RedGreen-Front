@@ -11,7 +11,6 @@ import {
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-  type GambitGameplaySource,
 } from './GambitGame/gambitGameplayClient';
 import {
   applyGambitCashOutResponseToSession,
@@ -22,7 +21,7 @@ import {
 import { getGambitEffectPresentation } from './GambitGame/gambitEffectPresentation';
 import {
   mapBackendGambitCardToViewModel,
-  mapGambitSessionToMinefieldCards,
+  mapGambitSessionToVisualCards,
 } from './GambitGame/gambitMapper';
 import {
   createRewardChoiceSessionFromPendingEvent,
@@ -40,12 +39,11 @@ import type {
 
 export type GambitProps = {
   initialSession?: GambitSession;
-  gameplaySource?: GambitGameplaySource;
   onNewGame?: () => void;
 };
 
 type GambitVisualState = {
-  cards: ReturnType<typeof mapGambitSessionToMinefieldCards>;
+  cards: ReturnType<typeof mapGambitSessionToVisualCards>;
   preparedEffect: GambitCardEffect | null;
   previewedCardId: number | null;
 };
@@ -145,11 +143,7 @@ const applyPeekResultToVisualCards = (
   );
 };
 
-export const Gambit = ({
-  gameplaySource = 'backend',
-  initialSession,
-  onNewGame,
-}: GambitProps = {}) => {
+export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
   const [session, setSession] = useState<GambitSession | null>(
     () => initialSession ?? null
   );
@@ -196,7 +190,7 @@ export const Gambit = ({
     }
 
     return applyPeekResultToVisualCards(
-      mapGambitSessionToMinefieldCards(session, previewedCardId),
+      mapGambitSessionToVisualCards(session, previewedCardId),
       lastInteractionResult
     );
   }, [lastInteractionResult, previewedCardId, session]);
@@ -424,7 +418,7 @@ export const Gambit = ({
     try {
       const nextSession = await burnActiveGambitCard(cardId);
       const revealedCard =
-        mapGambitSessionToMinefieldCards(nextSession).find(
+        mapGambitSessionToVisualCards(nextSession).find(
           (card) => card.id === cardId && card.revealed
         ) ?? null;
 
@@ -627,14 +621,6 @@ export const Gambit = ({
               </span>
             </div>
           </div>
-
-          {gameplaySource === 'mock' ? (
-            <div className="mb-3 bg-card px-4 py-2 text-center pixel-border">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cassino-gold/80">
-                Modo mock visual do Gambit ativo
-              </span>
-            </div>
-          ) : null}
 
           <div className="bg-card p-4 pixel-border-gold">
             <GambitBoard

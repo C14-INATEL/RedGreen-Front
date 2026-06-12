@@ -417,7 +417,7 @@ export const mapBackendGambitSessionToViewModel = (
   };
 };
 
-export const mapGambitSessionToMinefieldCards = (
+export const mapGambitSessionToVisualCards = (
   session: GambitSession,
   previewedCardId: number | null = null
 ): GambitVisualCard[] =>
@@ -427,7 +427,5 @@ export const mapGambitSessionToMinefieldCards = (
       previewed: card.id === previewedCardId,
     })
   );
-
-export const mapGambitSessionToVisualCards = mapGambitSessionToMinefieldCards;
 
 export const mapGambitSessionToViewModel = mapBackendGambitSessionToViewModel;

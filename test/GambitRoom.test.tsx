@@ -16,7 +16,7 @@ jest.mock('../src/presentation/games/Gambit', () => {
   const React = jest.requireActual('react') as typeof import('react');
 
   return {
-    Gambit: ({ gameplaySource, initialSession, onNewGame }: GambitProps) =>
+    Gambit: ({ initialSession, onNewGame }: GambitProps) =>
       React.createElement(
         'div',
         {
@@ -25,9 +25,7 @@ jest.mock('../src/presentation/games/Gambit', () => {
         React.createElement(
           'p',
           null,
-          `Gambit board:${String(gameplaySource)}:${String(
-            initialSession?.GambitSessionId
-          )}`
+          `Gambit board:${String(initialSession?.GambitSessionId)}`
         ),
         React.createElement(
           'button',
@@ -113,27 +111,19 @@ describe('GambitRoom', () => {
     });
 
     window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession.mockResolvedValueOnce({
-      mode: 'backend',
-      session,
-      source: 'backend',
-    });
+    mockFetchActiveGambitSession.mockResolvedValueOnce(session);
 
     renderGambitRoom();
 
     expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:backend:active-session'
+      'Gambit board:active-session'
     );
     expect(mockFetchGambitTables).not.toHaveBeenCalled();
   });
 
   it('shows the start panel when there is a token but no active session', async () => {
     window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession.mockResolvedValueOnce({
-      mode: 'backend',
-      session: null,
-      source: 'backend',
-    });
+    mockFetchActiveGambitSession.mockResolvedValueOnce(null);
     mockFetchGambitTables.mockResolvedValueOnce([
       createGambitTable({ Name: 'Mesa Inicial' }),
     ]);
@@ -155,21 +145,9 @@ describe('GambitRoom', () => {
 
     window.localStorage.setItem('token', 'jwt-dev');
     mockFetchActiveGambitSession
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: null,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: null,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session,
-        source: 'backend',
-      });
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(session);
     mockFetchGambitTables.mockResolvedValueOnce([
       createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
     ]);
@@ -190,7 +168,7 @@ describe('GambitRoom', () => {
       });
     });
     expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:backend:created-session'
+      'Gambit board:created-session'
     );
   });
 
@@ -205,26 +183,14 @@ describe('GambitRoom', () => {
 
     window.localStorage.setItem('token', 'jwt-dev');
     mockFetchActiveGambitSession
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: finishedSession,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: finishedSession,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: nextSession,
-        source: 'backend',
-      });
+      .mockResolvedValueOnce(finishedSession)
+      .mockResolvedValueOnce(finishedSession)
+      .mockResolvedValueOnce(nextSession);
     mockFetchGambitTables.mockResolvedValueOnce([
       createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
     ]);
     mockCashOutActiveGambitSession.mockResolvedValueOnce({
-      message: 'ok',
+      Message: 'ok',
     });
     mockCreateGambitSession.mockResolvedValueOnce(nextSession);
 
@@ -245,7 +211,7 @@ describe('GambitRoom', () => {
       GambitTableId: 7,
     });
     expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:backend:next-session'
+      'Gambit board:next-session'
     );
   });
 
@@ -260,26 +226,10 @@ describe('GambitRoom', () => {
 
     window.localStorage.setItem('token', 'jwt-dev');
     mockFetchActiveGambitSession
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: null,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: null,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: finishedSession,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: nextSession,
-        source: 'backend',
-      });
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(finishedSession)
+      .mockResolvedValueOnce(nextSession);
     mockFetchGambitTables.mockResolvedValueOnce([
       createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
     ]);
@@ -287,7 +237,7 @@ describe('GambitRoom', () => {
       .mockRejectedValueOnce(createAxiosStatusError(409))
       .mockResolvedValueOnce(nextSession);
     mockCashOutActiveGambitSession.mockResolvedValueOnce({
-      message: 'ok',
+      Message: 'ok',
     });
 
     renderGambitRoom();
@@ -299,7 +249,7 @@ describe('GambitRoom', () => {
     });
     expect(mockCreateGambitSession).toHaveBeenCalledTimes(2);
     expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:backend:retry-session'
+      'Gambit board:retry-session'
     );
   });
 
@@ -311,21 +261,9 @@ describe('GambitRoom', () => {
 
     window.localStorage.setItem('token', 'jwt-dev');
     mockFetchActiveGambitSession
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: null,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: null,
-        source: 'backend',
-      })
-      .mockResolvedValueOnce({
-        mode: 'backend',
-        session: activeSession,
-        source: 'backend',
-      });
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(activeSession);
     mockFetchGambitTables.mockResolvedValueOnce([
       createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
     ]);
@@ -336,7 +274,7 @@ describe('GambitRoom', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Iniciar' }));
 
     expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:backend:still-open-session'
+      'Gambit board:still-open-session'
     );
     expect(mockCashOutActiveGambitSession).not.toHaveBeenCalled();
     expect(mockCreateGambitSession).toHaveBeenCalledTimes(1);
@@ -349,11 +287,7 @@ describe('GambitRoom', () => {
     });
 
     window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession.mockResolvedValueOnce({
-      mode: 'backend',
-      session,
-      source: 'backend',
-    });
+    mockFetchActiveGambitSession.mockResolvedValueOnce(session);
     mockFetchGambitTables.mockResolvedValueOnce([
       createGambitTable({ GambitTableId: 3, Name: 'Mesa Nova' }),
     ]);

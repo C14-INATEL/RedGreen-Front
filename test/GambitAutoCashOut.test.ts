@@ -1,5 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { shouldAutoCashOutGambitSession } from '../src/presentation/games/GambitGame/gambitAutoCashOut';
+import {
+  applyGambitCashOutResponseToSession,
+  shouldAutoCashOutGambitSession,
+} from '../src/presentation/games/GambitGame/gambitAutoCashOut';
 import {
   createGambitApiGrid,
   createGambitApiPendingEvent,
@@ -62,5 +65,43 @@ describe('Gambit auto cash-out', () => {
         })
       )
     ).toBe(false);
+  });
+
+  it('applies the normalized cash-out reward to the finished session', () => {
+    const session = createGambitApiSession({
+      AccumulatedPoints: 80,
+      Result: null,
+      Status: 'Finished',
+    });
+
+    expect(
+      applyGambitCashOutResponseToSession(session, {
+        Message: 'ok',
+        Reward: 120,
+      })
+    ).toEqual(
+      expect.objectContaining({
+        Result: 120,
+        Status: 'CashedOut',
+      })
+    );
+  });
+
+  it('uses the backend session from cash-out when one is returned', () => {
+    const session = createGambitApiSession({
+      GambitSessionId: 'finished-session',
+      Status: 'Finished',
+    });
+    const cashedOutSession = createGambitApiSession({
+      GambitSessionId: 'cashed-out-session',
+      Result: 90,
+      Status: 'CashedOut',
+    });
+
+    expect(
+      applyGambitCashOutResponseToSession(session, {
+        Session: cashedOutSession,
+      })
+    ).toBe(cashedOutSession);
   });
 });

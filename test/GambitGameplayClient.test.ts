@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   burnActiveGambitCard,
+  cashOutActiveGambitSession,
   createGambitSession,
   fetchActiveGambitSession,
   fetchGambitTableById,
   fetchGambitTables,
-  resetGambitGameplayClient,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
 } from '../src/presentation/games/GambitGame/gambitGameplayClient';
@@ -20,12 +20,6 @@ const mockBackendFetchTableById = jest.fn();
 const mockBackendFetchTables = jest.fn();
 const mockBackendResolveEffect = jest.fn();
 const mockBackendResolveEvent = jest.fn();
-const mockMockBurn = jest.fn();
-const mockMockCashOut = jest.fn();
-const mockMockFetch = jest.fn();
-const mockMockResolveEffect = jest.fn();
-const mockMockResolveEvent = jest.fn();
-const mockMockReset = jest.fn();
 
 jest.mock('../src/presentation/games/GambitGame/gambitApi', () => ({
   burnActiveGambitCard: (...args: unknown[]) => mockBackendBurn(...args),
@@ -48,17 +42,6 @@ jest.mock('../src/presentation/games/GambitGame/gambitApi', () => ({
     mockBackendResolveEvent(...args),
 }));
 
-jest.mock('../src/presentation/games/GambitGame/gambitVisualMockApi', () => ({
-  burnActiveGambitCard: (...args: unknown[]) => mockMockBurn(...args),
-  cashOutActiveGambitSession: (...args: unknown[]) => mockMockCashOut(...args),
-  fetchActiveGambitSession: (...args: unknown[]) => mockMockFetch(...args),
-  resetGambitVisualMockSession: (...args: unknown[]) => mockMockReset(...args),
-  resolveActiveGambitEffect: (...args: unknown[]) =>
-    mockMockResolveEffect(...args),
-  resolveActiveGambitEvent: (...args: unknown[]) =>
-    mockMockResolveEvent(...args),
-}));
-
 const createGambitTable = (
   overrides: Partial<GambitTable> = {}
 ): GambitTable => ({
@@ -76,7 +59,6 @@ const createGambitTable = (
 
 describe('GambitGameplayClient', () => {
   beforeEach(() => {
-    window.localStorage.clear();
     mockBackendBurn.mockReset();
     mockBackendCashOut.mockReset();
     mockBackendCreateSession.mockReset();
@@ -85,56 +67,51 @@ describe('GambitGameplayClient', () => {
     mockBackendFetchTables.mockReset();
     mockBackendResolveEffect.mockReset();
     mockBackendResolveEvent.mockReset();
-    mockMockBurn.mockReset();
-    mockMockCashOut.mockReset();
-    mockMockFetch.mockReset();
-    mockMockResolveEffect.mockReset();
-    mockMockResolveEvent.mockReset();
-    mockMockReset.mockReset();
-    resetGambitGameplayClient();
   });
 
-  it('uses backend mode by default and does not fall back to mock when no active session exists', async () => {
+  it('fetches the active session through gambitApi without fallback', async () => {
     mockBackendFetch.mockResolvedValueOnce(null);
 
-    await expect(fetchActiveGambitSession()).resolves.toEqual({
-      mode: 'backend',
-      session: null,
-      source: 'backend',
-    });
+    await expect(fetchActiveGambitSession()).resolves.toBeNull();
 
     expect(mockBackendFetch).toHaveBeenCalled();
-    expect(mockMockFetch).not.toHaveBeenCalled();
     expect(mockBackendCreateSession).not.toHaveBeenCalled();
   });
 
-  it('propagates backend auth errors instead of masking them with mock gameplay', async () => {
+  it('propagates backend auth errors without fallback', async () => {
     const authError = new Error('401 Unauthorized');
 
     mockBackendFetch.mockRejectedValueOnce(authError);
 
     await expect(fetchActiveGambitSession()).rejects.toBe(authError);
 
-    expect(mockMockFetch).not.toHaveBeenCalled();
     expect(mockBackendCreateSession).not.toHaveBeenCalled();
   });
 
-  it('keeps backend actions on gambitApi after the backend source is active', async () => {
+  it('delegates active gameplay actions to gambitApi', async () => {
     const session = createGambitApiSession();
+    const cashOutResponse = {
+      FinalBalance: 120,
+      Message: 'ok',
+    };
 
-    window.localStorage.setItem('gambitGameplayMode', 'backend');
-    mockBackendFetch.mockResolvedValueOnce(session);
     mockBackendBurn.mockResolvedValueOnce(session);
+    mockBackendCashOut.mockResolvedValueOnce(cashOutResponse);
     mockBackendResolveEvent.mockResolvedValueOnce(session);
     mockBackendResolveEffect.mockResolvedValueOnce({
       PeekResult: null,
       Session: session,
     });
 
-    await fetchActiveGambitSession();
-    await burnActiveGambitCard(3);
-    await resolveActiveGambitEvent({ BadIndex: 2, GoodIndex: 1 });
-    await resolveActiveGambitEffect([8]);
+    await expect(burnActiveGambitCard(3)).resolves.toBe(session);
+    await expect(
+      resolveActiveGambitEvent({ BadIndex: 2, GoodIndex: 1 })
+    ).resolves.toBe(session);
+    await expect(resolveActiveGambitEffect([8])).resolves.toEqual({
+      PeekResult: null,
+      Session: session,
+    });
+    await expect(cashOutActiveGambitSession()).resolves.toBe(cashOutResponse);
 
     expect(mockBackendBurn).toHaveBeenCalledWith(3);
     expect(mockBackendResolveEvent).toHaveBeenCalledWith({
@@ -142,42 +119,7 @@ describe('GambitGameplayClient', () => {
       GoodIndex: 1,
     });
     expect(mockBackendResolveEffect).toHaveBeenCalledWith([8]);
-    expect(mockMockBurn).not.toHaveBeenCalled();
-    expect(mockMockResolveEvent).not.toHaveBeenCalled();
-    expect(mockMockResolveEffect).not.toHaveBeenCalled();
-  });
-
-  it('uses the visual mock API only in explicit mock mode', async () => {
-    const mockSession = createGambitApiSession({
-      GambitSessionId: 'mock-session',
-    });
-
-    window.localStorage.setItem('gambitGameplayMode', 'mock');
-    mockMockFetch.mockResolvedValueOnce(mockSession);
-    mockMockBurn.mockResolvedValueOnce(mockSession);
-    mockMockResolveEvent.mockResolvedValueOnce(mockSession);
-    mockMockResolveEffect.mockResolvedValueOnce({
-      PeekResult: null,
-      Session: mockSession,
-    });
-
-    await expect(fetchActiveGambitSession()).resolves.toEqual({
-      mode: 'mock',
-      session: mockSession,
-      source: 'mock',
-    });
-    await burnActiveGambitCard(7);
-    await resolveActiveGambitEvent({ BadIndex: 1, GoodIndex: 0 });
-    await resolveActiveGambitEffect([4]);
-
-    expect(mockBackendFetch).not.toHaveBeenCalled();
-    expect(mockBackendBurn).not.toHaveBeenCalled();
-    expect(mockMockBurn).toHaveBeenCalledWith(7);
-    expect(mockMockResolveEvent).toHaveBeenCalledWith({
-      BadIndex: 1,
-      GoodIndex: 0,
-    });
-    expect(mockMockResolveEffect).toHaveBeenCalledWith([4]);
+    expect(mockBackendCashOut).toHaveBeenCalled();
   });
 
   it('uses backendApi for table lookup and session creation', async () => {

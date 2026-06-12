@@ -2,14 +2,15 @@ import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { createGambitCard, type GambitCardInstance } from './GambitCard';
-import { GAMBIT_GRID_SIZE, type GambitCard } from './gambitGameConfig';
+import { GAMBIT_GRID_SIZE } from './gambitGameConfig';
 import { preloadGambitCardTextures } from './gambitTextures';
+import type { GambitVisualCard } from './gambitTypes';
 
 type GambitBoardProps = Pick<
   HTMLAttributes<HTMLDivElement>,
   'className' | 'style'
 > & {
-  cards: GambitCard[];
+  cards: GambitVisualCard[];
   clarividenciaPreviewMode?: boolean;
   interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;

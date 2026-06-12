@@ -139,12 +139,22 @@ describe('GambitApi', () => {
     );
   });
 
-  it('keeps cash-out wired in the API contract without using it visually', async () => {
-    const response = { FinalBalance: 500, Message: 'ok' };
+  it('normalizes cash-out camelCase backend fields to PascalCase', async () => {
+    const response = {
+      finalBalance: 500,
+      message: 'ok',
+      reward: 80,
+    };
 
     mockApiPost.mockResolvedValueOnce({ data: response });
 
-    await expect(cashOutActiveGambitSession()).resolves.toBe(response);
+    await expect(cashOutActiveGambitSession()).resolves.toEqual({
+      FinalBalance: 500,
+      Message: 'ok',
+      Reward: 80,
+      Result: undefined,
+      Session: undefined,
+    });
 
     expect(mockApiPost).toHaveBeenCalledWith(
       '/gambit/sessions/active/cash-out'
