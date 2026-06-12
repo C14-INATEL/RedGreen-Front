@@ -1,9 +1,12 @@
 import { describe, expect, it } from '@jest/globals';
-import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGame/GambitCard';
+import {
+  getGambitCardVisibilityState,
+} from '../src/presentation/games/GambitGame/GambitCard';
 import {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
 } from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
+import { GAMBIT_LOCKED_CARD_SPRITE } from '../src/presentation/games/GambitGame/gambitTextures';
 import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/gambitTypes';
 import { rewardCardPool } from '../src/presentation/games/cardReward/config/RewardCardPool';
 
@@ -60,6 +63,7 @@ describe('GambitCard visual secrecy', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'melancidio',
+        locked: false,
         overlayState: 'closed',
         previewed: false,
         revealed: false,
@@ -67,6 +71,7 @@ describe('GambitCard visual secrecy', () => {
     ).toEqual({
       closedOverlayVisible: true,
       effectSpriteVisible: false,
+      lockedClosedOverlayVisible: false,
       revealedFaceVisible: false,
       revealedLabelVisible: false,
       revealAnimationVisible: false,
@@ -136,6 +141,7 @@ describe('GambitCard visual secrecy', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'dobro-de-potassio',
+        locked: false,
         overlayState: 'hidden',
         previewed: false,
         revealed: true,
@@ -143,6 +149,7 @@ describe('GambitCard visual secrecy', () => {
     ).toEqual({
       closedOverlayVisible: false,
       effectSpriteVisible: false,
+      lockedClosedOverlayVisible: false,
       revealedFaceVisible: true,
       revealedLabelVisible: true,
       revealAnimationVisible: false,
@@ -153,6 +160,7 @@ describe('GambitCard visual secrecy', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'clarividencia',
+        locked: false,
         overlayState: 'hidden',
         previewed: true,
         revealed: false,
@@ -160,8 +168,29 @@ describe('GambitCard visual secrecy', () => {
     ).toMatchObject({
       closedOverlayVisible: false,
       effectSpriteVisible: false,
+      lockedClosedOverlayVisible: false,
       revealedFaceVisible: true,
       revealedLabelVisible: true,
+    });
+  });
+
+  it('uses the locked closed sprite when a hidden card is blocked by Mente Lisa', () => {
+    expect(GAMBIT_LOCKED_CARD_SPRITE).toBe('/Gambit/SpriteCardsNo.png');
+    expect(
+      getGambitCardVisibilityState({
+        effect: null,
+        locked: true,
+        overlayState: 'closed',
+        previewed: false,
+        revealed: false,
+      })
+    ).toEqual({
+      closedOverlayVisible: false,
+      effectSpriteVisible: false,
+      lockedClosedOverlayVisible: true,
+      revealedFaceVisible: false,
+      revealedLabelVisible: false,
+      revealAnimationVisible: false,
     });
   });
 });

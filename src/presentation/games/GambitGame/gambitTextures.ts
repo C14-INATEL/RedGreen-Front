@@ -16,6 +16,8 @@ export const GAMBIT_CLOSED_CARD_SPRITES = Array.from(
   (_, index) => `/Gambit/SpriteCards${index + 1}.png`
 );
 
+export const GAMBIT_LOCKED_CARD_SPRITE = '/Gambit/SpriteCardsNo.png';
+
 export const GAMBIT_REVEAL_ANIMATION_FRAMES = Array.from(
   { length: REVEAL_FRAME_TOTAL },
   (_, index) => `/Gambit/SpriteCardOff${String(index + 1).padStart(2, '0')}.png`
@@ -49,6 +51,7 @@ export const preloadGambitCardTextures = () => {
   if (!preloadGambitCardTexturesPromise) {
     const texturePaths = [
       ...GAMBIT_CLOSED_CARD_SPRITES,
+      GAMBIT_LOCKED_CARD_SPRITE,
       ...GAMBIT_REVEAL_ANIMATION_FRAMES,
       ...Object.values(GAMBIT_EFFECT_CARD_SPRITES),
     ];

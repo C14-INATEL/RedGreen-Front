@@ -208,6 +208,7 @@ export const GambitBoard = ({
         const nextProps = {
           disabled: interactionLockedRef.current || card.locked,
           effect: card.effect,
+          locked: card.locked,
           onClick: () => {
             onCardRevealRef.current(card.id);
           },
