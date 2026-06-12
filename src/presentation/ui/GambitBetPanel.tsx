@@ -7,6 +7,7 @@ type GambitBetPanelProps = {
   TableMultiplier: number;
   MinimumCardsPurchased: number;
   MaxCardsPurchased: number;
+  OnConfirm?: (cardsPurchased: number) => void;
 };
 
 export const GambitBetPanel = ({
@@ -15,11 +16,17 @@ export const GambitBetPanel = ({
   TableMultiplier,
   MinimumCardsPurchased,
   MaxCardsPurchased,
+  OnConfirm,
 }: GambitBetPanelProps) => {
   const [SelectedCards, SetSelectedCards] = useState(MinimumCardsPurchased);
 
-  const TotalBet = SelectedCards * CardPrice;
-  const Multiplier = (TableMultiplier * SelectedCards).toFixed(1);
+  const ClampedSelectedCards = Math.max(
+    MinimumCardsPurchased,
+    Math.min(SelectedCards, MaxCardsPurchased)
+  );
+
+  const TotalBet = ClampedSelectedCards * CardPrice;
+  const Multiplier = (TableMultiplier * ClampedSelectedCards).toFixed(1);
 
   return (
     <AnimatePresence>
@@ -45,6 +52,7 @@ export const GambitBetPanel = ({
                   Math.max(MinimumCardsPurchased, prev - 1)
                 )
               }
+              disabled={ClampedSelectedCards <= MinimumCardsPurchased}
               className="w-8 h-8 border border-white/20 text-white/60 hover:border-white/40 hover:text-white transition-colors text-lg"
             >
               -
@@ -53,7 +61,8 @@ export const GambitBetPanel = ({
               className="w-32 bg-card border border-white/20 text-foreground text-[10px] px-3 py-2 text-center whitespace-nowrap overflow-hidden"
               style={{ fontFamily: '"Press Start 2P", monospace' }}
             >
-              {SelectedCards} {SelectedCards === 1 ? 'carta' : 'cartas'}
+              {ClampedSelectedCards}{' '}
+              {ClampedSelectedCards === 1 ? 'carta' : 'cartas'}
             </div>
             <button
               onClick={() =>
@@ -61,6 +70,7 @@ export const GambitBetPanel = ({
                   Math.min(MaxCardsPurchased, prev + 1)
                 )
               }
+              disabled={ClampedSelectedCards >= MaxCardsPurchased}
               className="w-8 h-8 border border-white/20 text-white/60 hover:border-white/40 hover:text-white transition-colors text-lg"
             >
               +
@@ -101,7 +111,9 @@ export const GambitBetPanel = ({
 
           <button
             className="w-full border-2 border-[hsl(120,50%,35%)] bg-[hsl(120,50%,35%)]/20 py-3 text-[9px] uppercase text-[hsl(120,50%,45%)] hover:bg-[hsl(120,50%,35%)]/30 transition-colors mt-2"
+            onClick={() => OnConfirm?.(ClampedSelectedCards)}
             style={{ fontFamily: '"Press Start 2P", monospace' }}
+            type="button"
           >
             Confirmar
           </button>

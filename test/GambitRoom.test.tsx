@@ -1,16 +1,44 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createElement } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { createElement, type ReactNode } from 'react';
 import { GambitRoom } from '../src/presentation/pages/GambitRoom';
 import type { GambitProps } from '../src/presentation/games/Gambit';
 import type { GambitTable } from '../src/presentation/games/GambitGame/gambitTypes';
 import { createGambitApiSession } from './GambitTestBuilders';
 
-const mockCashOutActiveGambitSession = jest.fn();
+type MotionProps = {
+  children?: ReactNode;
+};
+
 const mockCreateGambitSession = jest.fn();
 const mockFetchActiveGambitSession = jest.fn();
 const mockFetchGambitTables = jest.fn();
+const mockNavigate = jest.fn();
+const mockUseLocation = jest.fn();
+
+jest.mock('framer-motion', () => {
+  const React = jest.requireActual('react') as typeof import('react');
+
+  return {
+    AnimatePresence: ({ children }: MotionProps) =>
+      React.createElement(React.Fragment, null, children),
+    motion: {
+      div: ({ children, ...props }: MotionProps) =>
+        React.createElement('div', props, children),
+    },
+  };
+});
+
+jest.mock('react-router-dom', () => {
+  const actual =
+    jest.requireActual<typeof import('react-router-dom')>('react-router-dom');
+
+  return {
+    ...actual,
+    useLocation: () => mockUseLocation(),
+    useNavigate: () => mockNavigate,
+  };
+});
 
 jest.mock('../src/presentation/games/Gambit', () => {
   const React = jest.requireActual('react') as typeof import('react');
@@ -20,7 +48,7 @@ jest.mock('../src/presentation/games/Gambit', () => {
       React.createElement(
         'div',
         {
-          'data-testid': 'gambit-board',
+          'data-testid': 'gambit-game',
         },
         React.createElement(
           'p',
@@ -40,8 +68,6 @@ jest.mock('../src/presentation/games/Gambit', () => {
 });
 
 jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
-  cashOutActiveGambitSession: (...args: unknown[]) =>
-    mockCashOutActiveGambitSession(...args),
   createGambitSession: (...args: unknown[]) => mockCreateGambitSession(...args),
   fetchActiveGambitSession: (...args: unknown[]) =>
     mockFetchActiveGambitSession(...args),
@@ -63,241 +89,133 @@ const createGambitTable = (
   ...overrides,
 });
 
-const createAxiosStatusError = (status: number) =>
-  Object.assign(new Error(`Request failed with status code ${status}`), {
-    isAxiosError: true,
-    response: {
-      status,
-    },
-  });
-
-const renderGambitRoom = () =>
-  render(
-    createElement(
-      MemoryRouter,
-      {
-        future: {
-          v7_relativeSplatPath: true,
-          v7_startTransition: true,
-        },
-      },
-      createElement(GambitRoom)
-    )
-  );
+const renderGambitRoom = () => render(createElement(GambitRoom));
 
 describe('GambitRoom', () => {
   beforeEach(() => {
-    window.localStorage.clear();
-    mockCashOutActiveGambitSession.mockReset();
     mockCreateGambitSession.mockReset();
     mockFetchActiveGambitSession.mockReset();
     mockFetchGambitTables.mockReset();
-  });
+    mockNavigate.mockReset();
+    mockUseLocation.mockReset();
 
-  it('shows the login CTA when there is no JWT token', async () => {
-    renderGambitRoom();
-
-    expect(
-      await screen.findByText('Faça login para jogar Gambit')
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
-    expect(mockFetchActiveGambitSession).not.toHaveBeenCalled();
-    expect(mockFetchGambitTables).not.toHaveBeenCalled();
-  });
-
-  it('renders Gambit directly when a backend active session exists', async () => {
-    const session = createGambitApiSession({
-      GambitSessionId: 'active-session',
+    mockFetchActiveGambitSession.mockResolvedValue(null);
+    mockFetchGambitTables.mockResolvedValue([createGambitTable()]);
+    mockUseLocation.mockReturnValue({
+      state: null,
     });
+  });
 
-    window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession.mockResolvedValueOnce(session);
+  it('renders Gambit when an active session exists', async () => {
+    mockFetchActiveGambitSession.mockResolvedValueOnce(
+      createGambitApiSession({
+        GambitSessionId: 'active-session',
+      })
+    );
 
     renderGambitRoom();
 
-    expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
+    expect(await screen.findByTestId('gambit-game')).toHaveTextContent(
       'Gambit board:active-session'
     );
     expect(mockFetchGambitTables).not.toHaveBeenCalled();
   });
 
-  it('shows the start panel when there is a token but no active session', async () => {
-    window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession.mockResolvedValueOnce(null);
+  it('loads tables and keeps the side bet panel when there is no active session', async () => {
     mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({ Name: 'Mesa Inicial' }),
+      createGambitTable({
+        CardPrice: 7,
+        MaxCardsPurchased: 6,
+        MinimumCardsPurchased: 3,
+        TableMultiplier: 2.5,
+      }),
     ]);
 
     renderGambitRoom();
 
+    await waitFor(() => {
+      expect(mockFetchGambitTables).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.queryByTestId('gambit-game')).not.toBeInTheDocument();
     expect(
-      await screen.findByText('Iniciar partida Gambit')
-    ).toBeInTheDocument();
-    expect(screen.getByDisplayValue('5')).toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toHaveTextContent('Mesa Inicial');
-    expect(screen.queryByTestId('gambit-board')).not.toBeInTheDocument();
+      screen.queryByText('Nenhuma sessão ativa do Gambit encontrada.')
+    ).not.toBeInTheDocument();
+    expect(await screen.findByText('3 cartas')).toBeInTheDocument();
+    expect(await screen.findByText('21')).toBeInTheDocument();
+    expect(await screen.findByText('7.5×')).toBeInTheDocument();
+    expect(mockCreateGambitSession).not.toHaveBeenCalled();
   });
 
-  it('creates a backend session and renders Gambit after the start click', async () => {
+  it('uses route state values in the Gambit bet panel', () => {
+    mockUseLocation.mockReturnValue({
+      state: {
+        CardPrice: 7,
+        GambitTableId: 12,
+        MaxCardsPurchased: 6,
+        MinimumCardsPurchased: 3,
+        TableMultiplier: 2.5,
+      },
+    });
+
+    renderGambitRoom();
+
+    expect(screen.getByText('3 cartas')).toBeInTheDocument();
+    expect(screen.getByText('21')).toBeInTheDocument();
+    expect(screen.getByText('7.5×')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '+' }));
+
+    expect(screen.getByText('4 cartas')).toBeInTheDocument();
+  });
+
+  it('creates a Gambit session from the side bet panel and renders the board', async () => {
     const session = createGambitApiSession({
       GambitSessionId: 'created-session',
     });
 
-    window.localStorage.setItem('token', 'jwt-dev');
+    mockUseLocation.mockReturnValue({
+      state: {
+        CardPrice: 7,
+        GambitTableId: 12,
+        MaxCardsPurchased: 6,
+        MinimumCardsPurchased: 3,
+        TableMultiplier: 2.5,
+      },
+    });
     mockFetchActiveGambitSession
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(session);
-    mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
-    ]);
     mockCreateGambitSession.mockResolvedValueOnce(session);
 
     renderGambitRoom();
 
-    fireEvent.click(
-      await screen.findByRole('button', {
-        name: 'Iniciar',
-      })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '+' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => {
       expect(mockCreateGambitSession).toHaveBeenCalledWith({
-        CardsPurchased: 5,
-        GambitTableId: 7,
+        CardsPurchased: 4,
+        GambitTableId: 12,
       });
     });
-    expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
+    expect(await screen.findByTestId('gambit-game')).toHaveTextContent(
       'Gambit board:created-session'
     );
   });
 
-  it('cashs out a finished active session before creating a new one from the start panel', async () => {
-    const finishedSession = createGambitApiSession({
-      GambitSessionId: 'finished-session',
-      Status: 'Finished',
-    });
-    const nextSession = createGambitApiSession({
-      GambitSessionId: 'next-session',
-    });
-
-    window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession
-      .mockResolvedValueOnce(finishedSession)
-      .mockResolvedValueOnce(finishedSession)
-      .mockResolvedValueOnce(nextSession);
-    mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
-    ]);
-    mockCashOutActiveGambitSession.mockResolvedValueOnce({
-      Message: 'ok',
-    });
-    mockCreateGambitSession.mockResolvedValueOnce(nextSession);
-
+  it('keeps the original back button behavior', () => {
     renderGambitRoom();
 
-    fireEvent.click(
-      await screen.findByRole('button', {
-        name: 'Nova partida',
-      })
-    );
-    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar' }));
+    fireEvent.click(screen.getByRole('button', { name: '←' }));
 
-    await waitFor(() => {
-      expect(mockCashOutActiveGambitSession).toHaveBeenCalledTimes(1);
-    });
-    expect(mockCreateGambitSession).toHaveBeenCalledWith({
-      CardsPurchased: 5,
-      GambitTableId: 7,
-    });
-    expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:next-session'
-    );
+    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
-  it('recovers a 409 by cashing out a finished active session and retrying creation once', async () => {
-    const finishedSession = createGambitApiSession({
-      GambitSessionId: 'finished-session',
-      Status: 'Finished',
-    });
-    const nextSession = createGambitApiSession({
-      GambitSessionId: 'retry-session',
-    });
-
-    window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(finishedSession)
-      .mockResolvedValueOnce(nextSession);
-    mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
-    ]);
-    mockCreateGambitSession
-      .mockRejectedValueOnce(createAxiosStatusError(409))
-      .mockResolvedValueOnce(nextSession);
-    mockCashOutActiveGambitSession.mockResolvedValueOnce({
-      Message: 'ok',
-    });
-
-    renderGambitRoom();
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar' }));
-
-    await waitFor(() => {
-      expect(mockCashOutActiveGambitSession).toHaveBeenCalledTimes(1);
-    });
-    expect(mockCreateGambitSession).toHaveBeenCalledTimes(2);
-    expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:retry-session'
-    );
-  });
-
-  it('recovers a 409 by loading an active in-progress session instead of creating another', async () => {
-    const activeSession = createGambitApiSession({
-      GambitSessionId: 'still-open-session',
-      Status: 'InProgress',
-    });
-
-    window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(activeSession);
-    mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({ GambitTableId: 7, Name: 'Mesa Sete' }),
-    ]);
-    mockCreateGambitSession.mockRejectedValueOnce(createAxiosStatusError(409));
-
-    renderGambitRoom();
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar' }));
-
-    expect(await screen.findByTestId('gambit-board')).toHaveTextContent(
-      'Gambit board:still-open-session'
-    );
-    expect(mockCashOutActiveGambitSession).not.toHaveBeenCalled();
-    expect(mockCreateGambitSession).toHaveBeenCalledTimes(1);
-  });
-
-  it('treats an already cashed-out active session as ready for the real start panel', async () => {
-    const session = createGambitApiSession({
-      GambitSessionId: 'finished-session',
-      Status: 'CashedOut',
-    });
-
-    window.localStorage.setItem('token', 'jwt-dev');
-    mockFetchActiveGambitSession.mockResolvedValueOnce(session);
-    mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({ GambitTableId: 3, Name: 'Mesa Nova' }),
-    ]);
-
+  it('does not render the removed session start UI', () => {
     renderGambitRoom();
 
     expect(
-      await screen.findByText('Iniciar partida Gambit')
-    ).toBeInTheDocument();
-    expect(mockFetchGambitTables).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('combobox')).toHaveTextContent('Mesa Nova');
+      screen.queryByText('Iniciar partida Gambit')
+    ).not.toBeInTheDocument();
   });
 });
