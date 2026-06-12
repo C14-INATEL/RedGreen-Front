@@ -56,7 +56,7 @@ export const SLOT_PAYTABLE_ENTRIES: readonly SlotPaytableEntry[] = [
   {
     id: 'cheese',
     prize: '+10 por rato',
-    symbols: [SLOT_SYMBOL_SOURCES.cheese,"+",SLOT_SYMBOL_SOURCES.rat],
+    symbols: [SLOT_SYMBOL_SOURCES.cheese, '+', SLOT_SYMBOL_SOURCES.rat],
   },
   {
     id: 'egg',
