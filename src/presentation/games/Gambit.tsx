@@ -771,19 +771,22 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
                       }}
                       className={`pointer-events-none absolute right-full top-1/2 z-[1] mr-2 whitespace-nowrap font-mono text-sm font-bold ${
                         scoreFeedback.delta > 0
-                          ? 'text-[#b9ffb3]'
-                          : 'text-[#ffb4b0]'
+                          ? 'text-[#8dff54]'
+                          : 'text-[#ff6666]'
                       }`}
                       data-testid="gambit-score-feedback"
                       exit={{ opacity: 0, y: -46, scale: 0.92 }}
                       initial={{ opacity: 0, scale: 0.84, y: 6 }}
                       key={scoreFeedback.id}
                       style={{
-                        filter: 'drop-shadow(2px 2px 0 rgba(0,0,0,0.62))',
+                        filter:
+                          scoreFeedback.delta > 0
+                            ? 'drop-shadow(0 0 8px rgba(141,255,84,0.5)) drop-shadow(2px 2px 0 rgba(0,0,0,0.72))'
+                            : 'drop-shadow(0 0 8px rgba(255,102,102,0.5)) drop-shadow(2px 2px 0 rgba(0,0,0,0.72))',
                         textShadow:
                           scoreFeedback.delta > 0
-                            ? '0 0 12px rgba(116,255,152,0.35)'
-                            : '0 0 12px rgba(255,122,122,0.35)',
+                            ? '0 0 16px rgba(141,255,84,0.72)'
+                            : '0 0 16px rgba(255,102,102,0.72)',
                       }}
                       transition={{
                         opacity: {
