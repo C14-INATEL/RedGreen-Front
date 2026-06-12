@@ -107,21 +107,30 @@ export const SlotPaytableHUD = ({
                         </span>
                       </>
                     ) : (
-                      symbols.map((symbolSourceItem, index) => (
-                        <img
-                          alt=""
-                          aria-hidden="true"
-                          className="block h-[36px] w-auto max-w-none shrink-0 select-none"
-                          draggable={false}
-                          key={`${id}-${symbolSourceItem}-${index}`}
-                          src={symbolSourceItem}
-                          style={{
-                            imageRendering: 'pixelated',
-                            objectFit: 'contain',
-                          }}
-                        />
-                      ))
-                    )}
+  symbols.map((symbolSourceItem, index) =>
+    symbolSourceItem === '+' ? (
+      <span
+        key={`${id}-plus-${index}`}
+        className="font-mono text-[10px] text-[#f2d680]"
+      >
+        +
+      </span>
+    ) : (
+      <img
+        alt=""
+        aria-hidden="true"
+        className="block h-[36px] w-auto max-w-none shrink-0 select-none"
+        draggable={false}
+        key={`${id}-${symbolSourceItem}-${index}`}
+        src={symbolSourceItem}
+        style={{
+          imageRendering: 'pixelated',
+          objectFit: 'contain',
+        }}
+      />
+    )
+  )
+)}
                   </div>
 
                   <span className="pl-2 font-mono text-[10px] leading-[1.25] text-right text-[#fff2c0]">
