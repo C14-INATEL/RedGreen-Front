@@ -88,16 +88,16 @@ const EditProfileModal = ({
   const [IsLoading, SetIsLoading] = useState(false);
   const [ToastMessage, SetToastMessage] = useState('');
   const [SuccessMessage, SetSuccessMessage] = useState('');
-  const UserEmail = String(StoredUser?.Email ?? StoredUser?.email ?? '')
+  const UserEmail = String(StoredUser?.Email ?? StoredUser?.Email ?? '')
     .trim()
     .toLowerCase();
 
   useEffect(() => {
     if (!StoredUser) return;
 
-    SetName(String(StoredUser.Name ?? StoredUser.name ?? ''));
+    SetName(String(StoredUser.Name ?? StoredUser.Name ?? ''));
     SetBirthDate(
-      FormatDateToBR(String(StoredUser.BirthDate ?? StoredUser.birthDate ?? ''))
+      FormatDateToBR(String(StoredUser.BirthDate ?? StoredUser.BirthDate ?? ''))
     );
   }, [StoredUser]);
 

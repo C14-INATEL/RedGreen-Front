@@ -2,18 +2,17 @@ import useSWR from 'swr';
 import { apiClient } from '@infrastructure/http/client';
 
 export interface UserProfile {
-  nickname?: string;
-  Nickname?: string;
-  UserType?: string;
-  Email?: string;
-  email?: string;
+  UserId?: string;
   Name?: string;
-  name?: string;
   BirthDate?: string;
-  birthDate?: string;
+  Nickname?: string;
+  Email?: string;
   ChipBalance?: number;
-  chips?: number;
-  [key: string]: unknown;
+  DailyLoginStreak?: number;
+  LastLoginDate?: string;
+  CreatedAt?: string;
+  Active?: boolean;
+  UserType?: string;
 }
 
 export const useUserProfile = (enabled: boolean = true) => {
@@ -31,7 +30,7 @@ export const useUserProfile = (enabled: boolean = true) => {
 
   return {
     user: data,
-    nickname: data?.nickname ?? data?.Nickname,
+    nickname: data?.Nickname ?? data?.Nickname,
     isAdmin: data?.UserType === 'Admin',
     isLoading,
     error,

@@ -28,7 +28,6 @@ const Home = () => {
   const PlayerName =
     nickname ??
     user?.Nickname ??
-    user?.nickname ??
     (IsLoggedIn && profileLoading
       ? 'Carregando...'
       : IsLoggedIn
