@@ -1,28 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { type GambitTableType, getGambitTableTheme } from './gambitTableConfig';
 import {
-  type MinefieldTableType,
-  getMinefieldTableTheme,
-} from './MinefieldTableConfig';
-import {
-  getMinefieldTableTexture,
-  preloadMinefieldTableTextures,
-} from './MinefieldTextures';
+  getGambitTableTexture,
+  preloadGambitTableTextures,
+} from './gambitTextures';
 import type { RewardTableState } from '../cardReward/types/CardReward';
 
-type MinefieldEventTableViewport = {
+type GambitEventTableViewport = {
   centerX: number;
   centerY: number;
   height: number;
   width: number;
 };
 
-type MinefieldEventTableProps = {
+type GambitEventTableProps = {
   className?: string;
   onTransitionSettled?: () => void;
   tableState: RewardTableState;
   transitionDurationMs?: number;
-  viewport: MinefieldEventTableViewport | null;
+  viewport: GambitEventTableViewport | null;
 };
 
 type TableSceneAnimationState = {
@@ -68,13 +65,13 @@ const drawImpactFlash = (
   graphics.endFill();
 };
 
-export const MinefieldEventTable = ({
+export const GambitEventTable = ({
   className,
   onTransitionSettled,
   tableState,
   transitionDurationMs = DEFAULT_TRANSITION_DURATION_MS,
   viewport,
-}: MinefieldEventTableProps) => {
+}: GambitEventTableProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const onTransitionSettledRef = useRef(onTransitionSettled);
   const renderSceneRef = useRef<(() => void) | null>(null);
@@ -135,11 +132,9 @@ export const MinefieldEventTable = ({
 
     const applyTableLayout = (
       tableSprite: Sprite,
-      tableViewport: MinefieldEventTableViewport
+      tableViewport: GambitEventTableViewport
     ) => {
       tableSprite.anchor.set(0.5);
-      // A mesa pode crescer visualmente sem mexer no grid/cartas do modal,
-      // porque o layout interativo continua no DOM e o Pixi desenha so o fundo.
       tableSprite.width = tableViewport.width * TABLE_RENDER_SCALE_X;
       tableSprite.height = tableViewport.height * TABLE_RENDER_SCALE_Y;
       tableSprite.roundPixels = true;
@@ -153,9 +148,9 @@ export const MinefieldEventTable = ({
 
     const applyTableTexture = (
       tableSprite: Sprite,
-      tableType: MinefieldTableType
+      tableType: GambitTableType
     ) => {
-      tableSprite.texture = getMinefieldTableTexture(tableType);
+      tableSprite.texture = getGambitTableTexture(tableType);
       tableSprite.roundPixels = true;
       tableSprite.tint = 0xffffff;
       tableSprite.alpha = 1;
@@ -166,9 +161,6 @@ export const MinefieldEventTable = ({
         return;
       }
 
-      // O flash verde acontecia porque a mesa incoming ainda podia aparecer
-      // no primeiro frame usando estado/textura provisoria do sprite.
-      // Aqui deixamos as duas texturas resolvidas e aplicadas antes da animacao.
       applyTableTexture(baseTable, tableStateRef.current.currentTable);
       applyTableTexture(incomingTable, 'bad');
       incomingTable.visible = false;
@@ -197,8 +189,6 @@ export const MinefieldEventTable = ({
       );
       resetTableSpriteVisualState(baseTable);
       incomingTable.visible = false;
-      // O flash branco vinha daqui: o layer de impacto podia existir por 1 frame
-      // antes de o estado idle zerar sua opacidade. Mantemos invisivel por padrao.
       impactFlash.alpha = 0;
       impactFlash.visible = false;
       activeTransitionId = null;
@@ -230,8 +220,6 @@ export const MinefieldEventTable = ({
       };
       activeTransitionId = nextTableState.transitionId;
 
-      // Antes a mesa nova era desenhada no mesmo retangulo do modal.
-      // Aqui cada mesa ganha seu proprio sprite e posicao na cena inteira.
       applyTableLayout(baseTable, tableViewport);
       applyTableLayout(incomingTable, tableViewport);
 
@@ -327,7 +315,7 @@ export const MinefieldEventTable = ({
       const impactPhase = clamp((progress - 0.46) / 0.16, 0, 1);
       const outgoingPhase = clamp((progress - 0.52) / 0.48, 0, 1);
 
-      const enteringTheme = getMinefieldTableTheme(
+      const enteringTheme = getGambitTableTheme(
         animationState.tableState.incomingTable ??
           animationState.tableState.currentTable
       );
@@ -355,8 +343,6 @@ export const MinefieldEventTable = ({
           : exitingStartX +
             (exitingTargetX - exitingStartX) * easeInCubic(outgoingPhase);
 
-      // A colisao acontece na cena inteira. A mesa nova vem de fora da viewport
-      // e empurra a antiga para alem da borda esquerda, sem clipping do modal.
       baseTable.position.set(Math.round(outgoingX), Math.round(centerY));
       incomingTable.position.set(Math.round(incomingX), Math.round(centerY));
 
@@ -454,7 +440,7 @@ export const MinefieldEventTable = ({
 
     renderScene();
 
-    preloadMinefieldTableTextures()
+    preloadGambitTableTextures()
       .catch(() => undefined)
       .finally(() => {
         if (isDisposed) {

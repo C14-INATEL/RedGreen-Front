@@ -1,4 +1,4 @@
-import type { MinefieldTableType } from '../../MinefieldGame/MinefieldTableConfig';
+import type { GambitTableType } from '../../GambitGame/gambitTableConfig';
 
 export type RewardSelectionPhase = 'selecting' | 'resolving';
 export type RewardTablePhase = 'normal' | 'transitioning' | 'bad';
@@ -26,7 +26,7 @@ export type RewardCardOption = RewardCardDefinition & {
 
 export type RewardSelectionEntry = {
   optionId: string;
-  tableType: MinefieldTableType;
+  tableType: GambitTableType;
 };
 
 export type RewardTriggerConfig = {
@@ -83,8 +83,8 @@ export type RewardSelectionResult = {
 };
 
 export type RewardTableState = {
-  currentTable: MinefieldTableType;
-  incomingTable: MinefieldTableType | null;
+  currentTable: GambitTableType;
+  incomingTable: GambitTableType | null;
   isTransitioning: boolean;
   phase: RewardTablePhase;
   transitionId: string | null;

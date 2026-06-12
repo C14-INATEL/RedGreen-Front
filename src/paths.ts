@@ -5,7 +5,7 @@ export const paths = {
   dashboard: '/dashboard',
   slotmachineroom: '/slot-machine-room',
   slotmachinetables: '/slotmachine-tables',
-  minefieldRoom: '/minefield-room',
-  minefieldTablesRoom: '/minefield-tables',
+  gambitRoom: '/gambit-room',
+  gambitTablesRoom: '/gambit-tables',
   rouletteRoom: '/roulette-room',
 } as const;

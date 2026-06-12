@@ -30,11 +30,11 @@ const Table = () => {
     const IsLoggedIn = !!Token;
 
     if (IsLoggedIn) {
-      Navigate(paths.minefieldTablesRoom);
+      Navigate(paths.gambitTablesRoom);
       return;
     }
 
-    Navigate(paths.minefieldRoom);
+    Navigate(paths.gambitRoom);
   };
 
   return (

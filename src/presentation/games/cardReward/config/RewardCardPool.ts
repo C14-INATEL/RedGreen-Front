@@ -1,29 +1,33 @@
+import { getGambitEffectCardSpritePath } from '../../GambitGame/gambitEffectCardAssets';
 import type { RewardCardDefinition } from '../types/CardReward';
 
-const CARD_TEST_SPRITES = [
-  '/MineField/CardTest.png',
-  '/MineField/CardTest1.png',
-  '/MineField/CardTest2.png',
-  '/MineField/CardTest3.png',
-  '/MineField/CardTest4.png',
-  '/MineField/CardTest5.png',
-  '/MineField/CardTest6.png',
+export const rewardCardPool: RewardCardDefinition[] = [
+  {
+    description: 'Multiplica os pontos da proxima carta revelada.',
+    id: 'dobro-de-potassio',
+    spritePath: getGambitEffectCardSpritePath('dobro-de-potassio'),
+    subtitle: 'Efeito positivo',
+    title: 'Dobro de Potassio',
+  },
+  {
+    description: 'Divide os pontos da proxima carta revelada.',
+    id: 'melancidio',
+    spritePath: getGambitEffectCardSpritePath('melancidio'),
+    subtitle: 'Efeito negativo',
+    title: 'Melancidio',
+  },
+  {
+    description: 'Revela uma pista neutra da mesa.',
+    id: 'clarividencia',
+    spritePath: getGambitEffectCardSpritePath('clarividencia'),
+    subtitle: 'Efeito neutro',
+    title: 'Clarividencia',
+  },
+  {
+    description: 'Inverte a leitura da mesa sem alterar pontos.',
+    id: 'inversao-gravitacional',
+    spritePath: getGambitEffectCardSpritePath('inversao-gravitacional'),
+    subtitle: 'Efeito neutro',
+    title: 'Inversao Gravitacional',
+  },
 ];
-
-const IDS = [
-  'golden-echo',
-  'frost-veil',
-  'rose-flare',
-  'verdant-step',
-  'astral-thread',
-  'ember-surge',
-  'lunar-mark',
-];
-
-export const rewardCardPool: RewardCardDefinition[] = IDS.map((id, index) => ({
-  description: '',
-  id,
-  spritePath: CARD_TEST_SPRITES[index % CARD_TEST_SPRITES.length],
-  subtitle: '',
-  title: 'Carta de Poder',
-}));

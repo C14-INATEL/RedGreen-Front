@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackgroundParticles } from '../../../MinefieldGame/BackgroundParticles';
-import { MinefieldEventTable } from '../../../MinefieldGame/MinefieldEventTable';
+import { BackgroundParticles } from '../../../GambitGame/BackgroundParticles';
+import { GambitEventTable } from '../../../GambitGame/GambitEventTable';
 import { rewardPresentationConfig } from '../../config/RewardPresentationConfig';
 import { rewardTimings } from '../../config/RewardTimings';
 import type {
@@ -15,8 +15,9 @@ import { selectedCardOverlayTransition } from '../../animations/CardSelectionAni
 import { RewardCard } from './RewardCard';
 
 type RewardChoiceModalProps = {
+  isSelectionLocked?: boolean;
   onCardHover: (card: RewardCardOption) => void;
-  onCardSelect: (optionId: string) => void;
+  onCardSelect: (optionId: string) => boolean;
   onSelectedCardCinematicComplete: (sessionId: string) => void;
   onTableTransitionComplete: (sessionId: string) => void;
   presentationConfig?: RewardPresentationConfig;
@@ -49,6 +50,11 @@ type FirstChoiceAnimationPhase =
   | 'waiting-transition'
   | 'transitioning';
 
+const EVENT_CARD_MAX_WIDTH = 260;
+const EVENT_CARD_MAX_HEIGHT_RATIO = 0.58;
+const EVENT_CARD_GRID_MAX_WIDTH = 768;
+const EVENT_CARD_MAX_ANIMATION_SCALE = 1.12;
+
 const createDefaultTableState = (): RewardTableState => ({
   currentTable: 'normal',
   incomingTable: null,
@@ -71,6 +77,7 @@ const getSelectedOptionIdsForTable = (
     .map((entry) => entry.optionId);
 
 export const RewardChoiceModal = ({
+  isSelectionLocked = false,
   onCardHover,
   onCardSelect,
   onSelectedCardCinematicComplete,
@@ -303,10 +310,22 @@ export const RewardChoiceModal = ({
         displayedCards.find((card) => card.optionId === optionId) ?? null;
       const activeSession = sessionRef.current;
 
+      if (!selectedCard || isSelectionLocked) {
+        return;
+      }
+
+      const wasSelectionAccepted = onCardSelect(optionId);
+
+      if (!wasSelectionAccepted) {
+        return;
+      }
+
       if (!modalRef.current || !buttonElement || !selectedCard) {
         setSelectedCenterCardOverlay(null);
       } else {
-        const cardRect = buttonElement.getBoundingClientRect();
+        const cardRect =
+          buttonElement.querySelector('img')?.getBoundingClientRect() ??
+          buttonElement.getBoundingClientRect();
         const modalRect = modalRef.current.getBoundingClientRect();
 
         // A carta escolhida vira uma entidade independente do grid.
@@ -320,7 +339,6 @@ export const RewardChoiceModal = ({
       }
 
       if (!activeSession) {
-        onCardSelect(optionId);
         return;
       }
 
@@ -391,11 +409,10 @@ export const RewardChoiceModal = ({
 
         transitionPrepTimeoutRef.current = null;
       }, timings.selectedCardCenteringDurationMs);
-
-      onCardSelect(optionId);
     },
     [
       displayedCards,
+      isSelectionLocked,
       onCardSelect,
       onSelectedCardCinematicComplete,
       timings.selectedCardCenteringDurationMs,
@@ -512,20 +529,49 @@ export const RewardChoiceModal = ({
       return null;
     }
 
+    const viewportWidth =
+      typeof window === 'undefined'
+        ? selectedCenterCardOverlay.modalRect.width
+        : window.innerWidth;
+    const viewportHeight =
+      typeof window === 'undefined'
+        ? selectedCenterCardOverlay.modalRect.height
+        : window.innerHeight;
+    const sourceWidth = Math.max(selectedCenterCardOverlay.cardRect.width, 1);
+    const sourceHeight = Math.max(selectedCenterCardOverlay.cardRect.height, 1);
+    const maxOverlayWidth = Math.min(
+      EVENT_CARD_MAX_WIDTH,
+      viewportWidth * 0.72,
+      selectedCenterCardOverlay.modalRect.width * 0.54
+    );
+    const maxOverlayHeight = Math.min(
+      viewportHeight * EVENT_CARD_MAX_HEIGHT_RATIO,
+      selectedCenterCardOverlay.modalRect.height * 0.72
+    );
+    const overlaySizeScale = Math.min(
+      1,
+      maxOverlayWidth / (sourceWidth * EVENT_CARD_MAX_ANIMATION_SCALE),
+      maxOverlayHeight / (sourceHeight * EVENT_CARD_MAX_ANIMATION_SCALE)
+    );
+    const overlayWidth = sourceWidth * overlaySizeScale;
+    const overlayHeight = sourceHeight * overlaySizeScale;
+    const overlayLeft =
+      selectedCenterCardOverlay.cardRect.left +
+      (sourceWidth - overlayWidth) / 2;
+    const overlayTop =
+      selectedCenterCardOverlay.cardRect.top +
+      (sourceHeight - overlayHeight) / 2;
     const targetX =
       selectedCenterCardOverlay.modalRect.left +
       selectedCenterCardOverlay.modalRect.width / 2 -
-      selectedCenterCardOverlay.cardRect.left -
-      selectedCenterCardOverlay.cardRect.width / 2;
+      overlayLeft -
+      overlayWidth / 2;
     const targetY =
       selectedCenterCardOverlay.modalRect.top +
       selectedCenterCardOverlay.modalRect.height / 2 -
-      selectedCenterCardOverlay.cardRect.top -
-      selectedCenterCardOverlay.cardRect.height / 2;
-    const flyAwayTargetY =
-      -selectedCenterCardOverlay.cardRect.top -
-      selectedCenterCardOverlay.cardRect.height -
-      96;
+      overlayTop -
+      overlayHeight / 2;
+    const flyAwayTargetY = -overlayTop - overlayHeight - 96;
     const isFlyingAway = firstChoiceAnimationPhase === 'flying';
     const isFirstTableSelection = latestSelection?.tableType === 'normal';
     const isCenteringFirstTableSelection =
@@ -570,11 +616,13 @@ export const RewardChoiceModal = ({
       <motion.div
         className="fixed left-0 top-0 z-[90] pointer-events-none"
         style={{
-          left: selectedCenterCardOverlay.cardRect.left,
-          top: selectedCenterCardOverlay.cardRect.top,
-          width: selectedCenterCardOverlay.cardRect.width,
-          height: selectedCenterCardOverlay.cardRect.height,
+          height: overlayHeight,
+          left: overlayLeft,
+          maxHeight: maxOverlayHeight,
+          maxWidth: maxOverlayWidth,
+          top: overlayTop,
           willChange: 'transform, opacity',
+          width: overlayWidth,
         }}
         initial={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
         animate={{
@@ -589,7 +637,7 @@ export const RewardChoiceModal = ({
         {/* A carta escolhida segura o foco e abre a pausa dramatica antes da colisao. */}
         <motion.img
           alt={selectedCenterCardOverlay.card.title}
-          className="block h-full w-full select-none object-cover"
+          className="block h-full w-full select-none object-contain"
           draggable={false}
           src={selectedCenterCardOverlay.card.spritePath}
           style={{
@@ -642,7 +690,7 @@ export const RewardChoiceModal = ({
             />
           ) : null}
 
-          <MinefieldEventTable
+          <GambitEventTable
             className="pointer-events-none fixed inset-0 z-[6]"
             onTransitionSettled={handleTableTransitionSettled}
             tableState={tableSceneState}
@@ -704,26 +752,33 @@ export const RewardChoiceModal = ({
 
               {cardsVisible ? (
                 <div
-                  className="mt-8 grid gap-4 lg:grid-cols-3"
+                  className="mx-auto mt-8 grid justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3"
                   key={`${session.id}-${tableSceneState.phase}-${cardPresentationCycle}`}
+                  style={{ maxWidth: EVENT_CARD_GRID_MAX_WIDTH }}
                 >
                   {displayedCards.map((card, index) => (
-                    <RewardCard
-                      card={card}
-                      index={index}
-                      isDisabled={
-                        session.status !== 'selecting' ||
-                        tableSceneState.isTransitioning
-                      }
-                      isResolved={session.status === 'resolving'}
-                      isSelected={displayedSelectedOptionIds.includes(
-                        card.optionId
-                      )}
-                      selectionState={getSelectionState(card.optionId)}
+                    <div
+                      className="w-full"
                       key={card.optionId}
-                      onHover={onCardHover}
-                      onSelect={handleCardSelect}
-                    />
+                      style={{ maxWidth: EVENT_CARD_MAX_WIDTH }}
+                    >
+                      <RewardCard
+                        card={card}
+                        index={index}
+                        isDisabled={
+                          session.status !== 'selecting' ||
+                          isSelectionLocked ||
+                          tableSceneState.isTransitioning
+                        }
+                        isResolved={session.status === 'resolving'}
+                        isSelected={displayedSelectedOptionIds.includes(
+                          card.optionId
+                        )}
+                        selectionState={getSelectionState(card.optionId)}
+                        onHover={onCardHover}
+                        onSelect={handleCardSelect}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (

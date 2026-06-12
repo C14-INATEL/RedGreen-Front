@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { AnimatedSprite, Application, Container } from 'pixi.js';
 import {
-  MINEFIELD_PARTICLE_ANIMATION_FRAMES,
-  preloadMinefieldParticleTextures,
-} from './MinefieldTextures';
+  GAMBIT_PARTICLE_ANIMATION_FRAMES,
+  preloadGambitParticleTextures,
+} from './gambitTextures';
 
 type BackgroundParticlesProps = {
   alphaMultiplier?: number;
@@ -65,7 +65,7 @@ const randomBetween = (min: number, max: number) =>
 
 const createParticleSprite = () => {
   const particleSprite = AnimatedSprite.fromFrames(
-    MINEFIELD_PARTICLE_ANIMATION_FRAMES
+    GAMBIT_PARTICLE_ANIMATION_FRAMES
   );
 
   particleSprite.anchor.set(0.5);
@@ -224,7 +224,7 @@ export const BackgroundParticles = ({
       nextParticle.sprite.visible = true;
       nextParticle.sprite.play();
       nextParticle.sprite.gotoAndPlay(
-        Math.floor(Math.random() * MINEFIELD_PARTICLE_ANIMATION_FRAMES.length)
+        Math.floor(Math.random() * GAMBIT_PARTICLE_ANIMATION_FRAMES.length)
       );
 
       root.addChild(nextParticle.sprite);
@@ -244,9 +244,6 @@ export const BackgroundParticles = ({
 
       while (spawnAccumulator >= spawnIntervalMs) {
         if (activeParticles.length >= maxParticles) {
-          // O ajuste anterior reciclava particulas ainda em voo e por isso elas
-          // morriam antes do topo. Quando o pool enche, seguramos o timer perto
-          // do proximo spawn sem acumular um "estouro" futuro.
           spawnAccumulator = Math.min(spawnAccumulator, spawnIntervalMs - 1);
           break;
         }
@@ -346,7 +343,7 @@ export const BackgroundParticles = ({
           });
     observer?.observe(host);
 
-    preloadMinefieldParticleTextures()
+    preloadGambitParticleTextures()
       .catch(() => undefined)
       .finally(() => {
         if (isDisposed) {

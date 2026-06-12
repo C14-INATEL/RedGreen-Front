@@ -430,6 +430,10 @@ export const SlotMachinePixi = ({
   const handleMachineModeChange = (nextMode: SlotMachineReelsMode) => {
     setMachineMode(nextMode);
 
+    if (nextMode === 'idle') {
+      setIsMachineAnimating(false);
+    }
+
     if (nextMode === 'resultHold' && pendingDisplayValue !== null) {
       setDisplayValue(pendingDisplayValue);
       setPendingDisplayValue(null);
