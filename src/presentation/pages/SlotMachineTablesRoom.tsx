@@ -62,8 +62,9 @@ export const SlotMachineTablesRoom = () => {
 
   const [ModalType, SetModalType] = useState<'success' | 'error'>('success');
 
-  const [SelectedTableColor, SetSelectedTableColor] =
-  useState<TableColor | undefined>();
+  const [SelectedTableColor, SetSelectedTableColor] = useState<
+    TableColor | undefined
+  >();
 
   useEffect(() => {
     const FetchTables = async () => {
