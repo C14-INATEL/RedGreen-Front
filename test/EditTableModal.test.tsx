@@ -60,7 +60,9 @@ describe('EditTableModal', () => {
     await waitFor(() => {
       expect(MockApiDelete).toHaveBeenCalledWith('/slot/machine/1');
       expect(DefaultProps.OnTableDeleted).toHaveBeenCalledWith(1);
-      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith('Mesa removida com sucesso.');
+      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith(
+        'Mesa removida com sucesso.'
+      );
       expect(DefaultProps.OnClose).toHaveBeenCalled();
     });
   });
@@ -72,7 +74,9 @@ describe('EditTableModal', () => {
   });
 
   it('calls OnError when API rejects with a response on delete', async () => {
-    MockApiDelete.mockRejectedValueOnce({ response: { status: 409 } } as unknown);
+    MockApiDelete.mockRejectedValueOnce({
+      response: { status: 409 },
+    } as unknown);
 
     render(<EditTableModal {...DefaultProps} TableActive={false} />);
     fireEvent.click(screen.getByText('Excluir'));
@@ -91,9 +95,14 @@ describe('EditTableModal', () => {
     fireEvent.click(screen.getByText('Salvar'));
 
     await waitFor(() => {
-      expect(MockApiPut).toHaveBeenCalledWith('/slot/machine/1', expect.any(Object));
+      expect(MockApiPut).toHaveBeenCalledWith(
+        '/slot/machine/1',
+        expect.any(Object)
+      );
       expect(DefaultProps.OnTableUpdated).toHaveBeenCalled();
-      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith('Mesa atualizada com sucesso!');
+      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith(
+        'Mesa atualizada com sucesso!'
+      );
     });
   });
 
@@ -106,7 +115,9 @@ describe('EditTableModal', () => {
 
     await waitFor(() => {
       expect(MockApiPatch).toHaveBeenCalledWith('/slot/machine/1/deactivate');
-      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith('Mesa desativada com sucesso!');
+      expect(DefaultProps.OnSuccess).toHaveBeenCalledWith(
+        'Mesa desativada com sucesso!'
+      );
     });
   });
 });

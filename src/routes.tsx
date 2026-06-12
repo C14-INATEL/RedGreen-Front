@@ -39,7 +39,10 @@ export const AppRoutes = () => (
 
       <Route path={paths.dashboard} element={<Dashboard />} />
       <Route path={paths.slotmachineroom} element={<SlotMachineRoom />} />
-      <Route path={paths.slotmachinetables} element={<SlotMachineTablesRoom />} />
+      <Route
+        path={paths.slotmachinetables}
+        element={<SlotMachineTablesRoom />}
+      />
       <Route path={paths.gambitRoom} element={<GambitRoom />} />
       <Route path={paths.gambitTablesRoom} element={<GambitTablesRoom />} />
       <Route path={paths.rouletteRoom} element={<RouletteRoom />} />
