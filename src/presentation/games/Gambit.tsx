@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RewardChoiceModal, type RewardCardOption } from './cardReward';
 import { GambitBoard } from './GambitGame/GambitBoard';
@@ -57,12 +57,18 @@ type PendingEventResolution = PendingEventSelection & {
   sessionId: string;
 };
 
+type GambitScoreFeedback = {
+  delta: number;
+  id: number;
+};
+
 const emptyPendingEventSelection: PendingEventSelection = {
   BadIndex: null,
   GoodIndex: null,
 };
 
 const PENDING_EVENT_PRESENTATION_DELAY_MS = 350;
+const SCORE_FEEDBACK_DURATION_MS = 1900;
 const GAMBIT_GAMEPLAY_ROUTES_NOT_FOUND_MESSAGE =
   'Rotas de gameplay do Gambit não encontradas. Verifique se o backend está na branch feat/gambit-game-logic.';
 const GAMBIT_SESSION_EXPIRED_MESSAGE = 'Sessão expirada. Faça login novamente.';
@@ -104,6 +110,9 @@ const mergeSelectedPositions = (
 
 const formatEffectName = (effect: GambitCardEffect) =>
   getGambitEffectPresentation(effect).title.toUpperCase();
+
+const formatScoreFeedbackDelta = (delta: number) =>
+  `${delta > 0 ? '+' : ''}${delta.toLocaleString('pt-BR')}`;
 
 const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   if (!peekResult) {
@@ -172,11 +181,18 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     setIsPendingEventPresentationDelayed,
   ] = useState(false);
   const [isAutoCashOutPending, setIsAutoCashOutPending] = useState(false);
+  const [scoreFeedback, setScoreFeedback] = useState<GambitScoreFeedback | null>(
+    null
+  );
   const revealAnimationLockedRef = useRef(false);
   const autoCashOutSessionIdRef = useRef<string | null>(null);
   const isAutoCashOutPendingRef = useRef(false);
   const pendingEventResolutionRef = useRef<PendingEventResolution | null>(null);
   const pendingEventPresentationDelayTimeoutRef = useRef<number | null>(null);
+  const previousScoreRef = useRef<number | null>(null);
+  const scoreFeedbackIdRef = useRef(0);
+  const scoreFeedbackTimeoutRef = useRef<number | null>(null);
+  const trackedScoreSessionIdRef = useRef<string | null>(null);
   const snapshot = getGambitSessionGridSnapshot(session);
   const pendingEvent = snapshot?.PendingEvent ?? null;
   const pendingInteraction = snapshot?.PendingInteraction ?? null;
@@ -268,6 +284,67 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
   }, [initialSession]);
 
   useEffect(() => {
+    if (!session) {
+      trackedScoreSessionIdRef.current = null;
+      previousScoreRef.current = null;
+      setScoreFeedback(null);
+
+      if (scoreFeedbackTimeoutRef.current) {
+        window.clearTimeout(scoreFeedbackTimeoutRef.current);
+        scoreFeedbackTimeoutRef.current = null;
+      }
+
+      return;
+    }
+
+    const sessionId = String(session.GambitSessionId);
+
+    if (trackedScoreSessionIdRef.current !== sessionId) {
+      trackedScoreSessionIdRef.current = sessionId;
+      previousScoreRef.current = totalScore;
+      setScoreFeedback(null);
+
+      if (scoreFeedbackTimeoutRef.current) {
+        window.clearTimeout(scoreFeedbackTimeoutRef.current);
+        scoreFeedbackTimeoutRef.current = null;
+      }
+
+      return;
+    }
+
+    const previousScore = previousScoreRef.current;
+
+    previousScoreRef.current = totalScore;
+
+    if (previousScore == null) {
+      return;
+    }
+
+    const scoreDelta = totalScore - previousScore;
+
+    if (scoreDelta === 0) {
+      return;
+    }
+
+    scoreFeedbackIdRef.current += 1;
+    setScoreFeedback({
+      delta: scoreDelta,
+      id: scoreFeedbackIdRef.current,
+    });
+
+    if (scoreFeedbackTimeoutRef.current) {
+      window.clearTimeout(scoreFeedbackTimeoutRef.current);
+    }
+
+    scoreFeedbackTimeoutRef.current = window.setTimeout(() => {
+      setScoreFeedback((currentFeedback) =>
+        currentFeedback?.id === scoreFeedbackIdRef.current ? null : currentFeedback
+      );
+      scoreFeedbackTimeoutRef.current = null;
+    }, SCORE_FEEDBACK_DURATION_MS);
+  }, [session, totalScore]);
+
+  useEffect(() => {
     if (!visualState.preparedEffect) {
       setIsPreparedEffectPreviewOpen(false);
     }
@@ -326,6 +403,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     () => () => {
       if (pendingEventPresentationDelayTimeoutRef.current) {
         window.clearTimeout(pendingEventPresentationDelayTimeoutRef.current);
+      }
+
+      if (scoreFeedbackTimeoutRef.current) {
+        window.clearTimeout(scoreFeedbackTimeoutRef.current);
       }
     },
     []
@@ -647,9 +728,61 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
                 Pontos
               </span>
 
-              <span className="font-mono text-lg font-bold text-foreground">
-                {totalScore.toLocaleString('pt-BR')}
-              </span>
+              <div className="relative flex min-w-[4.5rem] items-center justify-end">
+                <AnimatePresence initial={false}>
+                  {scoreFeedback ? (
+                    <motion.div
+                      animate={{
+                        opacity: [0, 1, 1, 0],
+                        scale: [0.9, 1.03, 1, 0.97],
+                        y: [6, -8, -22, -42],
+                      }}
+                      className={`pointer-events-none absolute right-full top-1/2 z-[1] mr-2 whitespace-nowrap font-mono text-sm font-bold ${
+                        scoreFeedback.delta > 0
+                          ? 'text-[#b9ffb3]'
+                          : 'text-[#ffb4b0]'
+                      }`}
+                      data-testid="gambit-score-feedback"
+                      exit={{ opacity: 0, y: -46, scale: 0.92 }}
+                      initial={{ opacity: 0, scale: 0.84, y: 6 }}
+                      key={scoreFeedback.id}
+                      style={{
+                        filter: 'drop-shadow(2px 2px 0 rgba(0,0,0,0.62))',
+                        textShadow:
+                          scoreFeedback.delta > 0
+                            ? '0 0 12px rgba(116,255,152,0.35)'
+                            : '0 0 12px rgba(255,122,122,0.35)',
+                      }}
+                      transition={{
+                        opacity: {
+                          duration: 1.58,
+                          ease: 'easeInOut',
+                          times: [0, 0.12, 0.78, 1],
+                        },
+                        scale: {
+                          duration: 1.18,
+                          ease: [0.22, 1, 0.36, 1],
+                          times: [0, 0.18, 0.68, 1],
+                        },
+                        y: {
+                          duration: 1.58,
+                          ease: [0.16, 1, 0.3, 1],
+                          times: [0, 0.16, 0.76, 1],
+                        },
+                      }}
+                    >
+                      {formatScoreFeedbackDelta(scoreFeedback.delta)}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+
+                <span
+                  className="font-mono text-lg font-bold text-foreground"
+                  data-testid="gambit-total-score"
+                >
+                  {totalScore.toLocaleString('pt-BR')}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center justify-between bg-card px-5 py-3 pixel-border">

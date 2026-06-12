@@ -280,6 +280,27 @@ describe('Gambit backend gameplay flow', () => {
     );
   });
 
+  it('shows floating score feedback when the total score changes', async () => {
+    mockBurnActiveGambitCard.mockResolvedValueOnce(createSessionAfterBurn(7));
+
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession(),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-7'));
+
+    await waitFor(() => {
+      expect(mockBurnActiveGambitCard).toHaveBeenCalledWith(7);
+    });
+
+    expect(await screen.findByTestId('gambit-score-feedback')).toHaveTextContent(
+      '+15'
+    );
+    expect(screen.getByTestId('gambit-total-score')).toHaveTextContent('15');
+  });
+
   it('keeps a revealed effect card in focus until the player skips the cinematic', async () => {
     mockBurnActiveGambitCard.mockResolvedValueOnce(
       createSessionAfterBurn(7, {
