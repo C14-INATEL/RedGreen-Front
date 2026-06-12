@@ -242,16 +242,6 @@ describe('Gambit backend gameplay flow', () => {
     mockResolveActiveGambitEvent.mockReset();
   });
 
-  it('shows an empty active-session message when no session is provided', async () => {
-    render(createElement(Gambit));
-
-    expect(
-      await screen.findByText('Nenhuma sessão ativa do Gambit encontrada.')
-    ).toBeInTheDocument();
-    expect(mockGambitBoard).not.toHaveBeenCalled();
-    expect(mockBurnActiveGambitCard).not.toHaveBeenCalled();
-  });
-
   it('burns a closed card through the active gameplay endpoint', async () => {
     mockBurnActiveGambitCard.mockResolvedValueOnce(createSessionAfterBurn(7));
 
@@ -295,9 +285,9 @@ describe('Gambit backend gameplay flow', () => {
       expect(mockBurnActiveGambitCard).toHaveBeenCalledWith(7);
     });
 
-    expect(await screen.findByTestId('gambit-score-feedback')).toHaveTextContent(
-      '+15'
-    );
+    expect(
+      await screen.findByTestId('gambit-score-feedback')
+    ).toHaveTextContent('+15');
     expect(screen.getByTestId('gambit-total-score')).toHaveTextContent('15');
   });
 

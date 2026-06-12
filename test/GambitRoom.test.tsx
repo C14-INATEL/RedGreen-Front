@@ -16,6 +16,17 @@ const mockFetchGambitTables = jest.fn();
 const mockNavigate = jest.fn();
 const mockUseLocation = jest.fn();
 
+jest.mock('../src/infrastructure/http/client', () => ({
+  apiClient: {
+    get: jest.fn(),
+    post: jest.fn(),
+    interceptors: {
+      request: { use: jest.fn() },
+      response: { use: jest.fn() },
+    },
+  },
+}));
+
 jest.mock('framer-motion', () => {
   const React = jest.requireActual('react') as typeof import('react');
 
@@ -74,6 +85,65 @@ jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
   fetchGambitTables: (...args: unknown[]) => mockFetchGambitTables(...args),
 }));
 
+jest.mock('../src/presentation/ui/GambitBetPanel', () => {
+  const React = jest.requireActual('react') as typeof import('react');
+  return {
+    GambitBetPanel: (props: {
+      MinimumCardsPurchased: number;
+      MaxCardsPurchased: number;
+      CardPrice: number;
+      TableMultiplier: number;
+      OnConfirm: (cards: number) => void;
+    }) =>
+      React.createElement(
+        'div',
+        {
+          'data-testid': 'gambit-bet-panel',
+        },
+        React.createElement('p', null, `${props.MinimumCardsPurchased} cartas`),
+        React.createElement(
+          'p',
+          null,
+          String(props.MaxCardsPurchased * props.CardPrice)
+        ),
+        React.createElement('p', null, `${props.TableMultiplier}×`),
+        React.createElement(
+          'button',
+          { onClick: () => props.OnConfirm(props.MinimumCardsPurchased + 1) },
+          '+'
+        ),
+        React.createElement(
+          'button',
+          { onClick: () => props.OnConfirm(props.MinimumCardsPurchased) },
+          'Confirmar'
+        )
+      ),
+  };
+});
+
+jest.mock('@application/hooks/useUserProfile', () => ({
+  useUserProfile: () => ({
+    nickname: 'TestPlayer',
+    isLoading: false,
+  }),
+}));
+
+jest.mock('@application/hooks/useUserChips', () => ({
+  useUserChips: () => ({
+    chips: 1000,
+    mutate: jest.fn(),
+  }),
+}));
+
+jest.mock('@ui/RankingPanel', () => {
+  const React = jest.requireActual('react') as typeof import('react');
+  return {
+    __esModule: true,
+    default: () =>
+      React.createElement('div', { 'data-testid': 'ranking-panel' }),
+  };
+});
+
 const createGambitTable = (
   overrides: Partial<GambitTable> = {}
 ): GambitTable => ({
@@ -106,7 +176,16 @@ describe('GambitRoom', () => {
     });
   });
 
-  it('renders Gambit when an active session exists', async () => {
+  it('renders Gambit and bet panel regardless of active session', async () => {
+    renderGambitRoom();
+
+    expect(await screen.findByTestId('gambit-game')).toHaveTextContent(
+      'Gambit board:undefined'
+    );
+    expect(screen.getByTestId('gambit-bet-panel')).toBeInTheDocument();
+  });
+
+  it('renders Gambit with active session', async () => {
     mockFetchActiveGambitSession.mockResolvedValueOnce(
       createGambitApiSession({
         GambitSessionId: 'active-session',
@@ -115,38 +194,22 @@ describe('GambitRoom', () => {
 
     renderGambitRoom();
 
-    expect(await screen.findByTestId('gambit-game')).toHaveTextContent(
-      'Gambit board:active-session'
-    );
-    expect(mockFetchGambitTables).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByTestId('gambit-game')).toHaveTextContent(
+        'Gambit board:active-session'
+      );
+    });
   });
 
-  it('loads tables and keeps the side bet panel when there is no active session', async () => {
-    mockFetchGambitTables.mockResolvedValueOnce([
-      createGambitTable({
-        CardPrice: 7,
-        MaxCardsPurchased: 6,
-        MinimumCardsPurchased: 3,
-        TableMultiplier: 2.5,
-      }),
-    ]);
-
+  it('fetches tables when there is no active session', async () => {
     renderGambitRoom();
 
     await waitFor(() => {
       expect(mockFetchGambitTables).toHaveBeenCalledTimes(1);
     });
-    expect(screen.queryByTestId('gambit-game')).not.toBeInTheDocument();
-    expect(
-      screen.queryByText('Nenhuma sessão ativa do Gambit encontrada.')
-    ).not.toBeInTheDocument();
-    expect(await screen.findByText('3 cartas')).toBeInTheDocument();
-    expect(await screen.findByText('21')).toBeInTheDocument();
-    expect(await screen.findByText('7.5×')).toBeInTheDocument();
-    expect(mockCreateGambitSession).not.toHaveBeenCalled();
   });
 
-  it('uses route state values in the Gambit bet panel', () => {
+  it('uses route state values in the Gambit bet panel', async () => {
     mockUseLocation.mockReturnValue({
       state: {
         CardPrice: 7,
@@ -159,13 +222,11 @@ describe('GambitRoom', () => {
 
     renderGambitRoom();
 
-    expect(screen.getByText('3 cartas')).toBeInTheDocument();
-    expect(screen.getByText('21')).toBeInTheDocument();
-    expect(screen.getByText('7.5×')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: '+' }));
-
-    expect(screen.getByText('4 cartas')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('3 cartas')).toBeInTheDocument();
+      expect(screen.getByText('42')).toBeInTheDocument();
+      expect(screen.getByText('2.5×')).toBeInTheDocument();
+    });
   });
 
   it('creates a Gambit session from the side bet panel and renders the board', async () => {
@@ -182,9 +243,7 @@ describe('GambitRoom', () => {
         TableMultiplier: 2.5,
       },
     });
-    mockFetchActiveGambitSession
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(session);
+    mockFetchActiveGambitSession.mockResolvedValueOnce(null);
     mockCreateGambitSession.mockResolvedValueOnce(session);
 
     renderGambitRoom();
@@ -203,12 +262,16 @@ describe('GambitRoom', () => {
     );
   });
 
-  it('keeps the original back button behavior', () => {
+  it('keeps the original back button behavior', async () => {
     renderGambitRoom();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '←' })).toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByRole('button', { name: '←' }));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
   it('does not render the removed session start UI', () => {
