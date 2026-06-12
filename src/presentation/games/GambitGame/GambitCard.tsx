@@ -1,6 +1,7 @@
-import { AnimatedSprite, Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { AnimatedSprite, Container, Graphics, Sprite, Text, TextStyle } from 'pixi.js';
 import {
   GAMBIT_CLOSED_CARD_SPRITES,
+  GAMBIT_LOCKED_CARD_SPRITE,
   GAMBIT_REVEAL_ANIMATION_FRAMES,
 } from './gambitTextures';
 import type { GambitCardEffectViewModel } from './gambitTypes';
@@ -8,6 +9,7 @@ import type { GambitCardEffectViewModel } from './gambitTypes';
 export type GambitCardProps = {
   disabled: boolean;
   effect: GambitCardEffectViewModel | null;
+  locked: boolean;
   onClick: () => void;
   onRevealComplete?: () => void;
   previewed: boolean;
@@ -24,6 +26,7 @@ type GambitCardOverlayState = 'closed' | 'animating' | 'hidden';
 export type GambitCardVisibilityState = {
   closedOverlayVisible: boolean;
   effectSpriteVisible: boolean;
+  lockedClosedOverlayVisible: boolean;
   revealedFaceVisible: boolean;
   revealedLabelVisible: boolean;
   revealAnimationVisible: boolean;
@@ -31,6 +34,7 @@ export type GambitCardVisibilityState = {
 
 export type GambitCardVisibilityParams = {
   effect: GambitCardEffectViewModel | null;
+  locked: boolean;
   overlayState: GambitCardOverlayState;
   previewed: boolean;
   revealed: boolean;
@@ -51,19 +55,24 @@ const CARD_NEGATIVE_BORDER_COLOR = 0xf06a3d;
 const CARD_NEGATIVE_TEXT_COLOR = 0xffefe8;
 const CARD_PREVIEW_BORDER_COLOR = 0xffffff;
 const CLOSED_CARD_ANIMATION_SPEED = 0.12;
+const LOCKED_CARD_SHAKE_DURATION_MS = 240;
+const LOCKED_CARD_SHAKE_OSCILLATIONS = 8;
 const REVEAL_ANIMATION_SPEED = 0.42;
 
 export const getGambitCardVisibilityState = ({
+  locked,
   overlayState,
   previewed,
   revealed,
 }: GambitCardVisibilityParams): GambitCardVisibilityState => {
   const isContentVisible = revealed || previewed;
   const isPointContentVisible = isContentVisible;
+  const isLockedClosedOverlayVisible = overlayState === 'closed' && locked;
 
   return {
-    closedOverlayVisible: overlayState === 'closed',
+    closedOverlayVisible: overlayState === 'closed' && !locked,
     effectSpriteVisible: false,
+    lockedClosedOverlayVisible: isLockedClosedOverlayVisible,
     revealedFaceVisible: isPointContentVisible && overlayState !== 'closed',
     revealedLabelVisible: isPointContentVisible && overlayState !== 'closed',
     revealAnimationVisible: overlayState === 'animating',
@@ -170,6 +179,21 @@ const createClosedCardAnimation = (size: number) => {
   return closedCardAnimation;
 };
 
+const createLockedClosedCardSprite = (size: number) => {
+  const lockedCardSprite = Sprite.from(GAMBIT_LOCKED_CARD_SPRITE);
+
+  lockedCardSprite.width = size;
+  lockedCardSprite.height = size;
+  lockedCardSprite.roundPixels = true;
+  lockedCardSprite.visible = false;
+
+  return lockedCardSprite;
+};
+
+const resetLockedClosedCardSpriteTransform = (lockedCardSprite: Sprite) => {
+  lockedCardSprite.position.set(0, 0);
+};
+
 export const createGambitCard = (
   initialProps: GambitCardProps
 ): GambitCardInstance => {
@@ -180,19 +204,74 @@ export const createGambitCard = (
     createValueTextStyle(initialProps.size, initialProps.value)
   );
   const closedCardAnimation = createClosedCardAnimation(initialProps.size);
+  const lockedClosedCardSprite = createLockedClosedCardSprite(initialProps.size);
   const revealAnimation = createRevealAnimation(initialProps.size);
   const closedCardAnimationInitialFrame = Math.floor(
     Math.random() * GAMBIT_CLOSED_CARD_SPRITES.length
   );
+  let lockedCardShakeFrameId: number | null = null;
 
   let currentProps = initialProps;
   let overlayState: GambitCardOverlayState = initialProps.revealed
     ? 'hidden'
     : 'closed';
 
+  const stopLockedCardShake = () => {
+    if (lockedCardShakeFrameId != null && typeof window !== 'undefined') {
+      window.cancelAnimationFrame(lockedCardShakeFrameId);
+      lockedCardShakeFrameId = null;
+    }
+
+    resetLockedClosedCardSpriteTransform(lockedClosedCardSprite);
+  };
+
+  const playLockedCardShake = () => {
+    if (!lockedClosedCardSprite.visible || typeof window === 'undefined') {
+      return;
+    }
+
+    stopLockedCardShake();
+
+    const shakeOffsetX = Math.max(3, Math.round(currentProps.size * 0.045));
+    const shakeOffsetY = Math.max(1, Math.round(currentProps.size * 0.014));
+    const startedAt = window.performance?.now() ?? Date.now();
+
+    const animateLockedCardShake = (now: number) => {
+      const elapsedMs = now - startedAt;
+      const progress = Math.min(elapsedMs / LOCKED_CARD_SHAKE_DURATION_MS, 1);
+      const decay = 1 - progress;
+      const wave = Math.sin(progress * Math.PI * LOCKED_CARD_SHAKE_OSCILLATIONS);
+      const sway = Math.cos(
+        progress * Math.PI * (LOCKED_CARD_SHAKE_OSCILLATIONS - 2)
+      );
+
+      lockedClosedCardSprite.position.set(
+        Math.round(wave * shakeOffsetX * decay),
+        Math.round(sway * shakeOffsetY * decay)
+      );
+
+      if (progress >= 1) {
+        lockedCardShakeFrameId = null;
+        resetLockedClosedCardSpriteTransform(lockedClosedCardSprite);
+        return;
+      }
+
+      lockedCardShakeFrameId = window.requestAnimationFrame(
+        animateLockedCardShake
+      );
+    };
+
+    lockedCardShakeFrameId = window.requestAnimationFrame(animateLockedCardShake);
+  };
+
   const syncInteractivity = () => {
+    const isLockedCardShakeEnabled =
+      currentProps.locked &&
+      !currentProps.revealed &&
+      !currentProps.previewed &&
+      overlayState === 'closed';
     const isCardClickable =
-      !currentProps.disabled &&
+      (!currentProps.disabled || isLockedCardShakeEnabled) &&
       !currentProps.revealed &&
       !currentProps.previewed &&
       overlayState === 'closed';
@@ -217,6 +296,9 @@ export const createGambitCard = (
     closedCardAnimation.width = size;
     closedCardAnimation.height = size;
 
+    lockedClosedCardSprite.width = size;
+    lockedClosedCardSprite.height = size;
+
     revealAnimation.width = size;
     revealAnimation.height = size;
   };
@@ -224,6 +306,7 @@ export const createGambitCard = (
   const syncVisibility = () => {
     const visibilityState = getGambitCardVisibilityState({
       effect: currentProps.effect,
+      locked: currentProps.locked,
       overlayState,
       previewed: currentProps.previewed,
       revealed: currentProps.revealed,
@@ -232,12 +315,24 @@ export const createGambitCard = (
     revealedCardFace.visible = visibilityState.revealedFaceVisible;
     revealedCardLabel.visible = visibilityState.revealedLabelVisible;
     closedCardAnimation.visible = visibilityState.closedOverlayVisible;
+    lockedClosedCardSprite.visible = visibilityState.lockedClosedOverlayVisible;
     revealAnimation.visible = visibilityState.revealAnimationVisible;
+
+    if (!visibilityState.lockedClosedOverlayVisible) {
+      stopLockedCardShake();
+    }
   };
 
   const showClosedOverlay = () => {
     overlayState = 'closed';
-    closedCardAnimation.gotoAndPlay(closedCardAnimationInitialFrame);
+    stopLockedCardShake();
+
+    if (currentProps.locked) {
+      closedCardAnimation.stop();
+    } else {
+      closedCardAnimation.gotoAndPlay(closedCardAnimationInitialFrame);
+    }
+
     revealAnimation.stop();
     syncVisibility();
     syncInteractivity();
@@ -245,6 +340,7 @@ export const createGambitCard = (
 
   const hideOverlay = () => {
     overlayState = 'hidden';
+    stopLockedCardShake();
     closedCardAnimation.stop();
     revealAnimation.stop();
     syncVisibility();
@@ -273,6 +369,16 @@ export const createGambitCard = (
 
   const handlePointerTap = () => {
     if (
+      currentProps.locked &&
+      !currentProps.revealed &&
+      !currentProps.previewed &&
+      overlayState === 'closed'
+    ) {
+      playLockedCardShake();
+      return;
+    }
+
+    if (
       currentProps.disabled ||
       currentProps.revealed ||
       currentProps.previewed ||
@@ -292,6 +398,7 @@ export const createGambitCard = (
     revealedCardFace,
     revealedCardLabel,
     closedCardAnimation,
+    lockedClosedCardSprite,
     revealAnimation
   );
   container.on('pointertap', handlePointerTap);
@@ -305,6 +412,7 @@ export const createGambitCard = (
   }
 
   const update = (nextProps: GambitCardProps) => {
+    const wasLocked = currentProps.locked;
     const wasRevealed = currentProps.revealed;
     const wasPreviewed = currentProps.previewed;
 
@@ -329,6 +437,14 @@ export const createGambitCard = (
       return;
     }
 
+    if (overlayState === 'closed') {
+      if (currentProps.locked) {
+        closedCardAnimation.stop();
+      } else if (wasLocked) {
+        closedCardAnimation.gotoAndPlay(closedCardAnimationInitialFrame);
+      }
+    }
+
     if (!currentProps.revealed && overlayState === 'hidden') {
       showClosedOverlay();
       return;
@@ -339,6 +455,7 @@ export const createGambitCard = (
 
   const destroy = () => {
     container.removeAllListeners();
+    stopLockedCardShake();
     revealAnimation.onComplete = undefined;
     container.destroy({ children: true });
   };

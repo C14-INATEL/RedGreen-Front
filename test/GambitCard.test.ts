@@ -1,10 +1,12 @@
 import { describe, expect, it } from '@jest/globals';
-import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGame/GambitCard';
 import {
-  FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  getGambitCardVisibilityState,
+} from '../src/presentation/games/GambitGame/GambitCard';
+import {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
 } from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
+import { GAMBIT_LOCKED_CARD_SPRITE } from '../src/presentation/games/GambitGame/gambitTextures';
 import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/gambitTypes';
 import { rewardCardPool } from '../src/presentation/games/cardReward/config/RewardCardPool';
 
@@ -12,24 +14,24 @@ const EFFECT_TEXT_FALLBACKS = ['CLAR', 'MEL', '2X', 'INV'];
 const TEMPORARY_SPRITE_PREFIX = ['Card', 'Test'].join('');
 const EXPECTED_EFFECT_SPRITES: Record<GambitCardEffectViewModel, string> = {
   'anulacao-total': '/Gambit/AnulacaoTotal.png',
-  'bumis-infiltrados': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
-  cabecinha: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  'bumis-infiltrados': '/Gambit/BumisInfiltrados.png',
+  cabecinha: '/Gambit/Cabecinha.png',
   'chris-joker': '/Gambit/OCoringaDoInatel.png',
   clarividencia: '/Gambit/Clarividencia.png',
-  coloridinho: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  coloridinho: '/Gambit/Coloridinho.png',
   'coringa-do-inatel': '/Gambit/OCoringaDoInatel.png',
   'dobro-de-potassio': '/Gambit/DobroDePotassio.png',
-  headgear: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  headgear: '/Gambit/Headgear.png',
   'inversao-gravitacional': '/Gambit/InversaoGravitacional.png',
-  jackpot: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
-  'jonas-joker': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
-  melancidio: '/Gambit/QuantoMenosMelhor.png',
-  'mente-lisa': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
-  'mosca-joker': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
-  'pao-com-oque': FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  jackpot: '/Gambit/Jackpot.png',
+  'jonas-joker': '/Gambit/JonasJoker.png',
+  melancidio: '/Gambit/Melancidio.png',
+  'mente-lisa': '/Gambit/MenteLisa.png',
+  'mosca-joker': '/Gambit/MoscaJoker.png',
+  'pao-com-oque': '/Gambit/PaoComOque.png',
   'quanto-mais-melhor': '/Gambit/QuantoMaisMelhor.png',
   'quanto-menos-melhor': '/Gambit/QuantoMenosMelhor.png',
-  ratimundio: FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+  ratimundio: '/Gambit/Ratimundio.png',
 };
 
 describe('GambitCard visual secrecy', () => {
@@ -61,6 +63,7 @@ describe('GambitCard visual secrecy', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'melancidio',
+        locked: false,
         overlayState: 'closed',
         previewed: false,
         revealed: false,
@@ -68,6 +71,7 @@ describe('GambitCard visual secrecy', () => {
     ).toEqual({
       closedOverlayVisible: true,
       effectSpriteVisible: false,
+      lockedClosedOverlayVisible: false,
       revealedFaceVisible: false,
       revealedLabelVisible: false,
       revealAnimationVisible: false,
@@ -90,12 +94,12 @@ describe('GambitCard visual secrecy', () => {
       effects.map((effect) => getGambitEffectCardSpritePath(effect))
     ).toEqual([
       '/Gambit/DobroDePotassio.png',
-      '/Gambit/QuantoMenosMelhor.png',
+      '/Gambit/Melancidio.png',
       '/Gambit/Clarividencia.png',
       '/Gambit/InversaoGravitacional.png',
       '/Gambit/AnulacaoTotal.png',
-      FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
-      FALLBACK_GAMBIT_EFFECT_CARD_SPRITE,
+      '/Gambit/Cabecinha.png',
+      '/Gambit/Jackpot.png',
     ]);
 
     effects.forEach((effect) => {
@@ -117,7 +121,7 @@ describe('GambitCard visual secrecy', () => {
     expect(rewardSpritesById['inversao-gravitacional']).toBe(
       '/Gambit/InversaoGravitacional.png'
     );
-    expect(rewardSpritesById.melancidio).toBe('/Gambit/QuantoMenosMelhor.png');
+    expect(rewardSpritesById.melancidio).toBe('/Gambit/Melancidio.png');
   });
 
   it('does not use temporary placeholder sprites for official effects', () => {
@@ -137,6 +141,7 @@ describe('GambitCard visual secrecy', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'dobro-de-potassio',
+        locked: false,
         overlayState: 'hidden',
         previewed: false,
         revealed: true,
@@ -144,6 +149,7 @@ describe('GambitCard visual secrecy', () => {
     ).toEqual({
       closedOverlayVisible: false,
       effectSpriteVisible: false,
+      lockedClosedOverlayVisible: false,
       revealedFaceVisible: true,
       revealedLabelVisible: true,
       revealAnimationVisible: false,
@@ -154,6 +160,7 @@ describe('GambitCard visual secrecy', () => {
     expect(
       getGambitCardVisibilityState({
         effect: 'clarividencia',
+        locked: false,
         overlayState: 'hidden',
         previewed: true,
         revealed: false,
@@ -161,8 +168,29 @@ describe('GambitCard visual secrecy', () => {
     ).toMatchObject({
       closedOverlayVisible: false,
       effectSpriteVisible: false,
+      lockedClosedOverlayVisible: false,
       revealedFaceVisible: true,
       revealedLabelVisible: true,
+    });
+  });
+
+  it('uses the locked closed sprite when a hidden card is blocked by Mente Lisa', () => {
+    expect(GAMBIT_LOCKED_CARD_SPRITE).toBe('/Gambit/SpriteCardsNo.png');
+    expect(
+      getGambitCardVisibilityState({
+        effect: null,
+        locked: true,
+        overlayState: 'closed',
+        previewed: false,
+        revealed: false,
+      })
+    ).toEqual({
+      closedOverlayVisible: false,
+      effectSpriteVisible: false,
+      lockedClosedOverlayVisible: true,
+      revealedFaceVisible: false,
+      revealedLabelVisible: false,
+      revealAnimationVisible: false,
     });
   });
 });

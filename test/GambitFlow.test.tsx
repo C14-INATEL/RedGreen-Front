@@ -280,6 +280,112 @@ describe('Gambit backend gameplay flow', () => {
     );
   });
 
+  it('shows floating score feedback when the total score changes', async () => {
+    mockBurnActiveGambitCard.mockResolvedValueOnce(createSessionAfterBurn(7));
+
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession(),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-7'));
+
+    await waitFor(() => {
+      expect(mockBurnActiveGambitCard).toHaveBeenCalledWith(7);
+    });
+
+    expect(await screen.findByTestId('gambit-score-feedback')).toHaveTextContent(
+      '+15'
+    );
+    expect(screen.getByTestId('gambit-total-score')).toHaveTextContent('15');
+  });
+
+  it('keeps a revealed effect card in focus until the player skips the cinematic', async () => {
+    mockBurnActiveGambitCard.mockResolvedValueOnce(
+      createSessionAfterBurn(7, {
+        Grid: createGambitApiGrid({
+          Revealed: [
+            createGambitApiRevealedCard({
+              Effect: 'JACKPOT',
+              Points: 0,
+              Position: 7,
+            }),
+          ],
+          Unrevealed: Array.from({ length: 25 }, (_, index) =>
+            createGambitApiUnrevealedCard({ Position: index })
+          ).filter((card) => card.Position !== 7),
+        }),
+      })
+    );
+
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession(),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-7'));
+
+    expect(
+      await screen.findByTestId('gambit-reveal-cinematic')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('gambit-reveal-cinematic')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('opens the current effect panel in the same cinematic overlay when clicked', async () => {
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession({
+          NextEffect: 'JACKPOT',
+        }),
+      })
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Ver efeito atual Jackpot',
+      })
+    );
+
+    expect(
+      await screen.findByTestId('gambit-reveal-cinematic')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('gambit-reveal-cinematic')
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('resolves PendingEvent with GoodIndex and BadIndex from the reward modal', async () => {
     mockResolveActiveGambitEvent.mockResolvedValueOnce(
       createGambitApiSession()
