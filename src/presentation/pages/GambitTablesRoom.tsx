@@ -10,6 +10,8 @@ import { EditGambitTableModal } from '../ui/Gambit/EditGambitModal';
 import { ResultModal } from '../ui/ResultModal';
 import { GambitTableCard } from '../ui/Gambit/GambitTableCard';
 import CassinoLogo from '../ui/CassinoLogo';
+import { fetchActiveGambitSession } from '../games/GambitGame/gambitGameplayClient';
+import { SessionWarningModal } from '../ui/SessionWarningModal';
 
 export type GambitTableFromApi = {
   GambitTableId: number;
@@ -25,7 +27,8 @@ export type GambitTableFromApi = {
 
 export const GambitTablesRoom = () => {
   const Navigate = useNavigate();
-
+  const [ShowSessionWarning, SetShowSessionWarning] = useState(false);
+  const [PendingTableName, SetPendingTableName] = useState('');
   const Token = getToken();
   const IsLoggedIn = !!Token;
   const { isAdmin } = useUserProfile(IsLoggedIn);
@@ -152,17 +155,36 @@ export const GambitTablesRoom = () => {
                 IsLocked={IsLocked}
                 IsAdmin={IsAdmin}
                 IsActive={TableItem.Active}
-                OnClick={() => {
+                OnClick={async () => {
                   if (IsLocked) return;
-                  Navigate(paths.gambitRoom, {
-                    state: {
-                      GambitTableId: TableItem.GambitTableId,
-                      CardPrice: TableItem.CardPrice,
-                      TableMultiplier: TableItem.TableMultiplier,
-                      MinimumCardsPurchased: TableItem.MinimumCardsPurchased,
-                      MaxCardsPurchased: TableItem.MaxCardsPurchased,
-                    },
-                  });
+                  try {
+                    const ActiveSession = await fetchActiveGambitSession();
+                    if (
+                      ActiveSession &&
+                      ActiveSession.GambitTableId !== TableItem.GambitTableId
+                    ) {
+                      const CurrentTable = Tables.find(
+                        (Table) =>
+                          Table.GambitTableId === ActiveSession.GambitTableId
+                      );
+                      SetPendingTableName(
+                        CurrentTable?.Name ?? 'Mesa desconhecida'
+                      );
+                      SetShowSessionWarning(true);
+                      return;
+                    }
+                    Navigate(paths.gambitRoom, {
+                      state: {
+                        GambitTableId: TableItem.GambitTableId,
+                        CardPrice: TableItem.CardPrice,
+                        TableMultiplier: TableItem.TableMultiplier,
+                        MinimumCardsPurchased: TableItem.MinimumCardsPurchased,
+                        MaxCardsPurchased: TableItem.MaxCardsPurchased,
+                      },
+                    });
+                  } catch (err) {
+                    console.error(err);
+                  }
                 }}
                 OnEdit={() => {
                   SetSelectedTableId(TableItem.GambitTableId);
@@ -186,6 +208,13 @@ export const GambitTablesRoom = () => {
           })
         )}
       </div>
+
+      {ShowSessionWarning && (
+        <SessionWarningModal
+          MachineName={PendingTableName}
+          OnClose={() => SetShowSessionWarning(false)}
+        />
+      )}
 
       {ShowCreateTableModal && (
         <CreateGambitTableModal
