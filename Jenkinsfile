@@ -1,0 +1,46 @@
+pipeline {
+  agent any
+
+  tools {
+    nodejs 'node-22'
+  }
+
+  environment {
+    VERCEL_DEPLOY_HOOK_URL = credentials('VERCEL_DEPLOY_HOOK_URL')
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Instalar dependências') {
+      steps {
+        sh 'npm install --legacy-peer-deps'
+      }
+    }
+
+    stage('Build') {
+      steps {
+        sh 'npm run build'
+      }
+    }
+
+    stage('Deploy na Vercel') {
+      steps {
+        sh 'curl -X POST $VERCEL_DEPLOY_HOOK_URL'
+      }
+    }
+  }
+
+  post {
+    success {
+      echo 'Deploy realizado com sucesso!'
+    }
+    failure {
+      echo 'Falha ao realizar o deploy.'
+    }
+  }
+}

@@ -1,42 +1,94 @@
 import { AnimatedSprite, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import {
-  MINEFIELD_CLOSED_CARD_SPRITES,
-  MINEFIELD_REVEAL_ANIMATION_FRAMES,
-} from './MinefieldTextures';
+  GAMBIT_CLOSED_CARD_SPRITES,
+  GAMBIT_REVEAL_ANIMATION_FRAMES,
+} from './gambitTextures';
+import type { GambitCardEffectViewModel } from './gambitTypes';
 
-export type MineCardProps = {
+export type GambitCardProps = {
   disabled: boolean;
+  effect: GambitCardEffectViewModel | null;
   onClick: () => void;
   onRevealComplete?: () => void;
+  previewed: boolean;
+  revealOnClick: boolean;
   revealed: boolean;
   size: number;
-  value: number;
+  value: number | null;
   x: number;
   y: number;
 };
 
-type MineCardOverlayState = 'closed' | 'animating' | 'hidden';
+type GambitCardOverlayState = 'closed' | 'animating' | 'hidden';
 
-export type MineCardInstance = {
+export type GambitCardVisibilityState = {
+  closedOverlayVisible: boolean;
+  effectSpriteVisible: boolean;
+  revealedFaceVisible: boolean;
+  revealedLabelVisible: boolean;
+  revealAnimationVisible: boolean;
+};
+
+export type GambitCardVisibilityParams = {
+  effect: GambitCardEffectViewModel | null;
+  overlayState: GambitCardOverlayState;
+  previewed: boolean;
+  revealed: boolean;
+};
+
+export type GambitCardInstance = {
   container: Container;
   destroy: () => void;
-  update: (nextProps: MineCardProps) => void;
+  update: (nextProps: GambitCardProps) => void;
 };
 
 const CARD_REVEALED_COLOR = 0xf1d28a;
 const CARD_REVEALED_BORDER_COLOR = 0xf0c350;
 const CARD_REVEALED_TEXT_COLOR = 0x2a1f12;
 const CARD_REVEALED_GLOW_COLOR = 0xfff4b5;
+const CARD_NEGATIVE_COLOR = 0x5f2028;
+const CARD_NEGATIVE_BORDER_COLOR = 0xf06a3d;
+const CARD_NEGATIVE_TEXT_COLOR = 0xffefe8;
+const CARD_PREVIEW_BORDER_COLOR = 0xffffff;
 const CLOSED_CARD_ANIMATION_SPEED = 0.12;
 const REVEAL_ANIMATION_SPEED = 0.42;
 
-const drawRevealedCardFace = (graphics: Graphics, size: number) => {
+export const getGambitCardVisibilityState = ({
+  overlayState,
+  previewed,
+  revealed,
+}: GambitCardVisibilityParams): GambitCardVisibilityState => {
+  const isContentVisible = revealed || previewed;
+  const isPointContentVisible = isContentVisible;
+
+  return {
+    closedOverlayVisible: overlayState === 'closed',
+    effectSpriteVisible: false,
+    revealedFaceVisible: isPointContentVisible && overlayState !== 'closed',
+    revealedLabelVisible: isPointContentVisible && overlayState !== 'closed',
+    revealAnimationVisible: overlayState === 'animating',
+  };
+};
+
+const drawRevealedCardFace = (
+  graphics: Graphics,
+  size: number,
+  value: number | null,
+  previewed: boolean
+) => {
   const borderWidth = Math.max(2, Math.round(size * 0.055));
   const inset = Math.max(3, Math.round(size * 0.08));
+  const isNegative = (value ?? 0) < 0;
+  const surfaceColor = isNegative ? CARD_NEGATIVE_COLOR : CARD_REVEALED_COLOR;
+  const borderColor = previewed
+    ? CARD_PREVIEW_BORDER_COLOR
+    : isNegative
+      ? CARD_NEGATIVE_BORDER_COLOR
+      : CARD_REVEALED_BORDER_COLOR;
 
   graphics.clear();
-  graphics.lineStyle(borderWidth, CARD_REVEALED_BORDER_COLOR, 0.96);
-  graphics.beginFill(CARD_REVEALED_COLOR, 1);
+  graphics.lineStyle(borderWidth, borderColor, previewed ? 1 : 0.96);
+  graphics.beginFill(surfaceColor, 1);
   graphics.drawRoundedRect(0, 0, size, size, Math.max(8, size * 0.11));
   graphics.endFill();
 
@@ -56,18 +108,42 @@ const drawRevealedCardFace = (graphics: Graphics, size: number) => {
   graphics.lineTo(inset, size - inset);
 };
 
-const createValueTextStyle = (size: number) =>
+const getCardTextColor = (value: number | null) => {
+  if ((value ?? 0) < 0) {
+    return CARD_NEGATIVE_TEXT_COLOR;
+  }
+
+  return CARD_REVEALED_TEXT_COLOR;
+};
+
+const createValueTextStyle = (size: number, value: number | null) =>
   new TextStyle({
     align: 'center',
-    fill: CARD_REVEALED_TEXT_COLOR,
+    fill: getCardTextColor(value),
     fontFamily: 'Press Start 2P',
-    fontSize: Math.max(10, Math.floor(size * 0.2)),
+    fontSize: Math.max(9, Math.floor(size * 0.2)),
     fontWeight: '700',
+    wordWrap: true,
+    wordWrapWidth: Math.max(24, Math.floor(size * 0.82)),
   });
+
+const formatCardValue = (value: number | null) => {
+  if (value == null) {
+    return '';
+  }
+
+  if (value > 0) {
+    return `+${value}`;
+  }
+
+  return String(value);
+};
+
+const formatCardLabel = (value: number | null) => formatCardValue(value);
 
 const createRevealAnimation = (size: number) => {
   const revealAnimation = AnimatedSprite.fromFrames(
-    MINEFIELD_REVEAL_ANIMATION_FRAMES
+    GAMBIT_REVEAL_ANIMATION_FRAMES
   );
 
   revealAnimation.width = size;
@@ -82,7 +158,7 @@ const createRevealAnimation = (size: number) => {
 
 const createClosedCardAnimation = (size: number) => {
   const closedCardAnimation = AnimatedSprite.fromFrames(
-    MINEFIELD_CLOSED_CARD_SPRITES
+    GAMBIT_CLOSED_CARD_SPRITES
   );
 
   closedCardAnimation.width = size;
@@ -94,23 +170,23 @@ const createClosedCardAnimation = (size: number) => {
   return closedCardAnimation;
 };
 
-export const createMineCard = (
-  initialProps: MineCardProps
-): MineCardInstance => {
+export const createGambitCard = (
+  initialProps: GambitCardProps
+): GambitCardInstance => {
   const container = new Container();
   const revealedCardFace = new Graphics();
   const revealedCardLabel = new Text(
-    `+${initialProps.value}`,
-    createValueTextStyle(initialProps.size)
+    formatCardLabel(initialProps.value),
+    createValueTextStyle(initialProps.size, initialProps.value)
   );
   const closedCardAnimation = createClosedCardAnimation(initialProps.size);
   const revealAnimation = createRevealAnimation(initialProps.size);
   const closedCardAnimationInitialFrame = Math.floor(
-    Math.random() * MINEFIELD_CLOSED_CARD_SPRITES.length
+    Math.random() * GAMBIT_CLOSED_CARD_SPRITES.length
   );
 
   let currentProps = initialProps;
-  let overlayState: MineCardOverlayState = initialProps.revealed
+  let overlayState: GambitCardOverlayState = initialProps.revealed
     ? 'hidden'
     : 'closed';
 
@@ -118,6 +194,7 @@ export const createMineCard = (
     const isCardClickable =
       !currentProps.disabled &&
       !currentProps.revealed &&
+      !currentProps.previewed &&
       overlayState === 'closed';
 
     container.eventMode = isCardClickable ? 'static' : 'none';
@@ -125,14 +202,14 @@ export const createMineCard = (
   };
 
   const syncLayout = () => {
-    const { size, value, x, y } = currentProps;
+    const { previewed, size, value, x, y } = currentProps;
 
     container.position.set(x, y);
 
-    drawRevealedCardFace(revealedCardFace, size);
+    drawRevealedCardFace(revealedCardFace, size, value, previewed);
 
-    revealedCardLabel.text = `+${value}`;
-    revealedCardLabel.style = createValueTextStyle(size);
+    revealedCardLabel.text = formatCardLabel(value);
+    revealedCardLabel.style = createValueTextStyle(size, value);
     revealedCardLabel.anchor.set(0.5);
     revealedCardLabel.resolution = 2;
     revealedCardLabel.position.set(Math.round(size / 2), Math.round(size / 2));
@@ -144,21 +221,33 @@ export const createMineCard = (
     revealAnimation.height = size;
   };
 
+  const syncVisibility = () => {
+    const visibilityState = getGambitCardVisibilityState({
+      effect: currentProps.effect,
+      overlayState,
+      previewed: currentProps.previewed,
+      revealed: currentProps.revealed,
+    });
+
+    revealedCardFace.visible = visibilityState.revealedFaceVisible;
+    revealedCardLabel.visible = visibilityState.revealedLabelVisible;
+    closedCardAnimation.visible = visibilityState.closedOverlayVisible;
+    revealAnimation.visible = visibilityState.revealAnimationVisible;
+  };
+
   const showClosedOverlay = () => {
     overlayState = 'closed';
-    closedCardAnimation.visible = true;
     closedCardAnimation.gotoAndPlay(closedCardAnimationInitialFrame);
-    revealAnimation.visible = false;
     revealAnimation.stop();
+    syncVisibility();
     syncInteractivity();
   };
 
   const hideOverlay = () => {
     overlayState = 'hidden';
-    closedCardAnimation.visible = false;
     closedCardAnimation.stop();
-    revealAnimation.visible = false;
     revealAnimation.stop();
+    syncVisibility();
     syncInteractivity();
   };
 
@@ -168,10 +257,9 @@ export const createMineCard = (
     }
 
     overlayState = 'animating';
-    closedCardAnimation.visible = false;
     closedCardAnimation.stop();
-    revealAnimation.visible = true;
     revealAnimation.gotoAndStop(0);
+    syncVisibility();
     syncInteractivity();
 
     revealAnimation.onComplete = () => {
@@ -187,12 +275,16 @@ export const createMineCard = (
     if (
       currentProps.disabled ||
       currentProps.revealed ||
+      currentProps.previewed ||
       overlayState !== 'closed'
     ) {
       return;
     }
 
-    playRevealAnimation();
+    if (currentProps.revealOnClick) {
+      playRevealAnimation();
+    }
+
     currentProps.onClick();
   };
 
@@ -206,18 +298,31 @@ export const createMineCard = (
 
   syncLayout();
 
-  if (currentProps.revealed) {
+  if (currentProps.revealed || currentProps.previewed) {
     hideOverlay();
   } else {
     showClosedOverlay();
   }
 
-  const update = (nextProps: MineCardProps) => {
+  const update = (nextProps: GambitCardProps) => {
     const wasRevealed = currentProps.revealed;
+    const wasPreviewed = currentProps.previewed;
 
     currentProps = nextProps;
 
     syncLayout();
+    syncVisibility();
+
+    if (currentProps.previewed) {
+      hideOverlay();
+      return;
+    }
+
+    if (wasPreviewed && currentProps.revealed) {
+      hideOverlay();
+      currentProps.onRevealComplete?.();
+      return;
+    }
 
     if (!wasRevealed && currentProps.revealed && overlayState === 'closed') {
       playRevealAnimation();

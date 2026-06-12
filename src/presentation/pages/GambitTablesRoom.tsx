@@ -154,7 +154,7 @@ export const GambitTablesRoom = () => {
                 IsActive={TableItem.Active}
                 OnClick={() => {
                   if (IsLocked) return;
-                  Navigate(paths.minefieldRoom, {
+                  Navigate(paths.gambitRoom, {
                     state: {
                       GambitTableId: TableItem.GambitTableId,
                       CardPrice: TableItem.CardPrice,

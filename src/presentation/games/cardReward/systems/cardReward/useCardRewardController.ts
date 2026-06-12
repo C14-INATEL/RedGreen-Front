@@ -1,8 +1,8 @@
 import {
-  getNextMinefieldTableType,
-  type MinefieldTableType,
-} from '../../../MinefieldGame/MinefieldTableConfig';
-import { useEffect, useReducer, useRef } from 'react';
+  getNextGambitTableType,
+  type GambitTableType,
+} from '../../../GambitGame/gambitTableConfig';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { getRewardCardPoolByTableType } from '../../config/RewardCardPoolsByTableType';
 import { rewardCardPool } from '../../config/RewardCardPool';
 import { rewardPresentationConfig } from '../../config/RewardPresentationConfig';
@@ -31,7 +31,7 @@ type UseCardRewardControllerParams = {
   ) => RewardCardOption[];
   rewardPool?: RewardCardDefinition[];
   revealedCardCount: number;
-  tableType?: MinefieldTableType;
+  tableType?: GambitTableType;
   timings?: RewardTimingsConfig;
   triggerConfig?: RewardTriggerConfig;
 };
@@ -162,7 +162,7 @@ const rewardControllerReducer = (
 const createRewardSession = (
   pool: RewardCardDefinition[],
   config: RewardTriggerConfig,
-  tableType: MinefieldTableType,
+  tableType: GambitTableType,
   optionsResolver: (
     pool: RewardCardDefinition[],
     amount: number,
@@ -197,17 +197,17 @@ const createRewardSession = (
 
 const buildTableOptionSessionId = (
   sessionId: string,
-  tableType: MinefieldTableType
+  tableType: GambitTableType
 ) => `${sessionId}-${tableType}`;
 
 const getCardsForTable = (
   session: RewardChoiceSession,
-  tableType: MinefieldTableType
+  tableType: GambitTableType
 ) => (tableType === 'bad' ? session.badTableCards : session.normalTableCards);
 
 const getSelectedOptionIdsForTable = (
   selectionHistory: RewardSelectionEntry[],
-  tableType: MinefieldTableType
+  tableType: GambitTableType
 ) =>
   selectionHistory
     .filter((entry) => entry.tableType === tableType)
@@ -241,10 +241,22 @@ export const useCardRewardController = ({
   const modalOpenTimeoutRef = useRef<number | null>(null);
   const revealProgressRef = useRef(0);
   const resolveTimeoutRef = useRef<number | null>(null);
+  const rewardSelectionLockedRef = useRef(false);
+  const [isRewardSelectionLocked, setIsRewardSelectionLocked] = useState(false);
   const rewardModalDelay = Math.max(
     timings.revealCompletionDelay,
     timings.revealObservationDelay + timings.transitionPreparationDelay
   );
+
+  const lockRewardSelection = () => {
+    rewardSelectionLockedRef.current = true;
+    setIsRewardSelectionLocked(true);
+  };
+
+  const unlockRewardSelection = () => {
+    rewardSelectionLockedRef.current = false;
+    setIsRewardSelectionLocked(false);
+  };
 
   useEffect(() => {
     activeSessionRef.current = activeSession;
@@ -259,6 +271,8 @@ export const useCardRewardController = ({
       if (resolveTimeoutRef.current) {
         window.clearTimeout(resolveTimeoutRef.current);
       }
+
+      rewardSelectionLockedRef.current = false;
     };
   }, []);
 
@@ -278,6 +292,7 @@ export const useCardRewardController = ({
 
       previousRevealedCountRef.current = revealedCardCount;
       revealProgressRef.current = 0;
+      unlockRewardSelection();
       dispatch({ revealProgress: 0, type: 'reset-controller' });
 
       return;
@@ -334,6 +349,7 @@ export const useCardRewardController = ({
 
     modalOpenTimeoutRef.current = window.setTimeout(() => {
       onSoundCue?.(rewardPresentationConfig.audioCues.open);
+      unlockRewardSelection();
       dispatch({
         session: pendingTrigger.session,
         type: 'open-pending-session',
@@ -351,12 +367,16 @@ export const useCardRewardController = ({
   };
 
   const handleRewardCardSelect = (optionId: string) => {
+    if (rewardSelectionLockedRef.current) {
+      return false;
+    }
+
     if (
       !activeSession ||
       activeSession.status !== 'selecting' ||
       activeSession.tableState.isTransitioning
     ) {
-      return;
+      return false;
     }
 
     const activeTableType = activeSession.tableState.currentTable;
@@ -370,12 +390,14 @@ export const useCardRewardController = ({
     );
 
     if (!selectedCard) {
-      return;
+      return false;
     }
 
     if (selectedOptionIdsForActiveTable.includes(selectedCard.optionId)) {
-      return;
+      return false;
     }
+
+    lockRewardSelection();
 
     const nextSelectionHistory = [
       ...activeSession.selectionHistory,
@@ -385,7 +407,7 @@ export const useCardRewardController = ({
       },
     ];
     const nextSelectedCount = nextSelectionHistory.length;
-    const nextTableType = getNextMinefieldTableType(
+    const nextTableType = getNextGambitTableType(
       activeSession.tableState.currentTable
     );
     const shouldTransitionToNextTable =
@@ -427,14 +449,15 @@ export const useCardRewardController = ({
 
     if (shouldTransitionToNextTable) {
       onSoundCue?.(rewardPresentationConfig.audioCues.confirm, selectedCard);
-      return;
+      return true;
     }
 
     if (nextSession.status !== 'resolving') {
-      return;
+      return true;
     }
 
     onSoundCue?.(rewardPresentationConfig.audioCues.confirm, selectedCard);
+    return true;
   };
 
   const handleSelectedCardCinematicComplete = (sessionId: string) => {
@@ -445,6 +468,10 @@ export const useCardRewardController = ({
       currentSession.id !== sessionId ||
       currentSession.status !== 'resolving'
     ) {
+      if (!currentSession || currentSession.id !== sessionId) {
+        unlockRewardSelection();
+      }
+
       return;
     }
 
@@ -460,6 +487,7 @@ export const useCardRewardController = ({
           session: currentSession,
         });
       } finally {
+        unlockRewardSelection();
         dispatch({ type: 'close-session' });
       }
     };
@@ -475,9 +503,11 @@ export const useCardRewardController = ({
     handleSelectedCardCinematicComplete,
     handleTableTransitionComplete: (sessionId: string) => {
       dispatch({ sessionId, type: 'complete-table-transition' });
+      unlockRewardSelection();
     },
     isChoiceOpen: Boolean(activeSession),
     isInteractionLocked: Boolean(activeSession || pendingTrigger),
+    isRewardSelectionLocked,
     registerCardReveal,
     revealProgress,
   };
