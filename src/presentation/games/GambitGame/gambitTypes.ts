@@ -51,7 +51,7 @@ export type GambitGridCard = {
 export type GambitPendingEvent = {
   BadOptions: GambitCard[];
   CardsOffered?: GambitCard[];
-  EventType?: GambitCardNature;
+  EventType?: GambitCardNature | null;
   GoodOptions: GambitCard[];
 };
 

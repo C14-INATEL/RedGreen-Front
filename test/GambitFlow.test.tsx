@@ -238,14 +238,7 @@ describe('Gambit backend gameplay flow', () => {
     mockResolveActiveGambitEvent.mockReset();
   });
 
-  it('shows an empty active-session message instead of starting a mock game', async () => {
-    mockFetchActiveGambitSession.mockResolvedValueOnce({
-      fallbackReason: 'missing-session',
-      mode: 'backend',
-      session: null,
-      source: 'backend',
-    });
-
+  it('shows an empty active-session message when no session is provided', async () => {
     render(createElement(Gambit));
 
     expect(
@@ -255,18 +248,16 @@ describe('Gambit backend gameplay flow', () => {
     expect(mockBurnActiveGambitCard).not.toHaveBeenCalled();
   });
 
-  it('shows the board with a sandbox debug note when auto mode falls back to mock', async () => {
-    mockFetchActiveGambitSession.mockResolvedValueOnce({
-      fallbackReason: 'missing-session',
-      mode: 'auto',
-      session: createGambitApiSession(),
-      source: 'mock',
-    });
-
-    render(createElement(Gambit));
+  it('shows the explicit visual mock banner only when mock gameplay is selected', async () => {
+    render(
+      createElement(Gambit, {
+        gameplaySource: 'mock',
+        initialSession: createGambitApiSession(),
+      })
+    );
 
     expect(
-      await screen.findByText('Modo sandbox do Gambit ativo')
+      await screen.findByText('Modo mock visual do Gambit ativo')
     ).toBeInTheDocument();
     expect(mockGambitBoard).toHaveBeenCalled();
   });

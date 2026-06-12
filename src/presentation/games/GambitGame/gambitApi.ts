@@ -100,6 +100,11 @@ export type ResolveActiveGambitEventSelection = {
   GoodIndex: number;
 };
 
+export type CreateGambitSessionParams = {
+  CardsPurchased: number;
+  GambitTableId: number;
+};
+
 const isNotFoundResponse = (error: unknown) =>
   axios.isAxiosError(error) && error.response?.status === 404;
 
@@ -133,6 +138,34 @@ export const fetchActiveGambitSession =
       throw error;
     }
   };
+
+export const fetchGambitTables = async (): Promise<GambitTable[]> => {
+  const response = await apiClient.get<GambitTable[]>('/gambit-table');
+
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const fetchGambitTableById = async (
+  id: number
+): Promise<GambitTable> => {
+  const response = await apiClient.get<GambitTable>(`/gambit-table/${id}`);
+
+  return response.data;
+};
+
+export const createGambitSession = async ({
+  CardsPurchased,
+  GambitTableId,
+}: CreateGambitSessionParams): Promise<GambitApiSession> => {
+  const response = await apiClient.post<GambitApiSession>(
+    `/gambit-tables/${GambitTableId}/sessions`,
+    {
+      CardsPurchased,
+    }
+  );
+
+  return response.data;
+};
 
 export const burnActiveGambitCard = async (
   position: number

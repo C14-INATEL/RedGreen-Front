@@ -69,7 +69,7 @@ const sanitizeSession = (session: GambitSession): GambitApiSession => {
   const snapshot = getGambitSessionGridSnapshot(session);
 
   if (!snapshot) {
-    throw new Error('Invalid Gambit sandbox session without Grid.');
+    throw new Error('Invalid Gambit mock session without Grid.');
   }
 
   const grid = sanitizeGridSnapshot(snapshot);
@@ -181,7 +181,7 @@ export const cashOutActiveGambitSession =
 
     return {
       FinalBalance: result,
-      Message: 'Sandbox cash-out prepared.',
+      Message: 'Mock cash-out prepared.',
       Result: result,
       Session: sanitizeSession(sandboxSession),
     };

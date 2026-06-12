@@ -2,14 +2,33 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import {
   burnActiveGambitCard,
   cashOutActiveGambitSession,
+  createGambitSession,
   fetchActiveGambitSession,
+  fetchGambitTableById,
+  fetchGambitTables,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
 } from '../src/presentation/games/GambitGame/gambitApi';
+import type { GambitTable } from '../src/presentation/games/GambitGame/gambitTypes';
 import { createGambitApiSession } from './GambitTestBuilders';
 
 const mockApiGet = jest.fn();
 const mockApiPost = jest.fn();
+
+const createGambitTable = (
+  overrides: Partial<GambitTable> = {}
+): GambitTable => ({
+  Active: true,
+  CardPrice: 10,
+  Description: null,
+  GambitTableId: 1,
+  MaxCardsPurchased: 25,
+  MinimumCardsPurchased: 1,
+  MinimumChipsRequired: null,
+  Name: 'Mesa Gambit',
+  TableMultiplier: 1,
+  ...overrides,
+});
 
 jest.mock('@infrastructure/http/client', () => ({
   apiClient: {
@@ -34,6 +53,29 @@ describe('GambitApi', () => {
     expect(mockApiGet).toHaveBeenCalledWith('/gambit/sessions/active');
   });
 
+  it('fetches available Gambit tables from the backend', async () => {
+    const tables = [
+      createGambitTable(),
+      createGambitTable({ GambitTableId: 2, Name: 'Mesa VIP' }),
+    ];
+
+    mockApiGet.mockResolvedValueOnce({ data: tables });
+
+    await expect(fetchGambitTables()).resolves.toBe(tables);
+
+    expect(mockApiGet).toHaveBeenCalledWith('/gambit-table');
+  });
+
+  it('fetches a Gambit table by id from the backend', async () => {
+    const table = createGambitTable({ GambitTableId: 3 });
+
+    mockApiGet.mockResolvedValueOnce({ data: table });
+
+    await expect(fetchGambitTableById(3)).resolves.toBe(table);
+
+    expect(mockApiGet).toHaveBeenCalledWith('/gambit-table/3');
+  });
+
   it('burns the active Gambit card by position', async () => {
     const session = createGambitApiSession();
 
@@ -42,6 +84,23 @@ describe('GambitApi', () => {
     await expect(burnActiveGambitCard(7)).resolves.toBe(session);
 
     expect(mockApiPost).toHaveBeenCalledWith('/gambit/sessions/active/burn/7');
+  });
+
+  it('creates a backend Gambit session through the table session route', async () => {
+    const session = createGambitApiSession();
+
+    mockApiPost.mockResolvedValueOnce({ data: session });
+
+    await expect(
+      createGambitSession({
+        CardsPurchased: 5,
+        GambitTableId: 1,
+      })
+    ).resolves.toBe(session);
+
+    expect(mockApiPost).toHaveBeenCalledWith('/gambit-tables/1/sessions', {
+      CardsPurchased: 5,
+    });
   });
 
   it('resolves the active Gambit pending event with backend indexes', async () => {

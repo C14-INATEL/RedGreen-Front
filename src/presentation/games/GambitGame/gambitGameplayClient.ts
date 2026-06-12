@@ -1,26 +1,18 @@
-import axios from 'axios';
+import { readEnv } from '@infrastructure/env';
 import * as backendApi from './gambitApi';
-import * as sandboxApi from './gambitSandboxApi';
+import * as mockApi from './gambitSandboxApi';
 import type {
-  GambitApiSession,
+  CreateGambitSessionParams,
   GambitCashOutResponse,
   GambitResolveEffectResponse,
   ResolveActiveGambitEventSelection,
 } from './gambitApi';
 
-export type GambitGameplayMode = 'auto' | 'backend' | 'mock';
+export type GambitGameplayMode = 'backend' | 'mock';
 export type GambitGameplaySource = 'backend' | 'mock';
-
-export type GambitGameplayFetchResult = {
-  fallbackReason: 'backend-error' | 'missing-session' | null;
-  mode: GambitGameplayMode;
-  session: GambitApiSession | null;
-  source: GambitGameplaySource;
-};
 
 const GAMBIT_GAMEPLAY_MODE_ENV_KEY = 'VITE_GAMBIT_GAMEPLAY_MODE';
 const VALID_GAMBIT_GAMEPLAY_MODES = new Set<GambitGameplayMode>([
-  'auto',
   'backend',
   'mock',
 ]);
@@ -42,7 +34,7 @@ const normalizeGameplayMode = (
 };
 
 const readConfiguredModeFromEnv = () =>
-  normalizeGameplayMode(import.meta.env?.[GAMBIT_GAMEPLAY_MODE_ENV_KEY]);
+  normalizeGameplayMode(readEnv(GAMBIT_GAMEPLAY_MODE_ENV_KEY));
 
 const readConfiguredModeFromStorage = () => {
   try {
@@ -54,94 +46,48 @@ const readConfiguredModeFromStorage = () => {
   }
 };
 
-export const getConfiguredGambitGameplayMode = (): GambitGameplayMode => {
-  const configuredMode =
-    readConfiguredModeFromEnv() ?? readConfiguredModeFromStorage();
-
-  if (configuredMode) {
-    return configuredMode;
-  }
-
-  return import.meta.env?.PROD ? 'backend' : 'auto';
-};
+export const getConfiguredGambitGameplayMode = (): GambitGameplayMode =>
+  readConfiguredModeFromEnv() ?? readConfiguredModeFromStorage() ?? 'backend';
 
 export const getActiveGambitGameplaySource = () => activeGameplaySource;
 
 export const resetGambitGameplayClient = () => {
   activeGameplaySource = null;
-  sandboxApi.resetGambitSandboxSession();
-};
-
-const shouldFallbackToSandbox = (error: unknown) => {
-  if (!axios.isAxiosError(error)) {
-    return false;
-  }
-
-  const status = error.response?.status;
-
-  return status == null || status === 401 || status === 403 || status === 404;
-};
-
-const activateSandboxSession = async (
-  mode: GambitGameplayMode,
-  fallbackReason: GambitGameplayFetchResult['fallbackReason']
-): Promise<GambitGameplayFetchResult> => {
-  activeGameplaySource = 'mock';
-
-  return {
-    fallbackReason,
-    mode,
-    session: await sandboxApi.fetchActiveGambitSession(),
-    source: 'mock',
-  };
+  mockApi.resetGambitSandboxSession();
 };
 
 const getActiveApi = () =>
-  activeGameplaySource === 'mock' ? sandboxApi : backendApi;
+  activeGameplaySource === 'mock' ? mockApi : backendApi;
 
-export const fetchActiveGambitSession =
-  async (): Promise<GambitGameplayFetchResult> => {
-    const mode = getConfiguredGambitGameplayMode();
+export const fetchActiveGambitSession = async () => {
+  const mode = getConfiguredGambitGameplayMode();
 
-    if (mode === 'mock') {
-      return activateSandboxSession(mode, null);
-    }
+  if (mode === 'mock') {
+    activeGameplaySource = 'mock';
 
-    try {
-      const session = await backendApi.fetchActiveGambitSession();
+    return {
+      mode,
+      session: await mockApi.fetchActiveGambitSession(),
+      source: 'mock' as const,
+    };
+  }
 
-      if (session) {
-        activeGameplaySource = 'backend';
+  activeGameplaySource = 'backend';
 
-        return {
-          fallbackReason: null,
-          mode,
-          session,
-          source: 'backend',
-        };
-      }
-
-      if (mode === 'auto') {
-        return activateSandboxSession(mode, 'missing-session');
-      }
-
-      activeGameplaySource = 'backend';
-
-      return {
-        fallbackReason: 'missing-session',
-        mode,
-        session: null,
-        source: 'backend',
-      };
-    } catch (error) {
-      if (mode === 'auto' && shouldFallbackToSandbox(error)) {
-        return activateSandboxSession(mode, 'backend-error');
-      }
-
-      activeGameplaySource = 'backend';
-      throw error;
-    }
+  return {
+    mode,
+    session: await backendApi.fetchActiveGambitSession(),
+    source: 'backend' as const,
   };
+};
+
+export const fetchGambitTables = () => backendApi.fetchGambitTables();
+
+export const fetchGambitTableById = (id: number) =>
+  backendApi.fetchGambitTableById(id);
+
+export const createGambitSession = (params: CreateGambitSessionParams) =>
+  backendApi.createGambitSession(params);
 
 export const burnActiveGambitCard = async (position: number) =>
   getActiveApi().burnActiveGambitCard(position);

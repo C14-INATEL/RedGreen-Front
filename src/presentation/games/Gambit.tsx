@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RewardChoiceModal, type RewardCardOption } from './cardReward';
@@ -5,11 +6,11 @@ import { GambitBoard } from './GambitGame/GambitBoard';
 import { GambitRevealCinematic } from './GambitGame/GambitRevealCinematic';
 import {
   burnActiveGambitCard,
-  fetchActiveGambitSession,
   getGambitResolveEffectPeekResult,
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
+  type GambitGameplaySource,
 } from './GambitGame/gambitGameplayClient';
 import { getGambitEffectPresentation } from './GambitGame/gambitEffectPresentation';
 import {
@@ -32,6 +33,7 @@ import type {
 
 export type GambitProps = {
   initialSession?: GambitSession;
+  gameplaySource?: GambitGameplaySource;
 };
 
 type GambitVisualState = {
@@ -55,6 +57,25 @@ const emptyPendingEventSelection: PendingEventSelection = {
 };
 
 const PENDING_EVENT_PRESENTATION_DELAY_MS = 350;
+const GAMBIT_GAMEPLAY_ROUTES_NOT_FOUND_MESSAGE =
+  'Rotas de gameplay do Gambit não encontradas. Verifique se o backend está na branch feat/gambit-game-logic.';
+const GAMBIT_SESSION_EXPIRED_MESSAGE =
+  'Sessão expirada. Faça login novamente.';
+
+const getGambitActionErrorMessage = (
+  error: unknown,
+  fallbackMessage: string
+) => {
+  if (axios.isAxiosError(error) && error.response?.status === 404) {
+    return GAMBIT_GAMEPLAY_ROUTES_NOT_FOUND_MESSAGE;
+  }
+
+  if (axios.isAxiosError(error) && error.response?.status === 401) {
+    return GAMBIT_SESSION_EXPIRED_MESSAGE;
+  }
+
+  return fallbackMessage;
+};
 
 const getGambitSessionGridSnapshot = (
   session: GambitSession | null
@@ -124,13 +145,13 @@ const applyPeekResultToVisualCards = (
   );
 };
 
-export const Gambit = ({ initialSession }: GambitProps = {}) => {
+export const Gambit = ({
+  gameplaySource = 'backend',
+  initialSession,
+}: GambitProps = {}) => {
   const [session, setSession] = useState<GambitSession | null>(
     () => initialSession ?? null
   );
-  const [isLoadingSession, setIsLoadingSession] = useState(!initialSession);
-  const [isSandboxMode, setIsSandboxMode] = useState(false);
-  const [sessionLoadError, setSessionLoadError] = useState<string | null>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
     null
   );
@@ -219,50 +240,7 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
     (!isSelectingInteraction && burnsRemaining <= 0);
 
   useEffect(() => {
-    let isMounted = true;
-
-    if (initialSession) {
-      setSession(initialSession);
-      setIsLoadingSession(false);
-      setIsSandboxMode(false);
-      setSessionLoadError(null);
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    setIsLoadingSession(true);
-    setSessionLoadError(null);
-
-    fetchActiveGambitSession()
-      .then((result) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setSession(result.session);
-        setIsSandboxMode(result.source === 'mock');
-      })
-      .catch(() => {
-        if (!isMounted) {
-          return;
-        }
-
-        setSession(null);
-        setIsSandboxMode(false);
-        setSessionLoadError(
-          'Nao foi possivel carregar a sessao ativa do Gambit.'
-        );
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingSession(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    setSession(initialSession ?? null);
   }, [initialSession]);
 
   useEffect(
@@ -349,8 +327,13 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
       setPreviewedCardId(
         peekResult && 'Position' in peekResult ? peekResult.Position : null
       );
-    } catch {
-      setActionErrorMessage('Nao foi possivel resolver o efeito do Gambit.');
+    } catch (error) {
+      setActionErrorMessage(
+        getGambitActionErrorMessage(
+          error,
+          'Nao foi possivel resolver o efeito do Gambit.'
+        )
+      );
     } finally {
       setIsGameActionPending(false);
     }
@@ -400,8 +383,13 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
         setRevealedCinematicCard(null);
         setIsPendingEventPresentationDelayed(false);
       }
-    } catch {
-      setActionErrorMessage('Nao foi possivel revelar a carta do Gambit.');
+    } catch (error) {
+      setActionErrorMessage(
+        getGambitActionErrorMessage(
+          error,
+          'Nao foi possivel revelar a carta do Gambit.'
+        )
+      );
     } finally {
       setIsGameActionPending(false);
     }
@@ -504,8 +492,13 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
       pendingEventResolutionRef.current = null;
       setHasPendingEventTableSettled(false);
       setPendingEventSelection(emptyPendingEventSelection);
-    } catch {
-      setActionErrorMessage('Nao foi possivel resolver o evento do Gambit.');
+    } catch (error) {
+      setActionErrorMessage(
+        getGambitActionErrorMessage(
+          error,
+          'Nao foi possivel resolver o evento do Gambit.'
+        )
+      );
       pendingEventResolutionRef.current = null;
       setHasPendingEventTableSettled(false);
       setPendingEventSelection(emptyPendingEventSelection);
@@ -531,23 +524,6 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
     }, PENDING_EVENT_PRESENTATION_DELAY_MS);
   };
 
-  if (isLoadingSession) {
-    return (
-      <motion.div
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-[min(94vw,780px)]"
-        initial={{ opacity: 0, scale: 0.94, y: 28 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="bg-card px-5 py-4 text-center pixel-border-gold">
-          <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Carregando sessao do Gambit...
-          </p>
-        </div>
-      </motion.div>
-    );
-  }
-
   if (!session) {
     return (
       <motion.div
@@ -558,7 +534,7 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
       >
         <div className="bg-card px-5 py-4 text-center pixel-border-gold">
           <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            {sessionLoadError ?? 'Nenhuma sessão ativa do Gambit encontrada.'}
+            Nenhuma sessão ativa do Gambit encontrada.
           </p>
         </div>
       </motion.div>
@@ -598,10 +574,10 @@ export const Gambit = ({ initialSession }: GambitProps = {}) => {
             </div>
           </div>
 
-          {isSandboxMode ? (
+          {gameplaySource === 'mock' ? (
             <div className="mb-3 bg-card px-4 py-2 text-center pixel-border">
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cassino-gold/80">
-                Modo sandbox do Gambit ativo
+                Modo mock visual do Gambit ativo
               </span>
             </div>
           ) : null}
