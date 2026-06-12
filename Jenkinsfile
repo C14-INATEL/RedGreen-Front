@@ -22,6 +22,13 @@ pipeline {
       }
     }
 
+    stage('Lint e Format') {
+      steps {
+        sh 'npm run lint'
+        sh 'npm run format'
+      }
+    }
+
     stage('Build') {
       steps {
         sh 'npm run build'
