@@ -181,9 +181,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     setIsPendingEventPresentationDelayed,
   ] = useState(false);
   const [isAutoCashOutPending, setIsAutoCashOutPending] = useState(false);
-  const [scoreFeedback, setScoreFeedback] = useState<GambitScoreFeedback | null>(
-    null
-  );
+  const [scoreFeedback, setScoreFeedback] =
+    useState<GambitScoreFeedback | null>(null);
   const revealAnimationLockedRef = useRef(false);
   const autoCashOutSessionIdRef = useRef<string | null>(null);
   const isAutoCashOutPendingRef = useRef(false);
@@ -338,7 +337,9 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     scoreFeedbackTimeoutRef.current = window.setTimeout(() => {
       setScoreFeedback((currentFeedback) =>
-        currentFeedback?.id === scoreFeedbackIdRef.current ? null : currentFeedback
+        currentFeedback?.id === scoreFeedbackIdRef.current
+          ? null
+          : currentFeedback
       );
       scoreFeedbackTimeoutRef.current = null;
     }, SCORE_FEEDBACK_DURATION_MS);

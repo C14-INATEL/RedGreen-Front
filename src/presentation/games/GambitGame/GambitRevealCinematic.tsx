@@ -194,7 +194,10 @@ export const GambitRevealCinematic = ({
               transition={{ duration: 0.36, ease: [0.2, 0.9, 0.26, 1] }}
             >
               <motion.div
-                animate={{ opacity: [0.34, 0.56, 0.42], scale: [0.94, 1.05, 0.98] }}
+                animate={{
+                  opacity: [0.34, 0.56, 0.42],
+                  scale: [0.94, 1.05, 0.98],
+                }}
                 className="absolute inset-[-10%] rounded-full blur-3xl"
                 style={{ backgroundColor: revealPalette.glowColor }}
                 transition={{

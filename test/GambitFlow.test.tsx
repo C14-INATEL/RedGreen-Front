@@ -295,9 +295,9 @@ describe('Gambit backend gameplay flow', () => {
       expect(mockBurnActiveGambitCard).toHaveBeenCalledWith(7);
     });
 
-    expect(await screen.findByTestId('gambit-score-feedback')).toHaveTextContent(
-      '+15'
-    );
+    expect(
+      await screen.findByTestId('gambit-score-feedback')
+    ).toHaveTextContent('+15');
     expect(screen.getByTestId('gambit-total-score')).toHaveTextContent('15');
   });
 
