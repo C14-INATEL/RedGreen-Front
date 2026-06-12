@@ -7,6 +7,7 @@ type GambitBetPanelProps = {
   TableMultiplier: number;
   MinimumCardsPurchased: number;
   MaxCardsPurchased: number;
+  IsLoading?: boolean;
   OnConfirm?: (cardsPurchased: number) => void;
 };
 
