@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   applyGambitCashOutResponseToSession,
   shouldAutoCashOutGambitSession,
-} from '../src/presentation/games/GambitGame/gambitAutoCashOut';
+} from '../src/presentation/games/GambitGame/GambitAutoCashOut';
 import {
   createGambitApiGrid,
   createGambitApiPendingEvent,

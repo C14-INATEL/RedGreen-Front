@@ -1,6 +1,6 @@
-import type { GambitTableType } from './gambitTableConfig';
-import { getGambitEffectPresentationForDisplay } from './gambitEffectPresentation';
-import type { GambitCardEffect, GambitPendingEvent } from './gambitTypes';
+import type { GambitTableType } from './GambitTableConfig';
+import { getGambitEffectPresentationForDisplay } from './GambitEffectPresentation';
+import type { GambitCardEffect, GambitPendingEvent } from './GambitTypes';
 import type {
   RewardCardOption,
   RewardChoiceSession,

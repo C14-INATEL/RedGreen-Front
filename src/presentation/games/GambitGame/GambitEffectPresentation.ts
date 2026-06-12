@@ -1,9 +1,9 @@
-import { getGambitEffectCardSpritePath } from './gambitEffectCardAssets';
-import { mapBackendGambitCardToViewModel } from './gambitMapper';
+import { getGambitEffectCardSpritePath } from './GambitEffectCardAssets';
+import { mapBackendGambitCardToViewModel } from './GambitMapper';
 import type {
   GambitCardEffect,
   GambitCardEffectViewModel,
-} from './gambitTypes';
+} from './GambitTypes';
 
 export type GambitEffectPresentation = {
   description: string;

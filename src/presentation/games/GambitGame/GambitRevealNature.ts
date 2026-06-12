@@ -1,7 +1,7 @@
 import type {
   GambitCardEffectViewModel,
   GambitVisualCard,
-} from './gambitTypes';
+} from './GambitTypes';
 
 export type GambitRevealNature = 'bad' | 'good' | 'neutral';
 

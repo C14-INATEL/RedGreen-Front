@@ -11,26 +11,26 @@ import {
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-} from './GambitGame/gambitGameplayClient';
+} from './GambitGame/GambitGameplayClient';
 import {
   applyGambitCashOutResponseToSession,
   getGambitBurnsRemaining,
   isFinalGambitSessionStatus,
   shouldAutoCashOutGambitSession,
-} from './GambitGame/gambitAutoCashOut';
+} from './GambitGame/GambitAutoCashOut';
 import {
   getDisplayedGambitEffectViewModel,
   getGambitEffectPresentation,
   getGambitEffectPresentationForDisplay,
-} from './GambitGame/gambitEffectPresentation';
+} from './GambitGame/GambitEffectPresentation';
 import {
   mapBackendGambitCardToViewModel,
   mapGambitSessionToVisualCards,
-} from './GambitGame/gambitMapper';
+} from './GambitGame/GambitMapper';
 import {
   createRewardChoiceSessionFromPendingEvent,
   parseGambitPendingEventOptionId,
-} from './GambitGame/gambitPendingEventRewardAdapter';
+} from './GambitGame/GambitPendingEventRewardAdapter';
 import { PreparedGambitEffectPanel } from './GambitGame/PreparedGambitEffectPanel';
 import type {
   GambitCardEffect,
@@ -40,7 +40,7 @@ import type {
   GambitPendingInteraction,
   GambitSession,
   GambitVisualCard,
-} from './GambitGame/gambitTypes';
+} from './GambitGame/GambitTypes';
 
 export type GambitProps = {
   initialSession?: GambitSession;
@@ -213,6 +213,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     useState<PendingEventSelection>(emptyPendingEventSelection);
   const [pendingInteractionSelections, setPendingInteractionSelections] =
     useState<number[]>([]);
+  const [
+    pendingInteractionFeedbackCardIds,
+    setPendingInteractionFeedbackCardIds,
+  ] = useState<number[]>([]);
   const [hasPendingEventTableSettled, setHasPendingEventTableSettled] =
     useState(false);
   const [isPendingEventSelectionLocked, setIsPendingEventSelectionLocked] =
@@ -256,6 +260,9 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
       mergeSelectedPositions(pendingInteraction, pendingInteractionSelections),
     [pendingInteraction, pendingInteractionSelections]
   );
+  const isMultiCardPendingInteraction =
+    pendingInteraction?.Action === 'SELECT_MULTIPLE_CARDS' ||
+    (pendingInteraction?.RequiredSelections ?? 0) > 1;
   const burnsRemaining = session ? getGambitBurnsRemaining(session) : 0;
   const cards = useMemo(() => {
     if (!session) {
@@ -399,6 +406,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     shouldShowPendingEventModal,
   ]);
   const isSelectingInteraction = Boolean(pendingInteraction);
+  const canDismissPendingInteractionFeedback = Boolean(
+    lastInteractionResult &&
+    'AtLeastOneBad' in lastInteractionResult &&
+    pendingInteractionFeedbackCardIds.length
+  );
   const hasBumisDisguisedPreparedEffect = Boolean(bumisDisguisedPreparedEffect);
   const isBoardLocked =
     !session ||
@@ -420,6 +432,12 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     setIsBumisUnmasked(false);
     setBumisTruthCinematicCard(null);
   }, [initialSession]);
+
+  useEffect(() => {
+    if (!session) {
+      setPendingInteractionFeedbackCardIds([]);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!session) {
@@ -598,6 +616,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     if (pendingInteraction) {
       setLastInteractionResult(null);
+      setPendingInteractionFeedbackCardIds([]);
       setPreviewedCardId(null);
     }
   }, [pendingInteraction]);
@@ -609,6 +628,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     window.clearTimeout(pendingEventPresentationDelayTimeoutRef.current);
     pendingEventPresentationDelayTimeoutRef.current = null;
+  };
+
+  const clearPendingInteractionVisualFeedback = () => {
+    setPendingInteractionFeedbackCardIds([]);
   };
 
   const lockRevealAnimation = () => {
@@ -699,6 +722,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     setPendingInteractionSelections(nextSelectedPositions);
 
+    if (isMultiCardPendingInteraction) {
+      setPendingInteractionFeedbackCardIds(nextSelectedPositions);
+    }
+
     setActionErrorMessage(null);
     setLastInteractionResult(null);
     setPreviewedCardId(null);
@@ -756,6 +783,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     setActionErrorMessage(null);
     setLastInteractionResult(null);
+    clearPendingInteractionVisualFeedback();
     setPreviewedCardId(null);
     setPendingEventSelection(emptyPendingEventSelection);
     clearPendingEventPresentationDelay();
@@ -832,6 +860,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
   const handlePreviewClose = () => {
     setPreviewedCardId(null);
+    setLastInteractionResult(null);
+  };
+
+  const handlePendingInteractionFeedbackSkip = () => {
+    clearPendingInteractionVisualFeedback();
     setLastInteractionResult(null);
   };
 
@@ -1031,19 +1064,22 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
                       }}
                       className={`pointer-events-none absolute right-full top-1/2 z-[1] mr-2 whitespace-nowrap font-mono text-sm font-bold ${
                         scoreFeedback.delta > 0
-                          ? 'text-[#b9ffb3]'
-                          : 'text-[#ffb4b0]'
+                          ? 'text-[#8dff54]'
+                          : 'text-[#ff6666]'
                       }`}
                       data-testid="gambit-score-feedback"
                       exit={{ opacity: 0, y: -46, scale: 0.92 }}
                       initial={{ opacity: 0, scale: 0.84, y: 6 }}
                       key={scoreFeedback.id}
                       style={{
-                        filter: 'drop-shadow(2px 2px 0 rgba(0,0,0,0.62))',
+                        filter:
+                          scoreFeedback.delta > 0
+                            ? 'drop-shadow(0 0 8px rgba(141,255,84,0.5)) drop-shadow(2px 2px 0 rgba(0,0,0,0.72))'
+                            : 'drop-shadow(0 0 8px rgba(255,102,102,0.5)) drop-shadow(2px 2px 0 rgba(0,0,0,0.72))',
                         textShadow:
                           scoreFeedback.delta > 0
-                            ? '0 0 12px rgba(116,255,152,0.35)'
-                            : '0 0 12px rgba(255,122,122,0.35)',
+                            ? '0 0 16px rgba(141,255,84,0.72)'
+                            : '0 0 16px rgba(255,102,102,0.72)',
                       }}
                       transition={{
                         opacity: {
@@ -1098,6 +1134,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
               interactionLocked={isBoardLocked}
               onCardReveal={handleCardReveal}
               onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
+              selectedCardIds={pendingInteractionFeedbackCardIds}
             />
           </div>
 
@@ -1156,6 +1193,18 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
                   </span>
                 </div>
               )}
+            </div>
+          ) : null}
+
+          {canDismissPendingInteractionFeedback ? (
+            <div className="mt-3">
+              <button
+                className="w-full bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
+                onClick={handlePendingInteractionFeedbackSkip}
+                type="button"
+              >
+                Pular
+              </button>
             </div>
           ) : null}
 

@@ -1,11 +1,11 @@
 import {
   getGambitEffectPresentationForDisplay,
   getGambitEffectPresentationFromViewModel,
-} from './gambitEffectPresentation';
+} from './GambitEffectPresentation';
 import type {
   GambitCardEffect,
   GambitCardEffectViewModel,
-} from './gambitTypes';
+} from './GambitTypes';
 
 type PreparedGambitEffectPanelProps = {
   displayEffect?: GambitCardEffectViewModel | null;

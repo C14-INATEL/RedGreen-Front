@@ -2,9 +2,9 @@ import type { CSSProperties, HTMLAttributes } from 'react';
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { createGambitCard, type GambitCardInstance } from './GambitCard';
-import { GAMBIT_GRID_SIZE } from './gambitGameConfig';
-import { preloadGambitCardTextures } from './gambitTextures';
-import type { GambitVisualCard } from './gambitTypes';
+import { GAMBIT_GRID_SIZE } from './GambitGameConfig';
+import { preloadGambitCardTextures } from './GambitTextures';
+import type { GambitVisualCard } from './GambitTypes';
 
 type GambitBoardProps = Pick<
   HTMLAttributes<HTMLDivElement>,
@@ -15,6 +15,7 @@ type GambitBoardProps = Pick<
   interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;
   onCardRevealAnimationComplete?: (cardId: number) => void;
+  selectedCardIds?: number[];
 };
 
 const BOARD_FRAME_COLOR = 0x2a1f12;
@@ -97,12 +98,14 @@ export const GambitBoard = ({
   interactionLocked = false,
   onCardReveal,
   onCardRevealAnimationComplete,
+  selectedCardIds = [],
   style,
 }: GambitBoardProps) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef(cards);
   const clarividenciaPreviewModeRef = useRef(clarividenciaPreviewMode);
   const interactionLockedRef = useRef(interactionLocked);
+  const selectedCardIdsRef = useRef(selectedCardIds);
   const onCardRevealAnimationCompleteRef = useRef(
     onCardRevealAnimationComplete
   );
@@ -125,6 +128,11 @@ export const GambitBoard = ({
     interactionLockedRef.current = interactionLocked;
     renderBoardRef.current?.();
   }, [interactionLocked]);
+
+  useEffect(() => {
+    selectedCardIdsRef.current = selectedCardIds;
+    renderBoardRef.current?.();
+  }, [selectedCardIds]);
 
   useEffect(() => {
     cardsRef.current = cards;
@@ -222,6 +230,7 @@ export const GambitBoard = ({
           previewed: card.previewed,
           revealOnClick: !clarividenciaPreviewModeRef.current,
           revealed: card.revealed,
+          selected: selectedCardIdsRef.current.includes(card.id),
           size: layout.cellSize,
           value: card.points,
           x,

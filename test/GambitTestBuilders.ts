@@ -5,7 +5,7 @@ import type {
   GambitApiRevealedCard,
   GambitApiSession,
   GambitApiUnrevealedCard,
-} from '../src/presentation/games/GambitGame/gambitApi';
+} from '../src/presentation/games/GambitGame/GambitApi';
 
 const GAMBIT_TEST_CELL_COUNT = 25;
 

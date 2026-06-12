@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { getGambitEffectPresentationFromViewModel } from './gambitEffectPresentation';
-import { classifyGambitRevealNature } from './gambitRevealNature';
-import type { GambitVisualCard } from './gambitTypes';
+import { getGambitEffectPresentationFromViewModel } from './GambitEffectPresentation';
+import { classifyGambitRevealNature } from './GambitRevealNature';
+import type { GambitVisualCard } from './GambitTypes';
 
 type GambitRevealCinematicProps = {
   card: GambitVisualCard | null;
@@ -213,9 +213,12 @@ export const GambitRevealCinematic = ({
                 style={{ borderColor: revealPalette.innerBorderColor }}
               >
                 <span
-                  className="absolute right-5 top-5 z-10 border border-white/20 bg-black/35 px-2 py-1 font-mono text-[10px] font-bold"
+                  className="absolute right-5 top-5 z-10 font-mono text-[11px] font-bold tracking-[0.12em]"
                   data-testid="gambit-reveal-points"
-                  style={{ color: revealPalette.badgeTextColor }}
+                  style={{
+                    color: revealPalette.badgeTextColor,
+                    textShadow: '2px 2px 0 rgba(8,6,3,0.78)',
+                  }}
                 >
                   {formatPoints(card.points)}
                 </span>

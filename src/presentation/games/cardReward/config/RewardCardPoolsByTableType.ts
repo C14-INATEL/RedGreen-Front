@@ -1,4 +1,4 @@
-import type { GambitTableType } from '../../GambitGame/gambitTableConfig';
+import type { GambitTableType } from '../../GambitGame/GambitTableConfig';
 import type { RewardCardDefinition } from '../types/CardReward';
 import { rewardCardPool } from './RewardCardPool';
 

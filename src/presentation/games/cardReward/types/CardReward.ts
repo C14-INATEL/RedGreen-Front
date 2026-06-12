@@ -1,4 +1,4 @@
-import type { GambitTableType } from '../../GambitGame/gambitTableConfig';
+import type { GambitTableType } from '../../GambitGame/GambitTableConfig';
 
 export type RewardSelectionPhase = 'selecting' | 'resolving';
 export type RewardTablePhase = 'normal' | 'transitioning' | 'bad';

@@ -1,5 +1,5 @@
-import type { GambitCashOutResponse } from './gambitApi';
-import type { GambitGridSnapshot, GambitSession } from './gambitTypes';
+import type { GambitCashOutResponse } from './GambitApi';
+import type { GambitGridSnapshot, GambitSession } from './GambitTypes';
 
 const getGambitSessionGridSnapshot = (
   session: GambitSession

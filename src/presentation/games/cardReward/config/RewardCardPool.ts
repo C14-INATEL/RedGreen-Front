@@ -1,4 +1,4 @@
-import { getGambitEffectCardSpritePath } from '../../GambitGame/gambitEffectCardAssets';
+import { getGambitEffectCardSpritePath } from '../../GambitGame/GambitEffectCardAssets';
 import type { RewardCardDefinition } from '../types/CardReward';
 
 export const rewardCardPool: RewardCardDefinition[] = [

@@ -1,7 +1,7 @@
 import {
   getNextGambitTableType,
   type GambitTableType,
-} from '../../../GambitGame/gambitTableConfig';
+} from '../../../GambitGame/GambitTableConfig';
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { getRewardCardPoolByTableType } from '../../config/RewardCardPoolsByTableType';
 import { rewardCardPool } from '../../config/RewardCardPool';
