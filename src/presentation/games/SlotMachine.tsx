@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SlotMachinePixi } from './SlotMachineGame/SlotMachinePixi';
 import { SlotPaytableHUD } from './SlotMachineGame/SlotPaytableHUD';
+import type { TableColor } from '../ui/TableColor';
 
 const MACHINE_ENTRY_TRANSITION = {
   duration: 0.65,
@@ -10,6 +11,7 @@ const MACHINE_ENTRY_TRANSITION = {
 } as const;
 
 export type SlotMachineFromApi = {
+  TableColor: TableColor | undefined;
   SlotMachineId: number;
   Name: string;
   Description: string;
