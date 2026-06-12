@@ -1029,23 +1029,6 @@ export const Gambit = ({
       }).title.toUpperCase()
     : null;
 
-  if (!session) {
-    return (
-      <motion.div
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-[min(94vw,780px)]"
-        initial={{ opacity: 0, scale: 0.94, y: 28 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="bg-card px-5 py-4 text-center pixel-border-gold">
-          <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-            Nenhuma sessão ativa do Gambit encontrada.
-          </p>
-        </div>
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1, y: 0 }}
