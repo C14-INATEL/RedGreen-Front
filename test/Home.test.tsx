@@ -456,4 +456,22 @@ describe('Home', () => {
     expect(OnDeleted).toHaveBeenCalledTimes(1);
     expect(OnClose).not.toHaveBeenCalled();
   });
+
+  it('warns that account deletion and email reuse are irreversible', () => {
+    render(
+      <DeleteAccountModal
+        IsOpen={true}
+        OnClose={jest.fn()}
+        OnDeleted={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('Esta ação é irreversível')).not.toBeNull();
+    expect(
+      screen.getByText(/não poderá criar outra conta usando este mesmo e-mail/i)
+    ).not.toBeNull();
+    expect(
+      screen.getByText(/será necessário utilizar um novo e-mail/i)
+    ).not.toBeNull();
+  });
 });

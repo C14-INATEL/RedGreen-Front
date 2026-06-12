@@ -186,9 +186,20 @@ const DeleteAccountModal = ({
                 <h2 className="font-display text-lg font-semibold text-white text-center mb-1">
                   Excluir conta
                 </h2>
-                <p className="text-white/60 text-xs text-center mb-6 leading-5">
-                  Esta ação é permanente e nao pode ser desfeita.
-                  <br />
+                <div
+                  className="mb-6 border-2 border-cassino-red/60 bg-cassino-red/10 px-4 py-3 text-center"
+                  role="alert"
+                >
+                  <p className="font-display text-[10px] uppercase leading-5 tracking-wider text-cassino-red">
+                    Esta ação é irreversível
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/70">
+                    Você não poderá criar outra conta usando este mesmo e-mail.
+                    Para voltar a jogar, será necessário utilizar um novo
+                    e-mail.
+                  </p>
+                </div>
+                <p className="mb-4 text-center text-xs leading-5 text-white/60">
                   Informe sua senha para confirmar.
                 </p>
 

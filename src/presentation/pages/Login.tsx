@@ -7,6 +7,29 @@ import { setToken } from '@/infrastructure/Cookies';
 
 type Step = 'identify' | 'login' | 'signup';
 
+const DeletedAccountMessage =
+  'NÃO É MAIS POSSÍVEL ACESSAR UMA CONTA COM O E-MAIL INFORMADO.\nCRIE UMA NOVA CONTA COM OUTRO E-MAIL.';
+
+const IsDeletedAccountError = (
+  Status: number | undefined,
+  Message: string
+) => {
+  if (Status === 403 || Status === 410) return true;
+
+  const NormalizedMessage = Message.toLowerCase();
+
+  return [
+    'conta excluída',
+    'conta excluida',
+    'conta inativa',
+    'account deleted',
+    'account inactive',
+    'inactive user',
+    'user inactive',
+    'user is not active',
+  ].some((Term) => NormalizedMessage.includes(Term));
+};
+
 const EyeOpenIcon = (
   <svg
     width="18"
@@ -140,8 +163,23 @@ const Login = () => {
       SetToastMessage('');
       window.location.href = '/';
     } catch (Error) {
-      const Status = (Error as { response?: { status?: number } })?.response
-        ?.status;
+      const Response = (
+        Error as {
+          response?: {
+            status?: number;
+            data?: { message?: string; Message?: string };
+          };
+        }
+      )?.response;
+      const Status = Response?.status;
+      const Message = String(
+        Response?.data?.message ?? Response?.data?.Message ?? ''
+      );
+
+      if (IsDeletedAccountError(Status, Message)) {
+        SetToastMessage(DeletedAccountMessage);
+        return;
+      }
 
       if (Status === 400 || Status === 401) {
         SetToastMessage('SENHA INVÁLIDA.');
