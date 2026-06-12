@@ -10,44 +10,30 @@ import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { UseDailyLogin } from '@application/hooks/useDailyLogin';
 import { useRanking } from '@application/hooks/useRanking';
+import { getToken, removeToken } from '@/infrastructure/Cookies';
 import { paths } from '../../paths';
-
-type StoredUserSnapshot = {
-  ChipBalance?: number;
-  chips?: number;
-  Nickname?: string;
-  nickname?: string;
-};
 
 const Home = () => {
   const Navigate = useNavigate();
-  const Token = localStorage.getItem('token');
-  const storedUserValue = localStorage.getItem('user');
-  let StoredUser: StoredUserSnapshot | null = null;
-
-  if (storedUserValue) {
-    try {
-      StoredUser = JSON.parse(storedUserValue) as StoredUserSnapshot;
-    } catch {
-      StoredUser = null;
-    }
-  }
+  const Token = getToken();
 
   const [IsLoggedIn, SetIsLoggedIn] = useState(!!Token);
-  const { nickname, isLoading: profileLoading } = useUserProfile(IsLoggedIn);
+  const {
+    user,
+    nickname,
+    isLoading: profileLoading,
+  } = useUserProfile(IsLoggedIn);
   const { chips, mutate: MutateChips } = useUserChips(IsLoggedIn);
 
-  const localNickname = StoredUser?.Nickname || StoredUser?.nickname;
-  const localChips = StoredUser?.ChipBalance ?? StoredUser?.chips;
   const PlayerName =
     nickname ??
-    localNickname ??
+    user?.Nickname ??
     (IsLoggedIn && profileLoading
       ? 'Carregando...'
       : IsLoggedIn
         ? 'Jogador Logado'
         : 'Convidado');
-  const Chips = chips ?? localChips ?? (IsLoggedIn ? 0 : 10000);
+  const Chips = chips ?? (IsLoggedIn ? 0 : 10000);
 
   const [RankingOpen, SetRankingOpen] = useState(false);
   const [CanShowRankingButton, SetCanShowRankingButton] = useState(true);
@@ -89,8 +75,7 @@ const Home = () => {
   };
 
   const HandleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    removeToken();
     SetIsLoggedIn(false);
     Navigate('/');
   };

@@ -10,6 +10,16 @@ import {
 } from '@jest/globals';
 import Login from '../src/presentation/pages/Login';
 
+const mockSetToken = jest.fn();
+
+jest.mock('@/infrastructure/Cookies', () => ({
+  setToken: (token: string) => mockSetToken(token),
+}));
+
+const clearTokenCookie = () => {
+  document.cookie = 'token=; Max-Age=0; path=/';
+};
+
 type ApiGetMock = (
   Url: string,
   Config?: Record<string, unknown>
@@ -33,13 +43,15 @@ jest.mock('@infrastructure/http/client', () => ({
 }));
 
 beforeEach(() => {
-  localStorage.clear();
+  clearTokenCookie();
+  mockSetToken.mockReset();
   MockApiGet.mockReset();
   MockApiPost.mockReset();
 });
 
 afterEach(() => {
-  localStorage.clear();
+  clearTokenCookie();
+  mockSetToken.mockReset();
 });
 
 const GoToLoginStep = async () => {
@@ -68,7 +80,7 @@ const GoToLoginStep = async () => {
 };
 
 describe('handleLogin - login successful.', () => {
-  it('the token is saved to localStorage when the API returns success.', async () => {
+  it('the token is saved to cookies when the API returns success.', async () => {
     await GoToLoginStep();
 
     const FakeToken = 'jwt-token-abc123';
@@ -86,7 +98,7 @@ describe('handleLogin - login successful.', () => {
     fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
 
     await waitFor(() => {
-      expect(localStorage.getItem('token')).toBe(FakeToken);
+      expect(mockSetToken).toHaveBeenCalledWith(FakeToken);
     });
   });
 });
@@ -111,6 +123,6 @@ describe('handleLogin - wrong password', () => {
       expect(screen.getByText(/SENHA INVÁLIDA/i)).toBeTruthy();
     });
 
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(mockSetToken).not.toHaveBeenCalled();
   });
 });

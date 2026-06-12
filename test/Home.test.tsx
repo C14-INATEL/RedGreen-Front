@@ -6,6 +6,14 @@ import {
   it,
   jest,
 } from '@jest/globals';
+
+const setTokenCookie = (value: string) => {
+  document.cookie = `token=${value}; path=/`;
+};
+
+const clearTokenCookie = () => {
+  document.cookie = 'token=; Max-Age=0; path=/';
+};
 import {
   act,
   fireEvent,
@@ -162,7 +170,7 @@ const RenderHome = () =>
 
 describe('Home', () => {
   beforeEach(() => {
-    localStorage.clear();
+    clearTokenCookie();
 
     MockUseUserProfile.mockReset();
     MockUseUserChips.mockReset();
@@ -203,7 +211,7 @@ describe('Home', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    localStorage.clear();
+    clearTokenCookie();
   });
 
   it('redirects the guest user to the login page after clicking the login action', () => {
@@ -217,7 +225,7 @@ describe('Home', () => {
   });
 
   it('uses the user data returned by hooks and opens the daily bonus when a token exists', () => {
-    localStorage.setItem('token', 'token-fake-123');
+    setTokenCookie('token-fake-123');
 
     MockUseUserProfile.mockReturnValue({
       nickname: 'ApiPlayer',
@@ -242,7 +250,7 @@ describe('Home', () => {
   });
 
   it('uses logged-in fallbacks while hook data is not available', () => {
-    localStorage.setItem('token', 'token-fake-123');
+    setTokenCookie('token-fake-123');
 
     MockUseUserProfile.mockReturnValue({
       nickname: undefined,
@@ -260,20 +268,20 @@ describe('Home', () => {
     expect(screen.getByText('0')).not.toBeNull();
   });
 
-  it('clears localStorage and disables hooks when logout is clicked', () => {
-    localStorage.setItem('token', 'token-fake-123');
+  it('clears session cookies and disables hooks when logout is clicked', () => {
+    setTokenCookie('token-fake-123');
 
     RenderHome();
 
     fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
 
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(document.cookie).not.toContain('token=');
     expect(MockUseUserProfile).toHaveBeenLastCalledWith(false);
     expect(MockUseUserChips).toHaveBeenLastCalledWith(false);
   });
 
   it('keeps the daily bonus closed while the daily state is still loading', () => {
-    localStorage.setItem('token', 'token-fake-123');
+    setTokenCookie('token-fake-123');
     MockUseDailyLogin.mockReturnValue({
       DailyState: null,
       CanClaimToday: false,
@@ -289,7 +297,7 @@ describe('Home', () => {
   });
 
   it('opens the ranking panel from the shortcut and closes it through the panel callback', () => {
-    localStorage.setItem('token', 'token-fake-123');
+    setTokenCookie('token-fake-123');
     MockUseDailyLogin.mockReturnValue({
       DailyState: {
         FirstLoginToday: false,
@@ -314,7 +322,7 @@ describe('Home', () => {
   });
 
   it('opens the daily bonus from the gift shortcut and forwards the chips mutator to the panel', () => {
-    localStorage.setItem('token', 'token-fake-123');
+    setTokenCookie('token-fake-123');
     MockUseDailyLogin.mockReturnValue({
       DailyState: {
         FirstLoginToday: false,
@@ -353,15 +361,20 @@ describe('Home', () => {
     const OnClose = jest.fn();
     const OnSuccess = jest.fn();
 
-    localStorage.setItem(
-      'user',
-      JSON.stringify({
+    const mockMutateUser = jest.fn();
+
+    MockUseUserProfile.mockReturnValue({
+      user: {
         Name: 'Old Name',
         Nickname: 'PixelPlayer',
         Email: 'pixel@example.com',
         BirthDate: '2000-01-02',
-      })
-    );
+      },
+      nickname: 'PixelPlayer',
+      isLoading: false,
+      isAdmin: false,
+      mutate: mockMutateUser,
+    });
 
     MockApiPatch.mockResolvedValue({
       data: {
@@ -405,12 +418,7 @@ describe('Home', () => {
     });
 
     expect(OnSuccess).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(localStorage.getItem('user') ?? '{}')).toEqual(
-      expect.objectContaining({
-        Name: 'New Name',
-        BirthDate: '1999-04-03',
-      })
-    );
+    expect(mockMutateUser).toHaveBeenCalled();
 
     act(() => {
       jest.advanceTimersByTime(1000);
@@ -423,7 +431,7 @@ describe('Home', () => {
     const OnClose = jest.fn();
     const OnDeleted = jest.fn();
 
-    localStorage.setItem('token', 'token-123');
+    setTokenCookie('token-123');
 
     MockApiDelete.mockResolvedValue({});
 
@@ -444,7 +452,7 @@ describe('Home', () => {
       expect(MockApiDelete).toHaveBeenCalledWith('/user');
     });
 
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(document.cookie).not.toContain('token=');
     expect(OnDeleted).toHaveBeenCalledTimes(1);
     expect(OnClose).not.toHaveBeenCalled();
   });
