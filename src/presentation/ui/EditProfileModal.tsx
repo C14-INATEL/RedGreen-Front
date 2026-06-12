@@ -86,21 +86,30 @@ const EditProfileModal = ({
   const [BirthDate, SetBirthDate] = useState<string>(
     FormatDateToBR(StoredUser.BirthDate ?? '')
   );
-  const [Password, SetPassword] = useState('');
-  const [ConfirmPassword, SetConfirmPassword] = useState('');
-  const [ShowPassword, SetShowPassword] = useState(false);
-  const [ShowConfirmPassword, SetShowConfirmPassword] = useState(false);
+  const [NewPassword, SetNewPassword] = useState('');
+  const [ConfirmNewPassword, SetConfirmNewPassword] = useState('');
+  const [CurrentPassword, SetCurrentPassword] = useState('');
+  const [ShowNewPassword, SetShowNewPassword] = useState(false);
+  const [ShowConfirmNewPassword, SetShowConfirmNewPassword] = useState(false);
+  const [ShowCurrentPassword, SetShowCurrentPassword] = useState(false);
   const [IsLoading, SetIsLoading] = useState(false);
   const [ToastMessage, SetToastMessage] = useState('');
   const [SuccessMessage, SetSuccessMessage] = useState('');
+  const UserEmail = String(StoredUser.Email ?? StoredUser.email ?? '')
+    .trim()
+    .toLowerCase();
 
   const CloseToast = () => SetToastMessage('');
 
   const HandleClose = () => {
     SetToastMessage('');
     SetSuccessMessage('');
-    SetPassword('');
-    SetConfirmPassword('');
+    SetNewPassword('');
+    SetConfirmNewPassword('');
+    SetCurrentPassword('');
+    SetShowNewPassword(false);
+    SetShowConfirmNewPassword(false);
+    SetShowCurrentPassword(false);
     OnClose();
   };
 
@@ -125,18 +134,25 @@ const EditProfileModal = ({
       return;
     }
 
-    if (Password && Password.length < 8) {
+    if (!CurrentPassword.trim()) {
+      SetToastMessage('CAMPO OBRIGATORIO\nINFORME SUA SENHA ATUAL.');
+      return;
+    }
+
+    if (!UserEmail) {
+      SetToastMessage(
+        'ERRO\nNAO FOI POSSIVEL VALIDAR SUA SENHA. ENTRE NOVAMENTE.'
+      );
+      return;
+    }
+
+    if (NewPassword && NewPassword.length < 8) {
       SetToastMessage('ERRO\nA SENHA DEVE TER PELO MENOS 8 CARACTERES.');
       return;
     }
 
-    if (Password && Password !== ConfirmPassword) {
-      SetToastMessage('ERRO\nAS SENHAS NAO CONFEREM.');
-      return;
-    }
-
-    if (ConfirmPassword && !Password) {
-      SetToastMessage('ERRO\nINFORME SUA NOVA SENHA.');
+    if (NewPassword && NewPassword !== ConfirmNewPassword) {
+      SetToastMessage('ERRO\nA CONFIRMACAO DA NOVA SENHA NAO CONFERE.');
       return;
     }
 
@@ -145,13 +161,36 @@ const EditProfileModal = ({
     SetSuccessMessage('');
 
     try {
+      try {
+        const PasswordCheckResponse = await apiClient.post('/auth/login', {
+          Email: UserEmail,
+          Password: CurrentPassword,
+        });
+
+        const Token = PasswordCheckResponse.data?.Token;
+        if (Token) {
+          localStorage.setItem('token', Token);
+        }
+      } catch (Err) {
+        const Status = (Err as { response?: { status?: number } })?.response
+          ?.status;
+
+        if (Status === 400 || Status === 401) {
+          SetToastMessage('ERRO\nSENHA ATUAL INVALIDA.');
+          return;
+        }
+
+        SetToastMessage('ERRO\nNAO FOI POSSIVEL VALIDAR SUA SENHA ATUAL.');
+        return;
+      }
+
       const Payload: Record<string, string> = {
         Name: Name.trim(),
         BirthDate: FormatDateToISO(BirthDate),
       };
 
-      if (Password) {
-        Payload.Password = Password;
+      if (NewPassword) {
+        Payload.Password = NewPassword;
       }
 
       const Response = await apiClient.patch('/user', Payload);
@@ -160,8 +199,9 @@ const EditProfileModal = ({
       localStorage.setItem('user', JSON.stringify(UpdatedUser));
 
       SetSuccessMessage('PERFIL ATUALIZADO COM SUCESSO!');
-      SetPassword('');
-      SetConfirmPassword('');
+      SetNewPassword('');
+      SetConfirmNewPassword('');
+      SetCurrentPassword('');
 
       if (OnSuccess) OnSuccess();
 
@@ -213,13 +253,13 @@ const EditProfileModal = ({
                   O apelido nao pode ser alterado
                 </p>
 
-                <div className="space-y-2">
+                <div className="space-y-5">
                   <input
                     type="text"
                     placeholder="Apelido"
                     value={StoredUser.Nickname ?? ''}
                     disabled
-                    className="auth-input opacity-40 cursor-not-allowed"
+                    className="auth-input !mb-0 opacity-40 cursor-not-allowed"
                   />
 
                   <input
@@ -231,7 +271,7 @@ const EditProfileModal = ({
                       SetToastMessage('');
                       SetSuccessMessage('');
                     }}
-                    className="auth-input"
+                    className="auth-input !mb-0"
                   />
 
                   <input
@@ -254,59 +294,90 @@ const EditProfileModal = ({
                     }}
                     inputMode="numeric"
                     maxLength={10}
-                    className="auth-input"
+                    className="auth-input !mb-0"
                   />
 
                   <div className="relative">
                     <input
-                      type={ShowPassword ? 'text' : 'password'}
+                      type={ShowNewPassword ? 'text' : 'password'}
                       placeholder="Nova senha (opcional)"
-                      value={Password}
+                      value={NewPassword}
                       onChange={(e) => {
-                        SetPassword(e.target.value);
+                        SetNewPassword(e.target.value);
                         SetToastMessage('');
                         SetSuccessMessage('');
                       }}
-                      className="auth-input pr-12"
+                      autoComplete="new-password"
+                      className="auth-input !mb-0 pr-12"
                     />
                     <button
                       type="button"
-                      onClick={() => SetShowPassword(!ShowPassword)}
+                      onClick={() => SetShowNewPassword(!ShowNewPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={
-                        ShowPassword ? 'Ocultar senha' : 'Mostrar senha'
+                        ShowNewPassword ? 'Ocultar senha' : 'Mostrar senha'
                       }
                     >
-                      {ShowPassword ? EyeClosedIcon : EyeOpenIcon}
+                      {ShowNewPassword ? EyeClosedIcon : EyeOpenIcon}
                     </button>
                   </div>
 
                   <div className="relative">
                     <input
-                      type={ShowConfirmPassword ? 'text' : 'password'}
+                      type={ShowConfirmNewPassword ? 'text' : 'password'}
                       placeholder="Confirmar nova senha"
-                      value={ConfirmPassword}
+                      value={ConfirmNewPassword}
                       onChange={(e) => {
-                        SetConfirmPassword(e.target.value);
+                        SetConfirmNewPassword(e.target.value);
                         SetToastMessage('');
                         SetSuccessMessage('');
                       }}
-                      onKeyDown={(e) => e.key === 'Enter' && HandleSubmit()}
-                      className="auth-input pr-12"
+                      autoComplete="new-password"
+                      className="auth-input !mb-0 pr-12"
                     />
                     <button
                       type="button"
                       onClick={() =>
-                        SetShowConfirmPassword(!ShowConfirmPassword)
+                        SetShowConfirmNewPassword(!ShowConfirmNewPassword)
                       }
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
                       aria-label={
-                        ShowConfirmPassword
-                          ? 'Ocultar confirmacao'
-                          : 'Mostrar confirmacao'
+                        ShowConfirmNewPassword
+                          ? 'Ocultar confirmacao de senha'
+                          : 'Mostrar confirmacao de senha'
                       }
                     >
-                      {ShowConfirmPassword ? EyeClosedIcon : EyeOpenIcon}
+                      {ShowConfirmNewPassword ? EyeClosedIcon : EyeOpenIcon}
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type={ShowCurrentPassword ? 'text' : 'password'}
+                      placeholder="Senha atual"
+                      value={CurrentPassword}
+                      onChange={(e) => {
+                        SetCurrentPassword(e.target.value);
+                        SetToastMessage('');
+                        SetSuccessMessage('');
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && HandleSubmit()}
+                      autoComplete="current-password"
+                      className="auth-input !mb-0 pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        SetShowCurrentPassword(!ShowCurrentPassword)
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+                      aria-label={
+                        ShowCurrentPassword
+                          ? 'Ocultar senha atual'
+                          : 'Mostrar senha atual'
+                      }
+                    >
+                      {ShowCurrentPassword ? EyeClosedIcon : EyeOpenIcon}
                     </button>
                   </div>
 

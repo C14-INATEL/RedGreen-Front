@@ -2,16 +2,16 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackgroundParticles } from '../../../GambitGame/BackgroundParticles';
 import { GambitEventTable } from '../../../GambitGame/GambitEventTable';
-import { rewardPresentationConfig } from '../../config/rewardPresentationConfig';
-import { rewardTimings } from '../../config/rewardTimings';
+import { rewardPresentationConfig } from '../../config/RewardPresentationConfig';
+import { rewardTimings } from '../../config/RewardTimings';
 import type {
   RewardCardOption,
   RewardChoiceSession,
   RewardPresentationConfig,
   RewardTableState,
   RewardTimingsConfig,
-} from '../../types/cardReward';
-import { selectedCardOverlayTransition } from '../../animations/cardSelectionAnimations';
+} from '../../types/CardReward';
+import { selectedCardOverlayTransition } from '../../animations/CardSelectionAnimations';
 import { RewardCard } from './RewardCard';
 
 type RewardChoiceModalProps = {

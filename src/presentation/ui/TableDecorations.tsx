@@ -14,8 +14,8 @@ const TableDecorations = () => {
             cx="20"
             cy="20"
             r="16"
-            fill="hsl(var(--cassino-red))"
-            stroke="hsl(0 0% 100% / 0.3)"
+            fill="hsl(0 70% 42%)"
+            stroke="hsl(0 60% 60% / 0.4)"
             strokeWidth="2"
           />
           <circle
@@ -26,9 +26,10 @@ const TableDecorations = () => {
             strokeWidth="1"
             fill="none"
           />
-          <circle cx="20" cy="20" r="3" fill="hsl(0 0% 100% / 0.3)" />
+          <circle cx="20" cy="20" r="3" fill="hsl(0 0% 100% / 0.4)" />
         </svg>
       </motion.div>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -45,15 +46,15 @@ const TableDecorations = () => {
             cx="20"
             cy="20"
             r="16"
-            fill="hsl(210 10% 20%)"
-            stroke="hsl(0 0% 100% / 0.3)"
+            fill="hsl(220 70% 35%)"
+            stroke="hsl(220 60% 60% / 0.35)"
             strokeWidth="2"
           />
           <circle
             cx="20"
             cy="20"
             r="10"
-            stroke="hsl(0 0% 100% / 0.3)"
+            stroke="hsl(0 0% 100% / 0.25)"
             strokeWidth="1"
             fill="none"
           />
@@ -77,8 +78,8 @@ const TableDecorations = () => {
             cx="20"
             cy="20"
             r="16"
-            fill="hsl(var(--cassino-red))"
-            stroke="hsl(0 0% 100% / 0.3)"
+            fill="hsl(0 70% 42%)"
+            stroke="hsl(0 60% 60% / 0.4)"
             strokeWidth="2"
           />
           <circle
@@ -89,9 +90,10 @@ const TableDecorations = () => {
             strokeWidth="1"
             fill="none"
           />
-          <circle cx="20" cy="20" r="3" fill="hsl(0 0% 100% / 0.3)" />
+          <circle cx="20" cy="20" r="3" fill="hsl(0 0% 100% / 0.4)" />
         </svg>
       </motion.div>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -108,15 +110,15 @@ const TableDecorations = () => {
             cx="20"
             cy="20"
             r="16"
-            fill="hsl(210 10% 20%)"
-            stroke="hsl(0 0% 100% / 0.3)"
+            fill="hsl(220 70% 35%)"
+            stroke="hsl(220 60% 60% / 0.35)"
             strokeWidth="2"
           />
           <circle
             cx="20"
             cy="20"
             r="10"
-            stroke="hsl(0 0% 100% / 0.3)"
+            stroke="hsl(0 0% 100% / 0.25)"
             strokeWidth="1"
             fill="none"
           />
@@ -142,30 +144,31 @@ const TableDecorations = () => {
             width="32"
             height="44"
             rx="4"
-            fill="hsl(0 0% 100% / 0.08)"
-            stroke="hsl(0 0% 100% / 0.15)"
+            fill="hsl(0 0% 98% / 0.08)"
+            stroke="hsl(0 0% 100% / 0.2)"
             strokeWidth="1.5"
           />
           <text
             x="8"
             y="16"
             fontSize="10"
-            fill="hsl(0 0% 100% / 0.2)"
+            fill="hsl(0 0% 100% / 0.3)"
             fontFamily="serif"
           >
             A
           </text>
           <text
-            x="12"
+            x="10"
             y="32"
             fontSize="14"
-            fill="hsl(var(--cassino-red) / 0.25)"
+            fill="hsl(0 70% 50% / 0.4)"
             fontFamily="serif"
           >
             ♥
           </text>
         </svg>
       </motion.div>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -184,24 +187,24 @@ const TableDecorations = () => {
             width="32"
             height="44"
             rx="4"
-            fill="hsl(0 0% 100% / 0.06)"
-            stroke="hsl(0 0% 100% / 0.12)"
+            fill="hsl(0 0% 98% / 0.06)"
+            stroke="hsl(0 0% 100% / 0.15)"
             strokeWidth="1.5"
           />
           <text
             x="8"
             y="16"
             fontSize="10"
-            fill="hsl(0 0% 100% / 0.15)"
+            fill="hsl(0 0% 100% / 0.25)"
             fontFamily="serif"
           >
             K
           </text>
           <text
-            x="12"
+            x="10"
             y="32"
             fontSize="14"
-            fill="hsl(0 0% 100% / 0.15)"
+            fill="hsl(0 0% 100% / 0.25)"
             fontFamily="serif"
           >
             ♠
@@ -227,17 +230,18 @@ const TableDecorations = () => {
             width="24"
             height="24"
             rx="4"
-            fill="hsl(0 0% 100% / 0.06)"
-            stroke="hsl(0 0% 100% / 0.15)"
+            fill="hsl(0 0% 96% / 0.1)"
+            stroke="hsl(0 0% 100% / 0.2)"
             strokeWidth="1.5"
           />
-          <circle cx="9" cy="9" r="2" fill="hsl(0 0% 100% / 0.15)" />
-          <circle cx="19" cy="9" r="2" fill="hsl(0 0% 100% / 0.15)" />
-          <circle cx="14" cy="14" r="2" fill="hsl(0 0% 100% / 0.15)" />
-          <circle cx="9" cy="19" r="2" fill="hsl(0 0% 100% / 0.15)" />
-          <circle cx="19" cy="19" r="2" fill="hsl(0 0% 100% / 0.15)" />
+          <circle cx="9" cy="9" r="2" fill="hsl(0 0% 20% / 0.4)" />
+          <circle cx="19" cy="9" r="2" fill="hsl(0 0% 20% / 0.4)" />
+          <circle cx="14" cy="14" r="2" fill="hsl(0 0% 20% / 0.4)" />
+          <circle cx="9" cy="19" r="2" fill="hsl(0 0% 20% / 0.4)" />
+          <circle cx="19" cy="19" r="2" fill="hsl(0 0% 20% / 0.4)" />
         </svg>
       </motion.div>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -256,12 +260,12 @@ const TableDecorations = () => {
             width="24"
             height="24"
             rx="4"
-            fill="hsl(0 0% 100% / 0.05)"
-            stroke="hsl(0 0% 100% / 0.1)"
+            fill="hsl(0 0% 96% / 0.08)"
+            stroke="hsl(0 0% 100% / 0.15)"
             strokeWidth="1.5"
           />
-          <circle cx="9" cy="9" r="2" fill="hsl(0 0% 100% / 0.12)" />
-          <circle cx="19" cy="19" r="2" fill="hsl(0 0% 100% / 0.12)" />
+          <circle cx="9" cy="9" r="2" fill="hsl(0 0% 20% / 0.35)" />
+          <circle cx="19" cy="19" r="2" fill="hsl(0 0% 20% / 0.35)" />
         </svg>
       </motion.div>
     </div>

@@ -20,7 +20,7 @@ import type {
   RewardSelectionResult,
   RewardTimingsConfig,
   RewardTriggerConfig,
-} from '../src/presentation/games/cardReward/types/cardReward';
+} from '../src/presentation/games/cardReward/types/CardReward';
 
 const rewardPool: RewardCardDefinition[] = [
   {

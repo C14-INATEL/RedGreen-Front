@@ -1,7 +1,7 @@
 import type {
   SlotMachineApiMachine,
   SlotMachineApiSession,
-} from '../src/presentation/games/SlotMachineGame/slotMachineApi';
+} from '../src/presentation/games/SlotMachineGame/SlotMachineApi';
 
 export const createSlotMachine = (
   overrides: Partial<SlotMachineApiMachine> = {}
@@ -40,6 +40,6 @@ export const createSlotMachineSession = (
   SlotMachineId: 7,
   SlotSessionId: 101,
   StartedAt: '2026-04-24T12:00:00.000Z',
-  Status: 'Active',
+  Status: 'InProgress',
   ...overrides,
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Table from '@ui/Table';
 import HUD from '@ui/HUD';
@@ -8,6 +8,9 @@ import { motion } from 'framer-motion';
 import { Trophy, Gift } from 'lucide-react';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';
+import { UseDailyLogin } from '@application/hooks/useDailyLogin';
+import { useRanking } from '@application/hooks/useRanking';
+import { paths } from '../../paths';
 
 type StoredUserSnapshot = {
   ChipBalance?: number;
@@ -18,8 +21,7 @@ type StoredUserSnapshot = {
 
 const Home = () => {
   const Navigate = useNavigate();
-  const Token =
-    localStorage.getItem('token') ?? localStorage.getItem('authToken');
+  const Token = localStorage.getItem('token');
   const storedUserValue = localStorage.getItem('user');
   let StoredUser: StoredUserSnapshot | null = null;
 
@@ -48,19 +50,65 @@ const Home = () => {
   const Chips = chips ?? localChips ?? (IsLoggedIn ? 0 : 10000);
 
   const [RankingOpen, SetRankingOpen] = useState(false);
-  const [DailyBonusOpen, SetDailyBonusOpen] = useState(!!Token);
+  const [CanShowRankingButton, SetCanShowRankingButton] = useState(true);
+  const [DailyBonusOpen, SetDailyBonusOpen] = useState(false);
+  const {
+    Players: RankingPlayers,
+    IsLoading: IsRankingLoading,
+    Error: RankingError,
+  } = useRanking(RankingOpen);
+  const HasAutoOpenedDailyBonus = useRef(false);
+  const {
+    DailyState,
+    CanClaimToday,
+    IsLoading: IsDailyBonusLoading,
+  } = UseDailyLogin(IsLoggedIn);
+
+  useEffect(() => {
+    if (!IsLoggedIn) {
+      SetDailyBonusOpen(false);
+      HasAutoOpenedDailyBonus.current = false;
+      return;
+    }
+
+    if (
+      HasAutoOpenedDailyBonus.current ||
+      IsDailyBonusLoading ||
+      !DailyState ||
+      !CanClaimToday
+    ) {
+      return;
+    }
+
+    HasAutoOpenedDailyBonus.current = true;
+    SetDailyBonusOpen(true);
+  }, [CanClaimToday, DailyState, IsDailyBonusLoading, IsLoggedIn]);
 
   const HandleLogin = () => {
-    Navigate('/Login');
+    Navigate(paths.login);
   };
 
   const HandleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     SetIsLoggedIn(false);
     Navigate('/');
   };
+
+  const HandleOpenRanking = () => {
+    SetCanShowRankingButton(false);
+    SetRankingOpen(true);
+  };
+
+  const HandleCloseRanking = () => {
+    SetRankingOpen(false);
+  };
+
+  const RankingRows =
+    IsRankingLoading || RankingError || RankingPlayers.length === 0
+      ? 1
+      : RankingPlayers.length;
+  const DailyBonusTop = RankingOpen ? `${10.75 + RankingRows * 3}rem` : '11rem';
 
   return (
     <div className="relative h-screen w-screen overflow-hidden suit-pattern">
@@ -80,16 +128,26 @@ const Home = () => {
         OnLogout={HandleLogout}
       />
 
-      <main className="relative flex h-full items-center justify-center px-6 pb-10 pt-20 md:px-16">
+      <main className="relative flex h-full items-center justify-center px-6 pb-10 pt-24 md:px-16">
         <Table />
 
         {IsLoggedIn && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.8, y: 0 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.22,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             onClick={() => SetDailyBonusOpen(true)}
-            className="fixed right-6 z-50 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)]"
-            style={{ top: RankingOpen ? 'calc(6rem + 320px)' : '10rem' }}
+            className={`fixed right-6 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border shadow-[3px_3px_0px_rgba(0,0,0,0.4)] ${
+              RankingOpen ? 'z-40' : 'z-50'
+            }`}
+            style={{ top: DailyBonusTop }}
           >
             <Gift className="h-4 w-4" />
           </motion.button>
@@ -98,16 +156,18 @@ const Home = () => {
 
       <RankingPanel
         IsOpen={RankingOpen}
-        OnClose={() => SetRankingOpen(false)}
+        OnClose={HandleCloseRanking}
+        OnExitComplete={() => SetCanShowRankingButton(true)}
       />
 
-      {!RankingOpen && (
+      {!RankingOpen && CanShowRankingButton && (
         <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          onClick={() => SetRankingOpen(true)}
-          className="fixed right-6 z-50 hidden h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 lg:flex pixel-border"
-          style={{ top: '6rem' }}
+          transition={{ duration: 0.1, ease: 'easeOut' }}
+          onClick={HandleOpenRanking}
+          className="fixed right-4 z-50 flex h-10 w-10 items-center justify-center border-2 border-cassino-gold/30 bg-card/60 text-cassino-gold transition-colors hover:bg-card/80 sm:right-6 pixel-border"
+          style={{ top: '7rem' }}
         >
           <Trophy className="h-5 w-5" />
         </motion.button>

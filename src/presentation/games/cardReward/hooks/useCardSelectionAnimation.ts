@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   RewardCardOption,
   RewardChoiceSession,
-} from '../types/cardReward';
+} from '../types/CardReward';
 
 export type RewardSelectionOverlay = {
   optionId: string;

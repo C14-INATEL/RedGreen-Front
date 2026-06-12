@@ -5,35 +5,35 @@
 @tailwind utilities;
 
 :root {
-  --background: 100 15% 10%;
+  --background: 100 18% 11%;
   --foreground: 45 20% 90%;
-  --card: 90 12% 8%;
+  --card: 90 14% 9%;
   --card-foreground: 45 20% 90%;
-  --popover: 90 12% 8%;
+  --popover: 90 14% 9%;
   --popover-foreground: 45 20% 90%;
   --primary: 0 70% 42%;
   --primary-foreground: 45 30% 95%;
-  --secondary: 35 50% 22%;
+  --secondary: 35 55% 24%;
   --secondary-foreground: 45 20% 90%;
   --muted: 90 10% 16%;
   --muted-foreground: 45 10% 50%;
-  --accent: 42 80% 50%;
+  --accent: 45 90% 52%;
   --accent-foreground: 0 0% 5%;
   --destructive: 0 84% 55%;
   --destructive-foreground: 45 30% 95%;
-  --border: 42 40% 30% / 0.25;
-  --input: 42 40% 30% / 0.2;
-  --ring: 42 80% 50%;
+  --border: 45 60% 40% / 0.35;
+  --input: 45 60% 40% / 0.25;
+  --ring: 45 90% 52%;
   --radius: 0px;
 
-  --hud-bg: 90 15% 6%;
-  --table-green: 100 30% 18%;
-  --table-green-light: 100 25% 22%;
+  --hud-bg: 90 16% 7%;
+  --table-green: 100 28% 19%;
+  --table-green-light: 100 24% 23%;
   --accent-green: 120 50% 35%;
   --cassino-red: 0 70% 42%;
   --cassino-red-glow: 0 70% 42% / 0.3;
-  --cassino-gold: 42 80% 50%;
-  --cassino-gold-glow: 42 80% 50% / 0.3;
+  --cassino-gold: 45 90% 52%;
+  --cassino-gold-glow: 45 90% 52% / 0.35;
 
   --shadow-surface: 4px 4px 0px rgba(0, 0, 0, 0.5);
   --shadow-active: 6px 6px 0px rgba(0, 0, 0, 0.6);
@@ -67,12 +67,14 @@ body {
 }
 
 .pixel-border {
-  border: 3px solid hsl(var(--border));
+  border: 3px solid hsl(45 60% 40% / 0.45);
   box-shadow: var(--shadow-surface);
 }
 .pixel-border-gold {
   border: 3px solid hsl(var(--cassino-gold));
-  box-shadow: var(--shadow-surface);
+  box-shadow:
+    0 0 8px hsl(var(--cassino-gold-glow)),
+    var(--shadow-surface);
 }
 .pixel-shadow {
   box-shadow: var(--shadow-surface);
@@ -188,17 +190,14 @@ body {
   top: 16px;
   left: 16px;
   z-index: 50;
-
   padding: 8px 12px;
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
   text-transform: uppercase;
   color: white;
-
   background: rgba(0, 0, 0, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
-
   border-radius: 0px;
   cursor: pointer;
   transition: all 0.2s;

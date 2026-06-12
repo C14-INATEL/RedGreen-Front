@@ -1,10 +1,13 @@
 import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSWRConfig } from 'swr';
+import { RANKING_CACHE_KEY } from '@application/hooks/useRanking';
 import { useUserChips } from '@application/hooks/useUserChips';
 import { SlotMachineAmountDisplay } from './SlotMachineAmountDisplay';
 import { SlotMachineButtons } from './SlotMachineButtons';
 import { SlotMachineCounters } from './SlotMachineCounters';
 import { SlotMachineLever } from './SlotMachineLever';
+import { MAX_REROLLS } from './SlotMachineGameConfig';
 import {
   buildRerollAnimationFromSession,
   buildSpinAnimationFromSession,
@@ -17,7 +20,7 @@ import {
   getSlotMachineSessionState,
   rerollActiveSlotSession,
   type SlotMachineApiSession,
-} from './slotMachineApi';
+} from './SlotMachineApi';
 import {
   SlotMachineReels,
   type SlotMachineReelsMode,
@@ -48,6 +51,7 @@ const EMPTY_MACHINE_SIZE = {
 
 type SlotMachinePixiProps = {
   animateMachineSprite?: boolean;
+  slotMachineId?: number;
 };
 
 type ApplySessionStateOptions = {
@@ -79,18 +83,23 @@ const getRerollCounterStates = (
   rerollsMax: number
 ) => {
   const safeRerollsMax = Math.max(0, rerollsMax);
-  const rerollsUsed = Math.max(0, safeRerollsMax - rerollsRemaining);
+  const safeRerollsRemaining = Math.max(
+    0,
+    Math.min(safeRerollsMax, rerollsRemaining)
+  );
 
   return Array.from(
     { length: safeRerollsMax },
-    (_, index) => index >= safeRerollsMax - rerollsUsed
+    (_, index) => index < safeRerollsRemaining
   );
 };
 
 export const SlotMachinePixi = ({
   animateMachineSprite = false,
+  slotMachineId,
 }: SlotMachinePixiProps) => {
-  const { mutate: mutateUserChips } = useUserChips();
+  const { mutate: MutateUserChips } = useUserChips();
+  const { mutate } = useSWRConfig();
   const machineRef = useRef<HTMLDivElement | null>(null);
   const [machineSize, setMachineSize] = useState<{
     height: number;
@@ -228,6 +237,11 @@ export const SlotMachinePixi = ({
     setRerollsRemaining(safeMaxRerolls);
   };
 
+  const RefreshPlayerProgress = useCallback(() => {
+    void MutateUserChips();
+    void mutate(RANKING_CACHE_KEY);
+  }, [mutate, MutateUserChips]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -245,10 +259,10 @@ export const SlotMachinePixi = ({
           return;
         }
 
-        const preferredMachine = getPreferredSlotMachine(
-          slotMachines,
-          activeSession
-        );
+        const preferredMachine =
+          slotMachines.find(
+            (machine) => machine.SlotMachineId === slotMachineId
+          ) ?? getPreferredSlotMachine(slotMachines, activeSession);
 
         setSelectedMachineId(
           preferredMachine?.SlotMachineId ??
@@ -295,7 +309,7 @@ export const SlotMachinePixi = ({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [slotMachineId]);
 
   const handleLeverAnimationStateChange = useCallback(
     (nextIsAnimating: boolean) => {
@@ -345,7 +359,7 @@ export const SlotMachinePixi = ({
         id: (currentValue?.id ?? 0) + 1,
         result: buildSpinAnimationFromSession(session),
       }));
-      void mutateUserChips();
+      RefreshPlayerProgress();
     } catch (error) {
       setPendingAction(null);
       setStatusMessage(
@@ -371,7 +385,7 @@ export const SlotMachinePixi = ({
       await cashOutActiveSlotSession();
       clearSessionState(rerollsMax);
       setIdleRequestId((currentValue) => currentValue + 1);
-      void mutateUserChips();
+      RefreshPlayerProgress();
     } catch (error) {
       setPendingAction(null);
       setStatusMessage(
@@ -402,7 +416,7 @@ export const SlotMachinePixi = ({
         reelIndex,
         result: buildRerollAnimationFromSession(session, reelIndex),
       }));
-      void mutateUserChips();
+      RefreshPlayerProgress();
     } catch (error) {
       setPendingAction(null);
       setStatusMessage(
@@ -442,9 +456,20 @@ export const SlotMachinePixi = ({
     ? SLOT_MACHINE_ANIMATION_FRAME_SOURCES[machineSpriteFrameIndex]
     : SLOT_MACHINE_BASE_SPRITE;
   const currentLeverToggleActive = isLeverAnimating && isLeverToggleActive;
+  const visualRerollsMax =
+    slotSession === null
+      ? defaultMaxRerolls > 0
+        ? defaultMaxRerolls
+        : MAX_REROLLS
+      : defaultMaxRerolls;
+  const visualRerollsRemaining =
+    slotSession === null ? visualRerollsMax : rerollsRemaining;
 
   return (
-    <div className="relative w-full max-w-[960px] shrink-0" ref={machineRef}>
+    <div
+      className="relative w-[min(72vw,1120px)] max-w-[1120px] shrink-0"
+      ref={machineRef}
+    >
       <img
         alt="Caca-niquel de teste"
         className="block w-full select-none"
@@ -484,7 +509,10 @@ export const SlotMachinePixi = ({
 
       <SlotMachineCounters
         machineSize={machineSize}
-        states={getRerollCounterStates(rerollsRemaining, defaultMaxRerolls)}
+        states={getRerollCounterStates(
+          visualRerollsRemaining,
+          visualRerollsMax
+        )}
       />
 
       <SlotMachineAmountDisplay

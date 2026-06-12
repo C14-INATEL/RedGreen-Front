@@ -6,7 +6,7 @@ import {
   getGambitEffectCardSpritePath,
 } from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
 import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/gambitTypes';
-import { rewardCardPool } from '../src/presentation/games/cardReward/config/rewardCardPool';
+import { rewardCardPool } from '../src/presentation/games/cardReward/config/RewardCardPool';
 
 const EFFECT_TEXT_FALLBACKS = ['CLAR', 'MEL', '2X', 'INV'];
 const TEMPORARY_SPRITE_PREFIX = ['Card', 'Test'].join('');

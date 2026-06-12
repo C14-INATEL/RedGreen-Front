@@ -10,22 +10,42 @@ import {
 } from '@jest/globals';
 import Login from '../src/presentation/pages/Login';
 
-const MockFetch = jest.fn<() => Promise<Partial<Response>>>();
+type ApiGetMock = (
+  Url: string,
+  Config?: Record<string, unknown>
+) => Promise<{ data: Record<string, unknown>; status?: number }>;
+
+type ApiPostMock = (
+  Url: string,
+  Payload?: Record<string, unknown>
+) => Promise<{ data: Record<string, unknown>; status?: number }>;
+
+const MockApiGet = jest.fn<ApiGetMock>();
+const MockApiPost = jest.fn<ApiPostMock>();
+
+jest.mock('@infrastructure/http/client', () => ({
+  apiClient: {
+    get: (Url: string, Config?: Record<string, unknown>) =>
+      MockApiGet(Url, Config),
+    post: (Url: string, Payload?: Record<string, unknown>) =>
+      MockApiPost(Url, Payload),
+  },
+}));
 
 beforeEach(() => {
-  globalThis.fetch = MockFetch as unknown as typeof fetch;
   localStorage.clear();
+  MockApiGet.mockReset();
+  MockApiPost.mockReset();
 });
 
 afterEach(() => {
-  MockFetch.mockReset();
   localStorage.clear();
 });
 
 const GoToLoginStep = async () => {
-  MockFetch.mockResolvedValueOnce({
-    ok: true,
-    json: async () => ({ taken: true }),
+  MockApiGet.mockResolvedValueOnce({
+    data: { taken: true },
+    status: 200,
   });
 
   render(
@@ -47,16 +67,16 @@ const GoToLoginStep = async () => {
   });
 };
 
-describe('handleLogin — login successful.', () => {
+describe('handleLogin - login successful.', () => {
   it('the token is saved to localStorage when the API returns success.', async () => {
     await GoToLoginStep();
 
     const FakeToken = 'jwt-token-abc123';
-    const FakeUser = { Nickname: 'Usuário1', ChipBalance: 10000 };
+    const FakeUser = { Nickname: 'Usuario1', ChipBalance: 10000 };
 
-    MockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ Token: FakeToken, User: FakeUser }),
+    MockApiPost.mockResolvedValueOnce({
+      data: { Token: FakeToken, User: FakeUser },
+      status: 200,
     });
 
     fireEvent.change(screen.getByPlaceholderText('Senha'), {
@@ -71,13 +91,14 @@ describe('handleLogin — login successful.', () => {
   });
 });
 
-describe('handleLogin — wrong password', () => {
+describe('handleLogin - wrong password', () => {
   it('displays an invalid password toast message when the API returns an error.', async () => {
     await GoToLoginStep();
 
-    MockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'Unauthorized' }),
+    MockApiPost.mockRejectedValueOnce({
+      response: {
+        status: 401,
+      },
     });
 
     fireEvent.change(screen.getByPlaceholderText('Senha'), {

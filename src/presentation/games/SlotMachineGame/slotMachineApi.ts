@@ -4,7 +4,7 @@ import type {
   SlotMachineSpinDirection,
   SlotMachineSpinResult,
   SlotMachineSymbolId,
-} from './slotMachineGameConfig';
+} from './SlotMachineGameConfig';
 
 type BackendSlotSymbol =
   | 'Orange'
@@ -12,6 +12,7 @@ type BackendSlotSymbol =
   | 'Watermelon'
   | 'Rat'
   | 'Cheese'
+  | 'Egg'
   | 'TwoX'
   | 'Pig';
 
@@ -49,7 +50,7 @@ export type SlotMachineApiSession = {
   SlotMachineId: number;
   SlotSessionId: number;
   StartedAt?: string;
-  Status: 'Active' | 'Ended' | 'Interrupted' | 'Expired';
+  Status: 'InProgress' | 'CashedOut';
 };
 
 export type SlotMachineSessionMutationResponse = {
@@ -87,6 +88,7 @@ const BACKEND_TO_FRONTEND_SYMBOL_ID: Record<
   SlotMachineSymbolId
 > = {
   Cheese: 'cheese',
+  Egg: 'egg',
   Orange: 'orange',
   Oranges: 'oranges',
   Pig: 'pig',
@@ -218,7 +220,13 @@ export const fetchActiveSlotSession = async () => {
     '/sessions/active'
   );
 
-  return response.data;
+  const session = response.data;
+
+  if (!session || session.Status !== 'InProgress') {
+    return null;
+  }
+
+  return session;
 };
 
 export const createSlotSession = async (slotMachineId: number) => {

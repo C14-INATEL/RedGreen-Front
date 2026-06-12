@@ -5,7 +5,7 @@ import {
   getGambitTableTexture,
   preloadGambitTableTextures,
 } from './gambitTextures';
-import type { RewardTableState } from '../cardReward/types/cardReward';
+import type { RewardTableState } from '../cardReward/types/CardReward';
 
 type GambitEventTableViewport = {
   centerX: number;

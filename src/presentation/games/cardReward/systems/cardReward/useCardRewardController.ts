@@ -3,11 +3,11 @@ import {
   type GambitTableType,
 } from '../../../GambitGame/gambitTableConfig';
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { getRewardCardPoolByTableType } from '../../config/rewardCardPoolsByTableType';
-import { rewardCardPool } from '../../config/rewardCardPool';
-import { rewardPresentationConfig } from '../../config/rewardPresentationConfig';
-import { rewardTimings } from '../../config/rewardTimings';
-import { rewardTriggerConfig } from '../../config/rewardTriggerConfig';
+import { getRewardCardPoolByTableType } from '../../config/RewardCardPoolsByTableType';
+import { rewardCardPool } from '../../config/RewardCardPool';
+import { rewardPresentationConfig } from '../../config/RewardPresentationConfig';
+import { rewardTimings } from '../../config/RewardTimings';
+import { rewardTriggerConfig } from '../../config/RewardTriggerConfig';
 import type {
   RewardAudioCue,
   RewardCardDefinition,
@@ -18,8 +18,8 @@ import type {
   RewardTableState,
   RewardTimingsConfig,
   RewardTriggerConfig,
-} from '../../types/cardReward';
-import { buildRewardCardOptions } from './rewardCardSelection';
+} from '../../types/CardReward';
+import { buildRewardCardOptions } from './RewardCardSelection';
 
 type UseCardRewardControllerParams = {
   onRewardSelected?: (result: RewardSelectionResult) => Promise<void> | void;

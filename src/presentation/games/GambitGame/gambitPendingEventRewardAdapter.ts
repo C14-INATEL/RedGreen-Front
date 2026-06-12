@@ -6,7 +6,7 @@ import type {
   RewardChoiceSession,
   RewardTableState,
 } from '../cardReward';
-import type { RewardSelectionEntry } from '../cardReward/types/cardReward';
+import type { RewardSelectionEntry } from '../cardReward/types/CardReward';
 
 export type GambitPendingEventSelectionState = {
   BadIndex: number | null;

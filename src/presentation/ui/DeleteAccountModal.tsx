@@ -88,7 +88,6 @@ const DeleteAccountModal = ({
       await apiClient.delete('/user');
 
       localStorage.removeItem('token');
-      localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('dailyLoginSnapshot');
 
@@ -189,7 +188,7 @@ const DeleteAccountModal = ({
                   Excluir conta
                 </h2>
                 <p className="text-white/60 text-xs text-center mb-6 leading-5">
-                  Esta acao e permanente e nao pode ser desfeita.
+                  Esta ação é permanente e nao pode ser desfeita.
                   <br />
                   Informe sua senha para confirmar.
                 </p>
@@ -222,7 +221,7 @@ const DeleteAccountModal = ({
                   <button
                     onClick={HandleDelete}
                     disabled={IsLoading}
-                    className="w-full border-2 border-cassino-red/60 bg-cassino-red/20 py-4 font-display text-sm uppercase tracking-[0.2em] text-cassino-red transition-all shadow-[3px_3px_0px_rgba(0,0,0,0.4)] hover:bg-cassino-red/30 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full border-2 border-cassino-red/60 bg-cassino-red/20 py-4 font-display text-sm uppercase tracking-[0.2em] text-cassino-red transition-all shadow-[3px_3px_0px_rgba(0,0,0,0.4)] hover:bg-[#541a10] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {IsLoading ? 'Excluindo...' : 'Excluir conta'}
                   </button>
@@ -230,7 +229,7 @@ const DeleteAccountModal = ({
                   <button
                     onClick={HandleClose}
                     disabled={IsLoading}
-                    className="w-full border-2 border-border/20 bg-secondary/40 py-3 font-display text-xs uppercase tracking-[0.2em] text-muted-foreground transition-all hover:bg-secondary/60 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full border-2 border-border/20 bg-secondary/40 py-3 font-display text-xs uppercase tracking-[0.2em] text-muted-foreground transition-all hover:bg-[#5f431f] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>

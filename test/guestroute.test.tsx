@@ -39,20 +39,20 @@ describe('GuestRoute - route protection', () => {
   });
 
   it('redirects to the home page when there is a valid token.', () => {
-    localStorage.setItem('authToken', 'token-fake-123');
+    localStorage.setItem('token', 'token-fake-123');
     RenderWithRouter('/login');
     expect(screen.getByText('Home Page')).not.toBeNull();
   });
 
   it('does not redirect when the token is empty.', () => {
-    localStorage.setItem('authToken', '');
+    localStorage.setItem('token', '');
     RenderWithRouter('/login');
     expect(screen.getByText('Login Page')).not.toBeNull();
   });
 
   it('displays the login page after removing the token.', () => {
-    localStorage.setItem('authToken', 'token-fake-123');
-    localStorage.removeItem('authToken');
+    localStorage.setItem('token', 'token-fake-123');
+    localStorage.removeItem('token');
     RenderWithRouter('/login');
     expect(screen.getByText('Login Page')).not.toBeNull();
   });

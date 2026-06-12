@@ -1,13 +1,13 @@
 import { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getFloatingCardAnimation } from '../../animations/cardFloating';
+import { getFloatingCardAnimation } from '../../animations/CardFloating';
 import {
   rewardCardEntranceVariants,
   rewardCardHoverAnimation,
   rewardCardTapAnimation,
-} from '../../animations/cardRewardAnimations';
-import { rewardCardSelectionVariants } from '../../animations/cardSelectionAnimations';
-import type { RewardCardOption } from '../../types/cardReward';
+} from '../../animations/CardRewardAnimations';
+import { rewardCardSelectionVariants } from '../../animations/CardSelectionAnimations';
+import type { RewardCardOption } from '../../types/CardReward';
 
 type RewardCardSelectionState = 'idle' | 'dimmed' | 'active' | 'hidden';
 
