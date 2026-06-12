@@ -327,16 +327,21 @@ export const createGambitCard = (
   };
 
   const syncInteractivity = () => {
+    const isPreviewedCardClickable =
+      currentProps.previewed &&
+      !currentProps.disabled &&
+      !currentProps.revealed;
     const isLockedCardShakeEnabled =
       currentProps.locked &&
       !currentProps.revealed &&
       !currentProps.previewed &&
       overlayState === 'closed';
     const isCardClickable =
-      (!currentProps.disabled || isLockedCardShakeEnabled) &&
-      !currentProps.revealed &&
-      !currentProps.previewed &&
-      overlayState === 'closed';
+      isPreviewedCardClickable ||
+      ((!currentProps.disabled || isLockedCardShakeEnabled) &&
+        !currentProps.revealed &&
+        !currentProps.previewed &&
+        overlayState === 'closed');
 
     container.eventMode = isCardClickable ? 'static' : 'none';
     container.cursor = isCardClickable ? 'pointer' : 'default';
@@ -433,6 +438,9 @@ export const createGambitCard = (
   };
 
   const handlePointerTap = () => {
+    const isPreviewedCardReveal =
+      currentProps.previewed && !currentProps.revealed;
+
     if (
       currentProps.locked &&
       !currentProps.revealed &&
@@ -446,13 +454,12 @@ export const createGambitCard = (
     if (
       currentProps.disabled ||
       currentProps.revealed ||
-      currentProps.previewed ||
-      overlayState !== 'closed'
+      (!isPreviewedCardReveal && overlayState !== 'closed')
     ) {
       return;
     }
 
-    if (currentProps.revealOnClick) {
+    if (!isPreviewedCardReveal && currentProps.revealOnClick) {
       playRevealAnimation();
     }
 

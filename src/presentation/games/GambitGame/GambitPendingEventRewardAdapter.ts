@@ -1,5 +1,5 @@
 import type { GambitTableType } from './GambitTableConfig';
-import { getGambitEffectPresentation } from './GambitEffectPresentation';
+import { getGambitEffectPresentationForDisplay } from './GambitEffectPresentation';
 import type { GambitCardEffect, GambitPendingEvent } from './GambitTypes';
 import type {
   RewardCardOption,
@@ -96,7 +96,10 @@ export const createRewardCardOptionFromGambitEffect = (
   tableType: GambitTableType,
   sessionId: string
 ): RewardCardOption => {
-  const presentation = getGambitEffectPresentation(effect);
+  const presentation = getGambitEffectPresentationForDisplay(effect, {
+    salt: `pending-event:${tableType}:${index}`,
+    sessionId,
+  });
   const side = getSideFromTableType(tableType);
 
   return {
