@@ -10,7 +10,7 @@ import { EditGambitTableModal } from '../ui/Gambit/EditGambitModal';
 import { ResultModal } from '../ui/ResultModal';
 import { GambitTableCard } from '../ui/Gambit/GambitTableCard';
 import CassinoLogo from '../ui/CassinoLogo';
-import { fetchActiveGambitSession } from '../games/GambitGame/gambitGameplayClient';
+import { fetchActiveGambitSession } from '../games/GambitGame/GambitGameplayClient';
 import { SessionWarningModal } from '../ui/SessionWarningModal';
 
 export type GambitTableFromApi = {

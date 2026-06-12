@@ -11,31 +11,36 @@ import {
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-} from './GambitGame/gambitGameplayClient';
+} from './GambitGame/GambitGameplayClient';
 import {
   applyGambitCashOutResponseToSession,
   getGambitBurnsRemaining,
   isFinalGambitSessionStatus,
   shouldAutoCashOutGambitSession,
-} from './GambitGame/gambitAutoCashOut';
-import { getGambitEffectPresentation } from './GambitGame/gambitEffectPresentation';
+} from './GambitGame/GambitAutoCashOut';
+import {
+  getDisplayedGambitEffectViewModel,
+  getGambitEffectPresentation,
+  getGambitEffectPresentationForDisplay,
+} from './GambitGame/GambitEffectPresentation';
 import {
   mapBackendGambitCardToViewModel,
   mapGambitSessionToVisualCards,
-} from './GambitGame/gambitMapper';
+} from './GambitGame/GambitMapper';
 import {
   createRewardChoiceSessionFromPendingEvent,
   parseGambitPendingEventOptionId,
-} from './GambitGame/gambitPendingEventRewardAdapter';
+} from './GambitGame/GambitPendingEventRewardAdapter';
 import { PreparedGambitEffectPanel } from './GambitGame/PreparedGambitEffectPanel';
 import type {
   GambitCardEffect,
+  GambitCardEffectViewModel,
   GambitGridSnapshot,
   GambitInteractionPeekResult,
   GambitPendingInteraction,
   GambitSession,
   GambitVisualCard,
-} from './GambitGame/gambitTypes';
+} from './GambitGame/GambitTypes';
 
 export type GambitProps = {
   initialSession?: GambitSession;
@@ -63,6 +68,12 @@ type GambitScoreFeedback = {
   id: number;
 };
 
+type BumisDisguisedPreparedEffect = {
+  effect: GambitCardEffectViewModel;
+  position: number | null;
+  sessionId: string | null;
+};
+
 const emptyPendingEventSelection: PendingEventSelection = {
   BadIndex: null,
   GoodIndex: null,
@@ -70,6 +81,9 @@ const emptyPendingEventSelection: PendingEventSelection = {
 
 const PENDING_EVENT_PRESENTATION_DELAY_MS = 350;
 const SCORE_FEEDBACK_DURATION_MS = 1900;
+const BUMIS_BACKEND_EFFECT: GambitCardEffect = 'BUMIS_INFILTRADOS';
+const BUMIS_EFFECT_VIEW_MODEL = 'bumis-infiltrados';
+const BUMIS_DISGUISE_SALT = 'bumis-mimic';
 const GAMBIT_GAMEPLAY_ROUTES_NOT_FOUND_MESSAGE =
   'Rotas de gameplay do Gambit não encontradas. Verifique se o backend está na branch feat/gambit-game-logic.';
 const GAMBIT_SESSION_EXPIRED_MESSAGE = 'Sessão expirada. Faça login novamente.';
@@ -109,11 +123,17 @@ const mergeSelectedPositions = (
   return [...selectedPositions];
 };
 
-const formatEffectName = (effect: GambitCardEffect) =>
-  getGambitEffectPresentation(effect).title.toUpperCase();
+const getEffectTitle = (effect: GambitCardEffect) =>
+  getGambitEffectPresentation(effect).title;
 
 const formatScoreFeedbackDelta = (delta: number) =>
   `${delta > 0 ? '+' : ''}${delta.toLocaleString('pt-BR')}`;
+
+const formatPeekPoints = (points: number) =>
+  `${points > 0 ? '+' : ''}${points}`;
+
+const formatPeekScore = (points: number | null) =>
+  formatPeekPoints(points ?? 0);
 
 const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   if (!peekResult) {
@@ -125,12 +145,15 @@ const formatPeekResult = (peekResult: GambitInteractionPeekResult | null) => {
   }
 
   if (peekResult.Effect) {
-    return `Carta ${peekResult.Position}: ${formatEffectName(peekResult.Effect)}`;
+    const pointsLabel =
+      peekResult.Points == null ? null : formatPeekPoints(peekResult.Points);
+
+    return `Carta ${peekResult.Position}: ${getEffectTitle(
+      peekResult.Effect
+    )}${pointsLabel ? ` (${pointsLabel})` : ''}`;
   }
 
-  const points = peekResult.Points ?? 0;
-
-  return `Carta ${peekResult.Position}: ${points > 0 ? '+' : ''}${points}`;
+  return `Carta ${peekResult.Position}: ${formatPeekScore(peekResult.Points)}`;
 };
 
 const applyPeekResultToVisualCards = (
@@ -158,6 +181,30 @@ export const Gambit = ({
   onNewGame,
   onSessionEnd,
 }: GambitProps = {}) => {
+  const getBumisDisplayedEffectViewModel = (
+    sessionId: number | string | null,
+    position: number | null,
+    revealed = false
+  ) =>
+    getDisplayedGambitEffectViewModel(BUMIS_EFFECT_VIEW_MODEL, {
+      position,
+      revealed,
+      salt: BUMIS_DISGUISE_SALT,
+      sessionId,
+    });
+
+  const createBumisTruthCinematicCard = (
+    position: number | null
+  ): GambitVisualCard => ({
+    effect: BUMIS_EFFECT_VIEW_MODEL,
+    id: -3,
+    locked: false,
+    points: null,
+    position: position ?? -1,
+    previewed: false,
+    revealed: true,
+  });
+
   const [session, setSession] = useState<GambitSession | null>(
     () => initialSession ?? null
   );
@@ -171,6 +218,10 @@ export const Gambit = ({
     useState<PendingEventSelection>(emptyPendingEventSelection);
   const [pendingInteractionSelections, setPendingInteractionSelections] =
     useState<number[]>([]);
+  const [
+    pendingInteractionFeedbackCardIds,
+    setPendingInteractionFeedbackCardIds,
+  ] = useState<number[]>([]);
   const [hasPendingEventTableSettled, setHasPendingEventTableSettled] =
     useState(false);
   const [isPendingEventSelectionLocked, setIsPendingEventSelectionLocked] =
@@ -181,6 +232,15 @@ export const Gambit = ({
     useState<GambitVisualCard | null>(null);
   const [isPreparedEffectPreviewOpen, setIsPreparedEffectPreviewOpen] =
     useState(false);
+  const [isPeekEffectPreviewOpen, setIsPeekEffectPreviewOpen] = useState(false);
+  const [bumisDisguisePosition, setBumisDisguisePosition] = useState<
+    number | null
+  >(null);
+  const [bumisDisguisedPreparedEffect, setBumisDisguisedPreparedEffect] =
+    useState<BumisDisguisedPreparedEffect | null>(null);
+  const [isBumisUnmasked, setIsBumisUnmasked] = useState(false);
+  const [bumisTruthCinematicCard, setBumisTruthCinematicCard] =
+    useState<GambitVisualCard | null>(null);
   const [
     isPendingEventPresentationDelayed,
     setIsPendingEventPresentationDelayed,
@@ -205,6 +265,9 @@ export const Gambit = ({
       mergeSelectedPositions(pendingInteraction, pendingInteractionSelections),
     [pendingInteraction, pendingInteractionSelections]
   );
+  const isMultiCardPendingInteraction =
+    pendingInteraction?.Action === 'SELECT_MULTIPLE_CARDS' ||
+    (pendingInteraction?.RequiredSelections ?? 0) > 1;
   const burnsRemaining = session ? getGambitBurnsRemaining(session) : 0;
   const cards = useMemo(() => {
     if (!session) {
@@ -229,8 +292,66 @@ export const Gambit = ({
     preparedEffect: session?.NextEffect ?? null,
     previewedCardId,
   };
+  const displaySessionId = session ? String(session.GambitSessionId) : null;
+  const lastPeekEffectPreview = useMemo(() => {
+    if (
+      !lastInteractionResult ||
+      !('Position' in lastInteractionResult) ||
+      !lastInteractionResult.Effect
+    ) {
+      return null;
+    }
+
+    return {
+      points: lastInteractionResult.Points,
+      pointsLabel:
+        lastInteractionResult.Points == null
+          ? null
+          : formatPeekPoints(lastInteractionResult.Points),
+      position: lastInteractionResult.Position,
+      presentation: getGambitEffectPresentationForDisplay(
+        lastInteractionResult.Effect,
+        {
+          position: lastInteractionResult.Position,
+          salt: BUMIS_DISGUISE_SALT,
+          sessionId: displaySessionId,
+        }
+      ),
+    };
+  }, [displaySessionId, lastInteractionResult]);
+  const peekEffectPreviewCard = useMemo(() => {
+    if (!isPeekEffectPreviewOpen || !lastPeekEffectPreview) {
+      return null;
+    }
+
+    return {
+      effect: lastPeekEffectPreview.presentation.viewModel,
+      id: -2,
+      locked: false,
+      points: lastPeekEffectPreview.points,
+      position: lastPeekEffectPreview.position,
+      previewed: false,
+      revealed: true,
+    } satisfies GambitVisualCard;
+  }, [isPeekEffectPreviewOpen, lastPeekEffectPreview]);
   const preparedEffectPreviewCard = useMemo(() => {
-    if (!isPreparedEffectPreviewOpen || !visualState.preparedEffect) {
+    if (!isPreparedEffectPreviewOpen) {
+      return null;
+    }
+
+    if (bumisDisguisedPreparedEffect) {
+      return {
+        effect: bumisDisguisedPreparedEffect.effect,
+        id: -1,
+        locked: false,
+        points: null,
+        position: bumisDisguisedPreparedEffect.position ?? -1,
+        previewed: false,
+        revealed: true,
+      } satisfies GambitVisualCard;
+    }
+
+    if (!visualState.preparedEffect) {
       return null;
     }
 
@@ -242,8 +363,18 @@ export const Gambit = ({
       return null;
     }
 
+    const displayEffectViewModel = getDisplayedGambitEffectViewModel(
+      effectViewModel,
+      {
+        position: bumisDisguisePosition,
+        revealed: isBumisUnmasked,
+        salt: BUMIS_DISGUISE_SALT,
+        sessionId: displaySessionId,
+      }
+    );
+
     return {
-      effect: effectViewModel,
+      effect: displayEffectViewModel,
       id: -1,
       locked: false,
       points: null,
@@ -251,7 +382,14 @@ export const Gambit = ({
       previewed: false,
       revealed: true,
     } satisfies GambitVisualCard;
-  }, [isPreparedEffectPreviewOpen, visualState.preparedEffect]);
+  }, [
+    bumisDisguisePosition,
+    bumisDisguisedPreparedEffect,
+    displaySessionId,
+    isBumisUnmasked,
+    isPreparedEffectPreviewOpen,
+    visualState.preparedEffect,
+  ]);
   const totalScore = session?.AccumulatedPoints ?? 0;
   const pendingEventRewardSessionId = session
     ? `gambit-pending-event-${String(session.GambitSessionId)}-${
@@ -261,6 +399,7 @@ export const Gambit = ({
   const shouldShowPendingEventModal =
     Boolean(pendingEvent) &&
     !revealedCinematicCard &&
+    !bumisTruthCinematicCard &&
     !isPendingEventPresentationDelayed;
   const pendingEventRewardSession = useMemo(() => {
     if (!shouldShowPendingEventModal || !pendingEvent) {
@@ -280,6 +419,12 @@ export const Gambit = ({
     shouldShowPendingEventModal,
   ]);
   const isSelectingInteraction = Boolean(pendingInteraction);
+  const canDismissPendingInteractionFeedback = Boolean(
+    lastInteractionResult &&
+    'AtLeastOneBad' in lastInteractionResult &&
+    pendingInteractionFeedbackCardIds.length
+  );
+  const hasBumisDisguisedPreparedEffect = Boolean(bumisDisguisedPreparedEffect);
   const isBoardLocked =
     !session ||
     isGameActionPending ||
@@ -287,13 +432,25 @@ export const Gambit = ({
     Boolean(pendingEvent) ||
     isRevealAnimationLocked ||
     revealedCinematicCard !== null ||
-    visualState.previewedCardId !== null ||
-    session.Status !== 'InProgress' ||
-    (!isSelectingInteraction && burnsRemaining <= 0);
+    bumisTruthCinematicCard !== null ||
+    (session.Status !== 'InProgress' && !hasBumisDisguisedPreparedEffect) ||
+    (!isSelectingInteraction &&
+      !hasBumisDisguisedPreparedEffect &&
+      burnsRemaining <= 0);
 
   useEffect(() => {
     setSession(initialSession ?? null);
+    setBumisDisguisePosition(null);
+    setBumisDisguisedPreparedEffect(null);
+    setIsBumisUnmasked(false);
+    setBumisTruthCinematicCard(null);
   }, [initialSession]);
+
+  useEffect(() => {
+    if (!session) {
+      setPendingInteractionFeedbackCardIds([]);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!session) {
@@ -359,10 +516,43 @@ export const Gambit = ({
   }, [session, totalScore]);
 
   useEffect(() => {
-    if (!visualState.preparedEffect) {
+    if (!visualState.preparedEffect && !bumisDisguisedPreparedEffect) {
       setIsPreparedEffectPreviewOpen(false);
     }
-  }, [visualState.preparedEffect]);
+  }, [bumisDisguisedPreparedEffect, visualState.preparedEffect]);
+
+  useEffect(() => {
+    if (bumisDisguisedPreparedEffect) {
+      return;
+    }
+
+    if (visualState.preparedEffect === BUMIS_BACKEND_EFFECT) {
+      return;
+    }
+
+    setBumisDisguisePosition(null);
+    setIsBumisUnmasked(false);
+  }, [bumisDisguisedPreparedEffect, visualState.preparedEffect]);
+
+  useEffect(() => {
+    if (
+      !bumisDisguisedPreparedEffect ||
+      bumisDisguisedPreparedEffect.sessionId === displaySessionId
+    ) {
+      return;
+    }
+
+    setBumisDisguisedPreparedEffect(null);
+    setBumisDisguisePosition(null);
+    setIsBumisUnmasked(false);
+    setBumisTruthCinematicCard(null);
+  }, [bumisDisguisedPreparedEffect, displaySessionId]);
+
+  useEffect(() => {
+    if (!lastPeekEffectPreview) {
+      setIsPeekEffectPreviewOpen(false);
+    }
+  }, [lastPeekEffectPreview]);
 
   useEffect(() => {
     if (
@@ -370,6 +560,8 @@ export const Gambit = ({
       isGameActionPending ||
       isAutoCashOutPendingRef.current ||
       revealedCinematicCard ||
+      bumisTruthCinematicCard ||
+      bumisDisguisedPreparedEffect ||
       !shouldAutoCashOutGambitSession(session)
     ) {
       return;
@@ -412,7 +604,7 @@ export const Gambit = ({
         isAutoCashOutPendingRef.current = false;
         setIsAutoCashOutPending(false);
       });
-  }, [isGameActionPending, onSessionEnd, revealedCinematicCard, session]);
+  }, [bumisDisguisedPreparedEffect, bumisTruthCinematicCard, isGameActionPending, onSessionEnd, revealedCinematicCard, session]);
 
   useEffect(
     () => () => {
@@ -432,6 +624,7 @@ export const Gambit = ({
 
     if (pendingInteraction) {
       setLastInteractionResult(null);
+      setPendingInteractionFeedbackCardIds([]);
       setPreviewedCardId(null);
     }
   }, [pendingInteraction]);
@@ -445,6 +638,10 @@ export const Gambit = ({
     pendingEventPresentationDelayTimeoutRef.current = null;
   };
 
+  const clearPendingInteractionVisualFeedback = () => {
+    setPendingInteractionFeedbackCardIds([]);
+  };
+
   const lockRevealAnimation = () => {
     revealAnimationLockedRef.current = true;
     setIsRevealAnimationLocked(true);
@@ -453,6 +650,55 @@ export const Gambit = ({
   const unlockRevealAnimation = () => {
     revealAnimationLockedRef.current = false;
     setIsRevealAnimationLocked(false);
+  };
+
+  const revealLocalBumisDisguiseIfNeeded = (cardId: number) => {
+    if (
+      !bumisDisguisedPreparedEffect ||
+      !session ||
+      isGameActionPending ||
+      revealedCinematicCard ||
+      bumisTruthCinematicCard ||
+      pendingEvent ||
+      session.Status === 'CashedOut' ||
+      session.Status === 'Completed'
+    ) {
+      return false;
+    }
+
+    const selectedCard = cards.find((card) => card.id === cardId);
+
+    if (!selectedCard || selectedCard.revealed || selectedCard.locked) {
+      return false;
+    }
+
+    setActionErrorMessage(null);
+    setLastInteractionResult(null);
+    setPreviewedCardId(null);
+    setPendingEventSelection(emptyPendingEventSelection);
+    clearPendingEventPresentationDelay();
+    setIsBumisUnmasked(true);
+    setIsPreparedEffectPreviewOpen(false);
+    setBumisTruthCinematicCard(
+      createBumisTruthCinematicCard(bumisDisguisedPreparedEffect.position)
+    );
+
+    return true;
+  };
+
+  const revealPreparedBumisTruthIfNeeded = () => {
+    const activePreparedEffect =
+      visualState.preparedEffect ?? pendingInteraction?.Effect ?? null;
+
+    if (activePreparedEffect !== BUMIS_BACKEND_EFFECT || isBumisUnmasked) {
+      return;
+    }
+
+    setIsBumisUnmasked(true);
+    setIsPreparedEffectPreviewOpen(false);
+    setBumisTruthCinematicCard(
+      createBumisTruthCinematicCard(bumisDisguisePosition)
+    );
   };
 
   const resolvePendingInteractionSelection = async (cardId: number) => {
@@ -475,12 +721,18 @@ export const Gambit = ({
       return;
     }
 
+    revealPreparedBumisTruthIfNeeded();
+
     const nextSelectedPositions = mergeSelectedPositions(pendingInteraction, [
       ...pendingInteractionSelections,
       cardId,
     ]);
 
     setPendingInteractionSelections(nextSelectedPositions);
+
+    if (isMultiCardPendingInteraction) {
+      setPendingInteractionFeedbackCardIds(nextSelectedPositions);
+    }
 
     setActionErrorMessage(null);
     setLastInteractionResult(null);
@@ -518,7 +770,7 @@ export const Gambit = ({
     if (
       !session ||
       isGameActionPending ||
-      previewedCardId !== null ||
+      (previewedCardId !== null && previewedCardId !== cardId) ||
       revealedCinematicCard !== null ||
       revealAnimationLockedRef.current ||
       pendingEvent ||
@@ -535,8 +787,12 @@ export const Gambit = ({
       return;
     }
 
+    revealPreparedBumisTruthIfNeeded();
+
     setActionErrorMessage(null);
     setLastInteractionResult(null);
+    clearPendingInteractionVisualFeedback();
+    setPreviewedCardId(null);
     setPendingEventSelection(emptyPendingEventSelection);
     clearPendingEventPresentationDelay();
     lockRevealAnimation();
@@ -552,13 +808,36 @@ export const Gambit = ({
       setSession(nextSession);
 
       if (revealedCard?.effect) {
-        setRevealedCinematicCard(revealedCard);
+        const isBumisReveal = revealedCard.effect === BUMIS_EFFECT_VIEW_MODEL;
+        const bumisDisguisedEffect = isBumisReveal
+          ? getBumisDisplayedEffectViewModel(
+              String(nextSession.GambitSessionId),
+              revealedCard.position
+            )
+          : null;
+
+        if (bumisDisguisedEffect) {
+          setBumisDisguisePosition(revealedCard.position);
+          setBumisDisguisedPreparedEffect({
+            effect: bumisDisguisedEffect,
+            position: revealedCard.position,
+            sessionId: String(nextSession.GambitSessionId),
+          });
+          setIsBumisUnmasked(false);
+          setBumisTruthCinematicCard(null);
+        }
+
+        setRevealedCinematicCard({
+          ...revealedCard,
+          effect: bumisDisguisedEffect ?? revealedCard.effect,
+        });
         setIsPendingEventPresentationDelayed(true);
       } else {
         setRevealedCinematicCard(null);
         setIsPendingEventPresentationDelayed(false);
       }
     } catch (error) {
+      unlockRevealAnimation();
       setActionErrorMessage(
         getGambitActionErrorMessage(
           error,
@@ -571,6 +850,10 @@ export const Gambit = ({
   };
 
   const handleCardReveal = (cardId: number) => {
+    if (revealLocalBumisDisguiseIfNeeded(cardId)) {
+      return;
+    }
+
     if (pendingInteraction) {
       void resolvePendingInteractionSelection(cardId);
       return;
@@ -585,6 +868,12 @@ export const Gambit = ({
 
   const handlePreviewClose = () => {
     setPreviewedCardId(null);
+    setLastInteractionResult(null);
+  };
+
+  const handlePendingInteractionFeedbackSkip = () => {
+    clearPendingInteractionVisualFeedback();
+    setLastInteractionResult(null);
   };
 
   const handlePendingEventRewardCardHover = (card: RewardCardOption) => {
@@ -592,7 +881,7 @@ export const Gambit = ({
   };
 
   const handlePreparedEffectInspect = () => {
-    if (!visualState.preparedEffect) {
+    if (!visualState.preparedEffect && !bumisDisguisedPreparedEffect) {
       return;
     }
 
@@ -601,6 +890,18 @@ export const Gambit = ({
 
   const handlePreparedEffectPreviewClose = () => {
     setIsPreparedEffectPreviewOpen(false);
+  };
+
+  const handlePeekEffectPreviewInspect = () => {
+    if (!lastPeekEffectPreview) {
+      return;
+    }
+
+    setIsPeekEffectPreviewOpen(true);
+  };
+
+  const handlePeekEffectPreviewClose = () => {
+    setIsPeekEffectPreviewOpen(false);
   };
 
   const handlePendingEventRewardCardSelect = (optionId: string) => {
@@ -711,6 +1012,40 @@ export const Gambit = ({
     }, PENDING_EVENT_PRESENTATION_DELAY_MS);
   };
 
+  const handleBumisTruthCinematicComplete = () => {
+    setBumisTruthCinematicCard(null);
+    setBumisDisguisedPreparedEffect(null);
+    setBumisDisguisePosition(null);
+    setIsBumisUnmasked(false);
+  };
+
+  const pendingInteractionTitle = pendingInteraction
+    ? getGambitEffectPresentationForDisplay(pendingInteraction.Effect, {
+        position:
+          bumisDisguisedPreparedEffect?.position ?? bumisDisguisePosition,
+        revealed: isBumisUnmasked,
+        salt: BUMIS_DISGUISE_SALT,
+        sessionId: bumisDisguisedPreparedEffect?.sessionId ?? displaySessionId,
+      }).title.toUpperCase()
+    : null;
+
+  if (!session) {
+    return (
+      <motion.div
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-[min(94vw,780px)]"
+        initial={{ opacity: 0, scale: 0.94, y: 28 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="bg-card px-5 py-4 text-center pixel-border-gold">
+          <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+            Nenhuma sessão ativa do Gambit encontrada.
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -737,19 +1072,22 @@ export const Gambit = ({
                       }}
                       className={`pointer-events-none absolute right-full top-1/2 z-[1] mr-2 whitespace-nowrap font-mono text-sm font-bold ${
                         scoreFeedback.delta > 0
-                          ? 'text-[#b9ffb3]'
-                          : 'text-[#ffb4b0]'
+                          ? 'text-[#8dff54]'
+                          : 'text-[#ff6666]'
                       }`}
                       data-testid="gambit-score-feedback"
                       exit={{ opacity: 0, y: -46, scale: 0.92 }}
                       initial={{ opacity: 0, scale: 0.84, y: 6 }}
                       key={scoreFeedback.id}
                       style={{
-                        filter: 'drop-shadow(2px 2px 0 rgba(0,0,0,0.62))',
+                        filter:
+                          scoreFeedback.delta > 0
+                            ? 'drop-shadow(0 0 8px rgba(141,255,84,0.5)) drop-shadow(2px 2px 0 rgba(0,0,0,0.72))'
+                            : 'drop-shadow(0 0 8px rgba(255,102,102,0.5)) drop-shadow(2px 2px 0 rgba(0,0,0,0.72))',
                         textShadow:
                           scoreFeedback.delta > 0
-                            ? '0 0 12px rgba(116,255,152,0.35)'
-                            : '0 0 12px rgba(255,122,122,0.35)',
+                            ? '0 0 16px rgba(141,255,84,0.72)'
+                            : '0 0 16px rgba(255,102,102,0.72)',
                       }}
                       transition={{
                         opacity: {
@@ -805,13 +1143,14 @@ export const Gambit = ({
               interactionLocked={isBoardLocked}
               onCardReveal={handleCardReveal}
               onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
+              selectedCardIds={pendingInteractionFeedbackCardIds}
             />
           </div>
 
           {pendingInteraction ? (
             <div className="mt-3 bg-card px-4 py-3 pixel-border">
               <p className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-                {formatEffectName(pendingInteraction.Effect)}
+                {pendingInteractionTitle}
               </p>
               <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/55">
                 {pendingInteractionSelectedPositions.length}/
@@ -821,13 +1160,60 @@ export const Gambit = ({
           ) : null}
 
           {lastInteractionResult ? (
-            <div className="mt-3 flex items-center justify-between bg-card px-4 py-3 pixel-border">
-              <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
-                Espiada
-              </span>
-              <span className="font-mono text-xs font-bold uppercase text-foreground">
-                {formatPeekResult(lastInteractionResult)}
-              </span>
+            <div className="mt-3 bg-card px-4 py-3 pixel-border">
+              {lastPeekEffectPreview ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    aria-label={`Ver carta espiada ${lastPeekEffectPreview.presentation.title}`}
+                    className="shrink-0 border border-cassino-gold/55 bg-black/25 p-1 transition hover:-translate-y-0.5 hover:border-cassino-gold hover:brightness-110"
+                    onClick={handlePeekEffectPreviewInspect}
+                    type="button"
+                  >
+                    <img
+                      alt=""
+                      className="h-16 w-11 object-contain [image-rendering:pixelated]"
+                      src={lastPeekEffectPreview.presentation.spritePath}
+                    />
+                  </button>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-[11px] font-bold uppercase tracking-widest text-cassino-gold">
+                      Espiada
+                    </p>
+                    <p className="mt-1 truncate font-display text-xs font-bold uppercase tracking-widest text-foreground sm:text-sm">
+                      {lastPeekEffectPreview.presentation.title}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {lastPeekEffectPreview.pointsLabel ? (
+                        <span className="bg-cassino-gold px-2 py-1 font-mono text-[10px] font-bold uppercase text-background">
+                          Pontos: {lastPeekEffectPreview.pointsLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-display text-xs font-bold uppercase tracking-widest text-cassino-gold">
+                    Espiada
+                  </span>
+                  <span className="font-mono text-xs font-bold uppercase text-foreground">
+                    {formatPeekResult(lastInteractionResult)}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {canDismissPendingInteractionFeedback ? (
+            <div className="mt-3">
+              <button
+                className="w-full bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
+                onClick={handlePendingInteractionFeedbackSkip}
+                type="button"
+              >
+                Pular
+              </button>
             </div>
           ) : null}
 
@@ -888,7 +1274,18 @@ export const Gambit = ({
         </div>
 
         <PreparedGambitEffectPanel
-          effect={visualState.preparedEffect}
+          displayEffect={bumisDisguisedPreparedEffect?.effect ?? null}
+          displayPosition={
+            bumisDisguisedPreparedEffect?.position ?? bumisDisguisePosition
+          }
+          displayRevealed={isBumisUnmasked}
+          displaySalt={BUMIS_DISGUISE_SALT}
+          displaySeed={
+            bumisDisguisedPreparedEffect?.sessionId ?? displaySessionId
+          }
+          effect={
+            bumisDisguisedPreparedEffect ? null : visualState.preparedEffect
+          }
           onInspect={handlePreparedEffectInspect}
         />
       </div>
@@ -912,6 +1309,16 @@ export const Gambit = ({
       <GambitRevealCinematic
         card={preparedEffectPreviewCard}
         onComplete={handlePreparedEffectPreviewClose}
+      />
+
+      <GambitRevealCinematic
+        card={bumisTruthCinematicCard}
+        onComplete={handleBumisTruthCinematicComplete}
+      />
+
+      <GambitRevealCinematic
+        card={peekEffectPreviewCard}
+        onComplete={handlePeekEffectPreviewClose}
       />
     </motion.div>
   );

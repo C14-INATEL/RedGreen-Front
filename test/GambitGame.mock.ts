@@ -3,7 +3,7 @@ import type {
   GambitApiPendingEvent,
   GambitApiPendingInteraction,
   GambitApiSession,
-} from '../src/presentation/games/GambitGame/gambitApi';
+} from '../src/presentation/games/GambitGame/GambitApi';
 import {
   createGambitApiPendingEvent,
   createGambitApiPendingInteraction,

@@ -5,8 +5,8 @@ import { Gambit } from '../src/presentation/games/Gambit';
 import type {
   GambitResolveEffectResponse,
   GambitApiSession,
-} from '../src/presentation/games/GambitGame/gambitApi';
-import type { GambitVisualCard } from '../src/presentation/games/GambitGame/gambitTypes';
+} from '../src/presentation/games/GambitGame/GambitApi';
+import type { GambitVisualCard } from '../src/presentation/games/GambitGame/GambitTypes';
 import type { RewardChoiceSession } from '../src/presentation/games/cardReward';
 import {
   createGambitApiGrid,
@@ -28,6 +28,7 @@ type MockGambitBoardProps = {
   interactionLocked?: boolean;
   onCardReveal: (cardId: number) => void;
   onCardRevealAnimationComplete?: (cardId: number) => void;
+  selectedCardIds?: number[];
 };
 
 type MockRewardChoiceModalProps = {
@@ -46,7 +47,7 @@ const mockResolveActiveGambitEffect = jest.fn();
 const mockResolveActiveGambitEvent = jest.fn();
 const mockGambitBoard = jest.fn();
 
-jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
+jest.mock('../src/presentation/games/GambitGame/GambitGameplayClient', () => ({
   burnActiveGambitCard: (...args: unknown[]) =>
     mockBurnActiveGambitCard(...args),
   cashOutActiveGambitSession: (...args: unknown[]) =>
@@ -125,7 +126,7 @@ jest.mock('../src/presentation/games/GambitGame/GambitBoard', () => {
             props.cards.filter((card) => card.previewed).length
           }:locked:${String(props.interactionLocked)}:preview-mode:${String(
             props.clarividenciaPreviewMode
-          )}`
+          )}:selected:${props.selectedCardIds?.join(',') ?? ''}`
         ),
         ...props.cards.map((card) =>
           React.createElement(
@@ -445,6 +446,82 @@ describe('Gambit backend gameplay flow', () => {
       expect(mockResolveActiveGambitEffect).toHaveBeenCalledWith([0, 1, 2]);
     });
     expect(await screen.findByText('Ha carta ruim')).toBeInTheDocument();
+  });
+
+  it('keeps Cabecinha selections highlighted until the player skips the visual feedback', async () => {
+    mockResolveActiveGambitEffect.mockResolvedValueOnce({
+      PeekResult: {
+        AtLeastOneBad: true,
+      },
+      Session: createGambitApiSession(),
+    });
+
+    render(
+      createElement(Gambit, {
+        initialSession: createGambitApiSession({
+          Grid: createGambitApiGrid({
+            PendingInteraction: createGambitApiPendingInteraction({
+              Action: 'SELECT_MULTIPLE_CARDS',
+              Effect: 'CABECINHA',
+              RequiredSelections: 3,
+            }),
+          }),
+        }),
+      })
+    );
+
+    fireEvent.click(screen.getByText('reveal-0'));
+
+    await waitFor(() => {
+      expect(mockGambitBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          selectedCardIds: [0],
+        })
+      );
+    });
+
+    fireEvent.click(screen.getByText('reveal-1'));
+
+    await waitFor(() => {
+      expect(mockGambitBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          selectedCardIds: [0, 1],
+        })
+      );
+    });
+
+    fireEvent.click(screen.getByText('reveal-2'));
+
+    await waitFor(() => {
+      expect(mockResolveActiveGambitEffect).toHaveBeenCalledWith([0, 1, 2]);
+    });
+
+    expect(await screen.findByText('Ha carta ruim')).toBeInTheDocument();
+    expect(mockGambitBoard).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        selectedCardIds: [0, 1, 2],
+      })
+    );
+    expect(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Pular',
+      })
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Ha carta ruim')).not.toBeInTheDocument();
+      expect(mockGambitBoard).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          selectedCardIds: [],
+        })
+      );
+    });
   });
 
   it('shows Clarividencia PeekResult without revealing the card locally', async () => {

@@ -7,7 +7,7 @@ import type {
   GambitPendingInteractionAction,
   GambitSessionStatus,
   GambitTable,
-} from './gambitTypes';
+} from './GambitTypes';
 
 export type GambitApiCardEffect = GambitCardEffect;
 export type GambitApiCard = GambitApiCardEffect;

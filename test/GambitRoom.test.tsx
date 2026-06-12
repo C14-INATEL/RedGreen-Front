@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { GambitRoom } from '../src/presentation/pages/GambitRoom';
 import type { GambitProps } from '../src/presentation/games/Gambit';
-import type { GambitTable } from '../src/presentation/games/GambitGame/gambitTypes';
+import type { GambitTable } from '../src/presentation/games/GambitGame/GambitTypes';
 import { createGambitApiSession } from './GambitTestBuilders';
 
 type MotionProps = {
@@ -78,7 +78,7 @@ jest.mock('../src/presentation/games/Gambit', () => {
   };
 });
 
-jest.mock('../src/presentation/games/GambitGame/gambitGameplayClient', () => ({
+jest.mock('../src/presentation/games/GambitGame/GambitGameplayClient', () => ({
   createGambitSession: (...args: unknown[]) => mockCreateGambitSession(...args),
   fetchActiveGambitSession: (...args: unknown[]) =>
     mockFetchActiveGambitSession(...args),
@@ -161,6 +161,19 @@ const createGambitTable = (
 
 const renderGambitRoom = () => render(createElement(GambitRoom));
 
+const waitForInitialRoomLoad = async () => {
+  await waitFor(() => {
+    expect(mockFetchActiveGambitSession).toHaveBeenCalledTimes(1);
+  });
+  await waitFor(() => {
+    expect(mockFetchGambitTables).toHaveBeenCalledTimes(1);
+  });
+
+  await act(async () => {
+    await Promise.resolve();
+  });
+};
+
 describe('GambitRoom', () => {
   beforeEach(() => {
     mockCreateGambitSession.mockReset();
@@ -221,6 +234,7 @@ describe('GambitRoom', () => {
     });
 
     renderGambitRoom();
+    await waitForInitialRoomLoad();
 
     await waitFor(() => {
       expect(screen.getByText('3 cartas')).toBeInTheDocument();
@@ -264,6 +278,7 @@ describe('GambitRoom', () => {
 
   it('keeps the original back button behavior', async () => {
     renderGambitRoom();
+    await waitForInitialRoomLoad();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '←' })).toBeInTheDocument();
@@ -274,8 +289,9 @@ describe('GambitRoom', () => {
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 
-  it('does not render the removed session start UI', () => {
+  it('does not render the removed session start UI', async () => {
     renderGambitRoom();
+    await waitForInitialRoomLoad();
 
     expect(
       screen.queryByText('Iniciar partida Gambit')

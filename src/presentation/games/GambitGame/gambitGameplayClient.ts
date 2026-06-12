@@ -9,4 +9,4 @@ export {
   getGambitResolveEffectSession,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-} from './gambitApi';
+} from './GambitApi';

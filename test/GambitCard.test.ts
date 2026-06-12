@@ -3,9 +3,9 @@ import { getGambitCardVisibilityState } from '../src/presentation/games/GambitGa
 import {
   GAMBIT_EFFECT_CARD_SPRITES,
   getGambitEffectCardSpritePath,
-} from '../src/presentation/games/GambitGame/gambitEffectCardAssets';
-import { GAMBIT_LOCKED_CARD_SPRITE } from '../src/presentation/games/GambitGame/gambitTextures';
-import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/gambitTypes';
+} from '../src/presentation/games/GambitGame/GambitEffectCardAssets';
+import { GAMBIT_LOCKED_CARD_SPRITE } from '../src/presentation/games/GambitGame/GambitTextures';
+import type { GambitCardEffectViewModel } from '../src/presentation/games/GambitGame/GambitTypes';
 import { rewardCardPool } from '../src/presentation/games/cardReward/config/RewardCardPool';
 
 const EFFECT_TEXT_FALLBACKS = ['CLAR', 'MEL', '2X', 'INV'];
@@ -36,21 +36,27 @@ describe('GambitCard visual secrecy', () => {
   it('keeps positive, negative and effect cards visually identical while closed', () => {
     const closedPositiveCard = getGambitCardVisibilityState({
       effect: null,
+      locked: false,
       overlayState: 'closed',
       previewed: false,
       revealed: false,
+      selected: false,
     });
     const closedNegativeCard = getGambitCardVisibilityState({
       effect: null,
+      locked: false,
       overlayState: 'closed',
       previewed: false,
       revealed: false,
+      selected: false,
     });
     const closedEffectCard = getGambitCardVisibilityState({
       effect: 'clarividencia',
+      locked: false,
       overlayState: 'closed',
       previewed: false,
       revealed: false,
+      selected: false,
     });
 
     expect(closedPositiveCard).toEqual(closedNegativeCard);
@@ -65,6 +71,7 @@ describe('GambitCard visual secrecy', () => {
         overlayState: 'closed',
         previewed: false,
         revealed: false,
+        selected: false,
       })
     ).toEqual({
       closedOverlayVisible: true,
@@ -73,6 +80,7 @@ describe('GambitCard visual secrecy', () => {
       revealedFaceVisible: false,
       revealedLabelVisible: false,
       revealAnimationVisible: false,
+      selectionHighlightVisible: false,
     });
   });
 
@@ -143,6 +151,7 @@ describe('GambitCard visual secrecy', () => {
         overlayState: 'hidden',
         previewed: false,
         revealed: true,
+        selected: false,
       })
     ).toEqual({
       closedOverlayVisible: false,
@@ -151,6 +160,7 @@ describe('GambitCard visual secrecy', () => {
       revealedFaceVisible: true,
       revealedLabelVisible: true,
       revealAnimationVisible: false,
+      selectionHighlightVisible: false,
     });
   });
 
@@ -162,6 +172,7 @@ describe('GambitCard visual secrecy', () => {
         overlayState: 'hidden',
         previewed: true,
         revealed: false,
+        selected: false,
       })
     ).toMatchObject({
       closedOverlayVisible: false,
@@ -169,6 +180,7 @@ describe('GambitCard visual secrecy', () => {
       lockedClosedOverlayVisible: false,
       revealedFaceVisible: true,
       revealedLabelVisible: true,
+      selectionHighlightVisible: false,
     });
   });
 
@@ -181,6 +193,7 @@ describe('GambitCard visual secrecy', () => {
         overlayState: 'closed',
         previewed: false,
         revealed: false,
+        selected: false,
       })
     ).toEqual({
       closedOverlayVisible: false,
@@ -189,6 +202,23 @@ describe('GambitCard visual secrecy', () => {
       revealedFaceVisible: false,
       revealedLabelVisible: false,
       revealAnimationVisible: false,
+      selectionHighlightVisible: false,
+    });
+  });
+
+  it('shows a selection highlight on hidden cards chosen during Cabecinha', () => {
+    expect(
+      getGambitCardVisibilityState({
+        effect: null,
+        locked: false,
+        overlayState: 'closed',
+        previewed: false,
+        revealed: false,
+        selected: true,
+      })
+    ).toMatchObject({
+      closedOverlayVisible: true,
+      selectionHighlightVisible: true,
     });
   });
 });

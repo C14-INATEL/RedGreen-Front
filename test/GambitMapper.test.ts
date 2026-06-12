@@ -2,8 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 import {
   mapBackendGambitGridToViewModel,
   mapBackendGambitSessionToViewModel,
-} from '../src/presentation/games/GambitGame/gambitMapper';
-import type { GambitApiUnrevealedCard } from '../src/presentation/games/GambitGame/gambitApi';
+} from '../src/presentation/games/GambitGame/GambitMapper';
+import type { GambitApiUnrevealedCard } from '../src/presentation/games/GambitGame/GambitApi';
 import {
   createGambitApiGrid,
   createGambitApiPendingEvent,

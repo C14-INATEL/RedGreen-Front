@@ -8,8 +8,8 @@ import {
   fetchGambitTables,
   resolveActiveGambitEffect,
   resolveActiveGambitEvent,
-} from '../src/presentation/games/GambitGame/gambitApi';
-import type { GambitTable } from '../src/presentation/games/GambitGame/gambitTypes';
+} from '../src/presentation/games/GambitGame/GambitApi';
+import type { GambitTable } from '../src/presentation/games/GambitGame/GambitTypes';
 import { createGambitApiSession } from './GambitTestBuilders';
 
 const mockApiGet = jest.fn();

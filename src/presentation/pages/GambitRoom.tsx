@@ -7,9 +7,9 @@ import {
   createGambitSession,
   fetchActiveGambitSession,
   fetchGambitTables,
-} from '../games/GambitGame/gambitGameplayClient';
-import type { GambitApiSession } from '../games/GambitGame/gambitApi';
-import type { GambitSession } from '../games/GambitGame/gambitTypes';
+} from '../games/GambitGame/GambitGameplayClient';
+import type { GambitApiSession } from '../games/GambitGame/GambitApi';
+import type { GambitSession } from '../games/GambitGame/GambitTypes';
 import { GambitBetPanel } from '../ui/GambitBetPanel';
 import { useUserProfile } from '@application/hooks/useUserProfile';
 import { useUserChips } from '@application/hooks/useUserChips';

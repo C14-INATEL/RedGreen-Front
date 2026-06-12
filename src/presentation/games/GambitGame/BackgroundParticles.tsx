@@ -3,7 +3,7 @@ import { AnimatedSprite, Application, Container } from 'pixi.js';
 import {
   GAMBIT_PARTICLE_ANIMATION_FRAMES,
   preloadGambitParticleTextures,
-} from './gambitTextures';
+} from './GambitTextures';
 
 type BackgroundParticlesProps = {
   alphaMultiplier?: number;
