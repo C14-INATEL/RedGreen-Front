@@ -166,6 +166,8 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     useState<PendingEventSelection>(emptyPendingEventSelection);
   const [pendingInteractionSelections, setPendingInteractionSelections] =
     useState<number[]>([]);
+  const [pendingInteractionFeedbackCardIds, setPendingInteractionFeedbackCardIds] =
+    useState<number[]>([]);
   const [hasPendingEventTableSettled, setHasPendingEventTableSettled] =
     useState(false);
   const [isPendingEventSelectionLocked, setIsPendingEventSelectionLocked] =
@@ -200,6 +202,9 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
       mergeSelectedPositions(pendingInteraction, pendingInteractionSelections),
     [pendingInteraction, pendingInteractionSelections]
   );
+  const isMultiCardPendingInteraction =
+    pendingInteraction?.Action === 'SELECT_MULTIPLE_CARDS' ||
+    (pendingInteraction?.RequiredSelections ?? 0) > 1;
   const burnsRemaining = session ? getGambitBurnsRemaining(session) : 0;
   const cards = useMemo(() => {
     if (!session) {
@@ -267,6 +272,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     shouldShowPendingEventModal,
   ]);
   const isSelectingInteraction = Boolean(pendingInteraction);
+  const canDismissPendingInteractionFeedback = Boolean(
+    lastInteractionResult &&
+      'AtLeastOneBad' in lastInteractionResult &&
+      pendingInteractionFeedbackCardIds.length
+  );
   const isBoardLocked =
     !session ||
     isGameActionPending ||
@@ -281,6 +291,12 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
   useEffect(() => {
     setSession(initialSession ?? null);
   }, [initialSession]);
+
+  useEffect(() => {
+    if (!session) {
+      setPendingInteractionFeedbackCardIds([]);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!session) {
@@ -418,6 +434,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     if (pendingInteraction) {
       setLastInteractionResult(null);
+      setPendingInteractionFeedbackCardIds([]);
       setPreviewedCardId(null);
     }
   }, [pendingInteraction]);
@@ -429,6 +446,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     window.clearTimeout(pendingEventPresentationDelayTimeoutRef.current);
     pendingEventPresentationDelayTimeoutRef.current = null;
+  };
+
+  const clearPendingInteractionVisualFeedback = () => {
+    setPendingInteractionFeedbackCardIds([]);
   };
 
   const lockRevealAnimation = () => {
@@ -467,6 +488,10 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
     ]);
 
     setPendingInteractionSelections(nextSelectedPositions);
+
+    if (isMultiCardPendingInteraction) {
+      setPendingInteractionFeedbackCardIds(nextSelectedPositions);
+    }
 
     setActionErrorMessage(null);
     setLastInteractionResult(null);
@@ -523,6 +548,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
     setActionErrorMessage(null);
     setLastInteractionResult(null);
+    clearPendingInteractionVisualFeedback();
     setPendingEventSelection(emptyPendingEventSelection);
     clearPendingEventPresentationDelay();
     lockRevealAnimation();
@@ -571,6 +597,11 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
 
   const handlePreviewClose = () => {
     setPreviewedCardId(null);
+  };
+
+  const handlePendingInteractionFeedbackSkip = () => {
+    clearPendingInteractionVisualFeedback();
+    setLastInteractionResult(null);
   };
 
   const handlePendingEventRewardCardHover = (card: RewardCardOption) => {
@@ -807,6 +838,7 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
               interactionLocked={isBoardLocked}
               onCardReveal={handleCardReveal}
               onCardRevealAnimationComplete={handleCardRevealAnimationComplete}
+              selectedCardIds={pendingInteractionFeedbackCardIds}
             />
           </div>
 
@@ -830,6 +862,18 @@ export const Gambit = ({ initialSession, onNewGame }: GambitProps = {}) => {
               <span className="font-mono text-xs font-bold uppercase text-foreground">
                 {formatPeekResult(lastInteractionResult)}
               </span>
+            </div>
+          ) : null}
+
+          {canDismissPendingInteractionFeedback ? (
+            <div className="mt-3">
+              <button
+                className="w-full bg-cassino-gold px-4 py-3 font-display text-xs font-bold uppercase tracking-widest text-background pixel-border"
+                onClick={handlePendingInteractionFeedbackSkip}
+                type="button"
+              >
+                Pular
+              </button>
             </div>
           ) : null}
 
