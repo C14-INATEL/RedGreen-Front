@@ -47,7 +47,11 @@ pipeline {
       echo 'Deploy realizado com sucesso!'
     }
     failure {
-      echo 'Falha ao realizar o deploy.'
+      echo 'Falha no pipeline.'
+    }
+    always {
+      cleanWs()
     }
   }
+
 }
