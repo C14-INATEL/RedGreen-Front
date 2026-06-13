@@ -85,7 +85,6 @@ const Login = () => {
   const [ToastMessage, SetToastMessage] = useState('');
   const [ShowPassword, SetShowPassword] = useState(false);
   const [ShowConfirmPassword, SetShowConfirmPassword] = useState(false);
-
   const CloseToast = () => SetToastMessage('');
 
   const IsValidEmail = (value: string) => {
