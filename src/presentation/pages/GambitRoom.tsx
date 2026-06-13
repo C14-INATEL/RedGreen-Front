@@ -92,31 +92,38 @@ export const GambitRoom = () => {
   }, [LoadRoom]);
 
   const HandleConfirmBet = async (CardsPurchased: number) => {
-    if (GambitTableId == null || IsCreatingSession) return;
+  if (GambitTableId == null || IsCreatingSession) return;
 
-    SetIsCreatingSession(true);
+  SetIsCreatingSession(true);
 
-    try {
-      const Response = await createGambitSession({
-        CardsPurchased,
-        GambitTableId,
-      });
+  try {
+    const ExistingSession = await fetchActiveGambitSession();
 
-      const RawSession =
-        (Response as Record<string, unknown> & { session?: GambitApiSession })
-          .session ?? Response;
-      SetSession(ToGambitSession(RawSession));
-    } catch {
-      try {
-        const ActiveSession = await fetchActiveGambitSession();
-        if (ActiveSession) SetSession(ToGambitSession(ActiveSession));
-      } catch {
-        SetSession(null);
+    if (ExistingSession) {
+      if (ExistingSession.GambitTableId !== GambitTableId) {
+        SetSession(ToGambitSession(ExistingSession));
+        return;
       }
-    } finally {
-      SetIsCreatingSession(false);
+      SetSession(ToGambitSession(ExistingSession));
+      return;
     }
-  };
+
+    const Response = await createGambitSession({ CardsPurchased, GambitTableId });
+    const RawSession =
+      (Response as Record<string, unknown> & { session?: GambitApiSession })
+        .session ?? Response;
+    SetSession(ToGambitSession(RawSession));
+  } catch {
+    try {
+      const ActiveSession = await fetchActiveGambitSession();
+      if (ActiveSession) SetSession(ToGambitSession(ActiveSession));
+    } catch {
+      SetSession(null);
+    }
+  } finally {
+    SetIsCreatingSession(false);
+  }
+};
 
   const HandleNewGame = () => {
     SetSession(null);
