@@ -20,6 +20,11 @@ pipeline {
         sh 'npm run format'
       }
     }
+    stage('Testes') {
+      steps {
+        sh 'npm run test'
+      }
+    }
     stage('Build') {
       steps {
         sh 'npm run build'
