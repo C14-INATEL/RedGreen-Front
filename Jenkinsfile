@@ -27,6 +27,12 @@ pipeline {
         sh 'npm run lint'
         sh 'npm run format'
       }
+    } 
+
+    stage('Testes') {
+      steps {
+        sh 'npm test'
+      }
     }
 
     stage('Build') {
