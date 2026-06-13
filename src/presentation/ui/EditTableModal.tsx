@@ -28,6 +28,7 @@ type DeactivateConfirmModalProps = {
 
 const DeactivateConfirmModal = ({
   TableName,
+  ActiveSessions,
   OnConfirm,
   OnCancel,
 }: DeactivateConfirmModalProps) => (
@@ -65,6 +66,15 @@ const DeactivateConfirmModal = ({
         A mesa <span className="text-[#FFD700]">{TableName}</span> possui
         sessões ativas.
       </p>
+
+      {ActiveSessions.length > 0 && (
+        <p
+          className="mb-2 text-center text-[8px] uppercase text-orange-400/80 leading-5"
+          style={{ fontFamily: '"Press Start 2P", monospace' }}
+        >
+          Sessões ativas: {ActiveSessions.length}
+        </p>
+      )}
 
       <p
         className="mb-6 text-center text-[8px] uppercase text-orange-300/80 leading-5"
@@ -186,17 +196,20 @@ export const EditTableModal = ({
     }
 
     if (!TableActive) {
-      void ExecuteToggle([]);
+      ExecuteToggle([]).catch(() =>
+        OnError('Erro ao alterar status da mesa.')
+      );
       return;
     }
 
     SetIsTogglingActive(true);
     try {
-      const Response = await apiClient.get<
-        { SlotSessionId: number; Status: string }[]
-      >(`/slot-machines/${TableId}/sessions`);
-      const InProgress = Response.data.filter((S) => S.Status === 'InProgress');
+      const Response = await apiClient.get(
+        `/admin/slot-machines/${TableId}/active-sessions`
+      );
+      const InProgress = Response.data as { SlotSessionId: number }[];
       SetActiveSessions(InProgress);
+
       if (InProgress.length > 0) {
         SetShowDeactivateConfirm(true);
         SetIsTogglingActive(false);
@@ -204,28 +217,22 @@ export const EditTableModal = ({
         void ExecuteToggle([]);
       }
     } catch {
-      SetActiveSessions([]);
-      SetShowDeactivateConfirm(true);
+      OnError('Erro ao verificar sessões ativas. Tente novamente.');
       SetIsTogglingActive(false);
     }
   };
 
   const ExecuteToggle = async (
-    SessionsToCashOut: { SlotSessionId: number }[]
+    _SessionsToCashOut: { SlotSessionId: number }[]
   ) => {
     if (TableId === null) return;
     SetIsTogglingActive(true);
     try {
-      if (SessionsToCashOut.length > 0) {
-        await Promise.all(
-          SessionsToCashOut.map((S) =>
-            apiClient.post(
-              `/slot-machines/${TableId}/sessions/${S.SlotSessionId}/cash-out`
-            )
-          )
-        );
+      if (TableActive) {
+        await apiClient.post(`/admin/slot-machines/${TableId}/deactivate`);
+      } else {
+        await apiClient.patch(`/slot/machine/${TableId}/activate`);
       }
-      await apiClient.patch(`/slot/machine/${TableId}/deactivate`);
       OnTableUpdated({
         SlotMachineId: TableId,
         Name,
@@ -237,9 +244,7 @@ export const EditTableModal = ({
         TableColor: SelectedColor,
       });
       OnSuccess(
-        TableActive
-          ? 'Mesa desativada com sucesso!'
-          : 'Mesa ativada com sucesso!'
+        TableActive ? 'Mesa desativada com sucesso!' : 'Mesa ativada com sucesso!'
       );
       OnClose();
     } catch (err) {
@@ -299,7 +304,6 @@ export const EditTableModal = ({
           </p>
 
           <div className="space-y-3 mb-6">
-            {/* Nome */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label
@@ -323,7 +327,6 @@ export const EditTableModal = ({
               />
             </div>
 
-            {/* Numéricos */}
             {[
               {
                 Label: 'Aposta mínima',
@@ -356,7 +359,6 @@ export const EditTableModal = ({
               </div>
             ))}
 
-            {/* Cor da mesa */}
             <div>
               <label
                 className="block text-[8px] uppercase text-white/50 mb-3"
@@ -494,7 +496,9 @@ export const EditTableModal = ({
             ActiveSessions={ActiveSessions}
             OnConfirm={() => {
               SetShowDeactivateConfirm(false);
-              void ExecuteToggle(ActiveSessions);
+              ExecuteToggle(ActiveSessions).catch(() =>
+                OnError('Erro ao desativar a mesa.')
+              );
             }}
             OnCancel={() => SetShowDeactivateConfirm(false)}
           />
