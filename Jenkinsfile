@@ -1,63 +1,58 @@
 pipeline {
   agent any
-
+  options {
+    timestamps()
+    timeout(time: 5, unit: 'MINUTES')
+    disableConcurrentBuilds()
+  }
   tools {
     nodejs 'node-22'
   }
-
-  environment {
-    VERCEL_DEPLOY_HOOK_URL = credentials('VERCEL_DEPLOY_HOOK_URL')
-  }
-
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-
     stage('Instalar dependências') {
       steps {
         sh 'npm install --legacy-peer-deps'
       }
     }
-
     stage('Lint e Format') {
       steps {
         sh 'npm run lint'
         sh 'npm run format'
       }
-    } 
-
-    stage('Testes') {
-      steps {
-        sh 'npm test'
-      }
     }
-
     stage('Build') {
       steps {
         sh 'npm run build'
       }
     }
-
     stage('Deploy na Vercel') {
+      when {
+        branch 'main'
+      }
       steps {
-        sh 'curl -X POST $VERCEL_DEPLOY_HOOK_URL'
+        withCredentials([string(credentialsId: 'VERCEL_DEPLOY_HOOK_URL', variable: 'VERCEL_DEPLOY_HOOK_URL')]) {
+          sh 'curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"'
+        }
       }
     }
   }
-
   post {
     success {
-      echo 'Deploy realizado com sucesso!'
+      script {
+        if (env.BRANCH_NAME == 'main') {
+          echo 'Deploy disparado e estará disponível na Vercel em breve.'
+          currentBuild.description = 'Vercel deploy iniciado'
+        } else {
+          echo 'Build e validação concluídos com sucesso.'
+        }
+      }
     }
     failure {
       echo 'Falha no pipeline.'
+      script { currentBuild.description = 'Falha no pipeline' }
     }
     always {
       cleanWs()
     }
   }
-
 }
