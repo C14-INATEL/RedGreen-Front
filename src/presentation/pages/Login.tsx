@@ -10,10 +10,7 @@ type Step = 'identify' | 'login' | 'signup';
 const DeletedAccountMessage =
   'NÃO É MAIS POSSÍVEL ACESSAR UMA CONTA COM O E-MAIL INFORMADO.\nCRIE UMA NOVA CONTA COM OUTRO E-MAIL.';
 
-const IsDeletedAccountError = (
-  Status: number | undefined,
-  Message: string
-) => {
+const IsDeletedAccountError = (Status: number | undefined, Message: string) => {
   if (Status === 403 || Status === 410) return true;
 
   const NormalizedMessage = Message.toLowerCase();

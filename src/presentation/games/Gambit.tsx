@@ -604,7 +604,14 @@ export const Gambit = ({
         isAutoCashOutPendingRef.current = false;
         setIsAutoCashOutPending(false);
       });
-  }, [bumisDisguisedPreparedEffect, bumisTruthCinematicCard, isGameActionPending, onSessionEnd, revealedCinematicCard, session]);
+  }, [
+    bumisDisguisedPreparedEffect,
+    bumisTruthCinematicCard,
+    isGameActionPending,
+    onSessionEnd,
+    revealedCinematicCard,
+    session,
+  ]);
 
   useEffect(
     () => () => {

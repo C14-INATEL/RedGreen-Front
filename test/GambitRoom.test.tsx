@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { GambitRoom } from '../src/presentation/pages/GambitRoom';
 import type { GambitProps } from '../src/presentation/games/Gambit';
