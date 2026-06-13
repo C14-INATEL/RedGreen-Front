@@ -196,7 +196,7 @@ export const EditTableModal = ({
     }
 
     if (!TableActive) {
-      ExecuteToggle([]).catch(() =>
+      ExecuteToggle().catch(() =>
         OnError('Erro ao alterar status da mesa.')
       );
       return;
@@ -214,7 +214,7 @@ export const EditTableModal = ({
         SetShowDeactivateConfirm(true);
         SetIsTogglingActive(false);
       } else {
-        void ExecuteToggle([]);
+        void ExecuteToggle();
       }
     } catch {
       OnError('Erro ao verificar sessões ativas. Tente novamente.');
@@ -222,9 +222,7 @@ export const EditTableModal = ({
     }
   };
 
-  const ExecuteToggle = async (
-    _SessionsToCashOut: { SlotSessionId: number }[]
-  ) => {
+  const ExecuteToggle = async () => {
     if (TableId === null) return;
     SetIsTogglingActive(true);
     try {
@@ -496,7 +494,7 @@ export const EditTableModal = ({
             ActiveSessions={ActiveSessions}
             OnConfirm={() => {
               SetShowDeactivateConfirm(false);
-              ExecuteToggle(ActiveSessions).catch(() =>
+              ExecuteToggle().catch(() =>
                 OnError('Erro ao desativar a mesa.')
               );
             }}
