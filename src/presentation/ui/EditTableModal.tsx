@@ -299,7 +299,6 @@ export const EditTableModal = ({
           </p>
 
           <div className="space-y-3 mb-6">
-            {/* Nome */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label
@@ -323,7 +322,6 @@ export const EditTableModal = ({
               />
             </div>
 
-            {/* Numéricos */}
             {[
               {
                 Label: 'Aposta mínima',
@@ -356,7 +354,6 @@ export const EditTableModal = ({
               </div>
             ))}
 
-            {/* Cor da mesa */}
             <div>
               <label
                 className="block text-[8px] uppercase text-white/50 mb-3"
